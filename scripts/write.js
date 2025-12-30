@@ -13,11 +13,15 @@ let currentLog = null; // 수정할 로그 데이터
 
 // 페이지 초기화
 async function initPage() {
-    // 수정 모드 확인 (id가 null이나 'null' 문자열이 아닌 경우만)
-    if (editLogId && editLogId !== 'null') {
+    console.log('📝 write.html 초기화:', { editLogId, initialDate });
+    
+    // 수정 모드 확인 (id가 null, 빈 문자열, 'null' 문자열이 아닌 경우만)
+    if (editLogId && editLogId !== 'null' && editLogId !== 'undefined' && editLogId.trim() !== '') {
+        console.log('✏️ 수정 모드로 진입:', editLogId);
         isEditMode = true;
         await loadLogForEdit(editLogId);
     } else {
+        console.log('📝 새 로그 작성 모드');
         // 새 로그 작성 모드
         await initNewLog();
     }
@@ -34,16 +38,27 @@ async function loadLogForEdit(logId) {
     try {
         console.log('📝 수정 모드: 로그 로딩 중...', logId);
         
+        if (!logId || logId === 'null' || logId === 'undefined') {
+            throw new Error('유효하지 않은 로그 ID입니다.');
+        }
+        
         // DB에서 로그 가져오기
-        const logs = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('style_logs')
             .select('*')
             .eq('id', logId)
             .single();
         
-        if (logs.error) throw logs.error;
+        if (error) {
+            console.error('❌ 로그 로드 오류:', error);
+            throw error;
+        }
         
-        currentLog = logs.data;
+        if (!data) {
+            throw new Error('로그를 찾을 수 없습니다.');
+        }
+        
+        currentLog = data;
         console.log('✅ 로그 로드 완료:', currentLog);
         
         // 폼에 데이터 채우기

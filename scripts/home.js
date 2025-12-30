@@ -680,21 +680,45 @@ function attachDayListEventListeners() {
             
             // common.js의 showItemMenu 사용
             if (typeof showItemMenu === 'function') {
+                console.log('📋 메뉴 열기:', { logId, date });
                 showItemMenu(logId, date, 
                     // 수정 버튼 클릭 시
                     (id, date) => {
+                        console.log('✏️ 수정 콜백 호출:', { id, date });
+                        if (!id || id === 'null' || id === 'undefined') {
+                            console.error('❌ 유효하지 않은 로그 ID:', id);
+                            alert('로그 정보를 찾을 수 없습니다.');
+                            return;
+                        }
                         window.location.href = `write.html?id=${id}&date=${date}`;
                     },
                     // 삭제 버튼 클릭 시
                     async (id) => {
                         if (confirm('정말 이 기록을 삭제하시겠습니까?')) {
                             try {
-                                await StyleLogAPI.delete(id);
+                                console.log('🗑️ 삭제 시작:', id);
+                                
+                                if (!id || id === 'null' || id === 'undefined') {
+                                    throw new Error('유효하지 않은 로그 ID입니다.');
+                                }
+                                
+                                if (typeof StyleLogAPI === 'undefined' || !StyleLogAPI.delete) {
+                                    throw new Error('StyleLogAPI가 정의되지 않았습니다.');
+                                }
+                                
+                                const result = await StyleLogAPI.delete(id);
+                                console.log('✅ 삭제 성공:', result);
                                 alert('삭제되었습니다.');
                                 location.reload();
                             } catch (error) {
                                 console.error('❌ 삭제 오류:', error);
-                                alert('삭제에 실패했습니다.');
+                                console.error('오류 상세:', {
+                                    message: error.message,
+                                    code: error.code,
+                                    details: error.details,
+                                    hint: error.hint
+                                });
+                                alert(`삭제에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
                             }
                         }
                     }

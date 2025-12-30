@@ -156,11 +156,18 @@ function showItemMenu(logId, date, onEdit, onDelete) {
     
     newEditBtn.onclick = () => {
         closeItemMenu();
+        console.log('✏️ 수정 버튼 클릭:', { id: currentSelectedLog.id, date: currentSelectedLog.date });
+        
         if (onEdit) {
             onEdit(currentSelectedLog.id, currentSelectedLog.date);
         } else {
             // 기본 동작: write.html로 이동
-            window.location.href = `write.html?id=${currentSelectedLog.id}&date=${currentSelectedLog.date}`;
+            if (currentSelectedLog.id && currentSelectedLog.id !== 'null' && currentSelectedLog.id !== 'undefined') {
+                window.location.href = `write.html?id=${currentSelectedLog.id}&date=${currentSelectedLog.date}`;
+            } else {
+                console.error('❌ 유효하지 않은 로그 ID:', currentSelectedLog.id);
+                alert('로그 정보를 찾을 수 없습니다.');
+            }
         }
     };
     
