@@ -672,13 +672,39 @@ function attachDayListEventListeners() {
             e.stopPropagation();
             const logId = btn.getAttribute('data-log-id');
             const date = btn.getAttribute('data-date');
-            openItemMenu(logId, date);
+            
+            if (!logId || logId === 'null' || logId === 'undefined') {
+                console.error('❌ 유효하지 않은 로그 ID:', logId);
+                return;
+            }
+            
+            // common.js의 showItemMenu 사용
+            if (typeof showItemMenu === 'function') {
+                showItemMenu(logId, date, 
+                    // 수정 버튼 클릭 시
+                    (id, date) => {
+                        window.location.href = `write.html?id=${id}&date=${date}`;
+                    },
+                    // 삭제 버튼 클릭 시
+                    async (id) => {
+                        if (confirm('정말 이 기록을 삭제하시겠습니까?')) {
+                            try {
+                                await StyleLogAPI.delete(id);
+                                alert('삭제되었습니다.');
+                                location.reload();
+                            } catch (error) {
+                                console.error('❌ 삭제 오류:', error);
+                                alert('삭제에 실패했습니다.');
+                            }
+                        }
+                    }
+                );
+            } else {
+                console.error('❌ showItemMenu 함수를 찾을 수 없습니다.');
+            }
         });
     });
 }
-
-// 메뉴 열기 (home.js용)
-// openItemMenu/closeItemMenu는 common.js에서 관리
 
 // 스와이프 기능 초기화
 function initSwipe() {

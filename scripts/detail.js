@@ -331,17 +331,13 @@ function updateDateDisplay(dateStr) {
 
 // 뒤로가기 버튼은 common.js에서 처리됨
 
-// 메뉴 버튼
-document.querySelector('.menu-btn')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    showOptionsMenu();
-});
-
-// 옵션 메뉴 표시
-function showOptionsMenu() {
-    const options = ['수정', '삭제', '공유', '즐겨찾기'];
-    console.log('옵션 메뉴:', options);
-    // 실제 구현 시 액션 시트 표시
+// closeMenu 함수 정의 (common.js의 함수 사용)
+function closeMenu() {
+    const menuPopup = document.getElementById('menuPopup');
+    if (menuPopup) {
+        menuPopup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 }
 
 // 수정 버튼
@@ -465,11 +461,25 @@ function initScrollEffect() {
 function attachEventListeners() {
     // 뒤로가기 버튼은 common.js에서 처리됨
     
-    // 메뉴 버튼
+    // 메뉴 버튼 (중복 등록 방지)
     const menuBtn = document.querySelector('.menu-btn');
     if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            openMenu();
+        // 기존 이벤트 리스너 제거 후 새로 등록
+        const newMenuBtn = menuBtn.cloneNode(true);
+        menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
+        
+        newMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof openMenu === 'function') {
+                openMenu();
+            } else {
+                // openMenu가 없으면 직접 처리
+                const menuPopup = document.getElementById('menuPopup');
+                if (menuPopup) {
+                    menuPopup.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
         });
     }
     
