@@ -1,0 +1,170 @@
+/* 디자인 토큰 - CSS 변수 */
+:root {
+    /* Primary Colors */
+    --color-primary: #667eea;
+    --color-primary-dark: #764ba2;
+    --color-primary-light: #f8f9ff;
+    
+    /* Accent Colors */
+    --color-accent: #67d5f5;
+    --color-accent-dark: #4fc3f0;
+    --color-accent-light: #E3F2FD;
+    
+    /* Favorite/Heart Color */
+    --color-favorite: #ff6b6b;
+    --color-favorite-light: rgba(255, 107, 107, 0.15);
+    
+    /* Text Colors */
+    --color-text-primary: #333;
+    --color-text-secondary: #666;
+    --color-text-tertiary: #999;
+    --color-text-disabled: #ccc;
+    --color-text-inverse: #fff;
+    
+    /* Background Colors */
+    --color-bg-primary: #fff;
+    --color-bg-secondary: #f5f5f5;
+    --color-bg-tertiary: #fafafa;
+    --color-bg-hover: #f8f9ff;
+    
+    /* Border Colors */
+    --color-border-light: #e0e0e0;
+    --color-border-lighter: #f0f0f0;
+    --color-border-focus: var(--color-accent);
+    
+    /* Weather Colors */
+    --color-weather-sunny-start: #FFF3E0;
+    --color-weather-sunny-end: #FFE0B2;
+    --color-weather-cloudy-start: #E3F2FD;
+    --color-weather-cloudy-end: #BBDEFB;
+    --color-weather-rainy-start: #E1F5FE;
+    --color-weather-rainy-end: #B3E5FC;
+    --color-weather-snowy-start: #F3E5F5;
+    --color-weather-snowy-end: #E1BEE7;
+    --color-weather-lightning-start: #FFF9C4;
+    --color-weather-lightning-end: #FFF59D;
+    
+    /* Temperature Colors */
+    --color-temp-high: #ff6b6b;
+    --color-temp-low: #4a90e2;
+    
+    /* Shadow Colors */
+    --color-shadow-sm: rgba(0, 0, 0, 0.05);
+    --color-shadow-md: rgba(0, 0, 0, 0.1);
+    --color-shadow-lg: rgba(0, 0, 0, 0.15);
+    --color-shadow-xl: rgba(0, 0, 0, 0.2);
+    
+    /* Overlay Colors */
+    --color-overlay: rgba(0, 0, 0, 0.5);
+    --color-overlay-light: rgba(0, 0, 0, 0.1);
+    
+    /* Status Colors */
+    --color-success: #2e7d32;
+    --color-error: #c62828;
+    --color-warning: #ffc107;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    --spacing-2xl: 24px;
+    --spacing-3xl: 32px;
+    --spacing-4xl: 40px;
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 50%;
+    
+    /* Font Sizes */
+    --font-size-xs: 12px;
+    --font-size-sm: 13px;
+    --font-size-base: 14px;
+    --font-size-md: 15px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+    --font-size-3xl: 24px;
+    --font-size-4xl: 32px;
+    
+    /* Font Weights */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Transitions */
+    --transition-fast: 0.2s;
+    --transition-base: 0.3s;
+    --transition-slow: 0.5s;
+    --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Z-index */
+    --z-index-base: 1;
+    --z-index-dropdown: 100;
+    --z-index-sticky: 100;
+    --z-index-modal: 1000;
+    --z-index-popup: 9999;
+    
+    /* Container */
+    --container-max-width: 428px;
+    --container-padding: 20px;
+    
+    /* Bottom Navigation */
+    --bottom-nav-height: 60px;
+    --bottom-nav-height-mobile: 56px;
+    --bottom-nav-icon-size: 28px;
+    --bottom-nav-icon-size-mobile: 26px;
+    --bottom-nav-icon-svg-size: 24px;
+    --bottom-nav-icon-svg-size-mobile: 22px;
+    --bottom-nav-label-size: 11px;
+    --bottom-nav-label-size-mobile: 10px;
+    
+    /* Modal & Bottom Sheet */
+    --modal-overlay: rgba(0, 0, 0, 0.5);
+    --modal-bg: var(--color-bg-primary);
+    --modal-border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    --modal-padding: var(--spacing-2xl);
+    --modal-max-height: 80vh;
+    --modal-header-border: var(--color-border-lighter);
+    
+    /* Icon Sizes */
+    --icon-size-xs: 16px;
+    --icon-size-sm: 20px;
+    --icon-size-md: 24px;
+    --icon-size-lg: 28px;
+    --icon-size-xl: 32px;
+    --icon-stroke-width: 2;
+    --icon-stroke-width-active: 2.5;
+    
+    /* Button Sizes */
+    --button-height-sm: 32px;
+    --button-height-md: 40px;
+    --button-height-lg: 44px;
+    --button-height-xl: 56px;
+    --button-padding-sm: var(--spacing-sm) var(--spacing-md);
+    --button-padding-md: var(--spacing-md) var(--spacing-lg);
+    --button-padding-lg: var(--spacing-lg) var(--spacing-xl);
+    
+    /* Action Button Colors */
+    --color-action-edit: var(--color-text-primary);
+    --color-action-delete: var(--color-favorite);
+    --color-action-danger: #ff3b30;
+    
+    /* Menu Item */
+    --menu-item-padding: var(--spacing-xl) var(--spacing-2xl);
+    --menu-item-gap: var(--spacing-md);
+    --menu-item-hover: var(--color-bg-secondary);
+    --menu-item-active: #e8e8e8;
+    
+    /* Tag */
+    --tag-padding: 6px var(--spacing-md);
+    --tag-bg: var(--color-bg-secondary);
+    --tag-color: var(--color-text-secondary);
+    --tag-radius: 16px;
+}
+

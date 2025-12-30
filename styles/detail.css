@@ -1,0 +1,429 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* 공통 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: var(--container-max-width);
+    min-height: 100vh;
+    margin: 0 auto;
+    background-color: var(--color-bg-primary);
+    position: relative;
+    padding-bottom: 80px;
+}
+
+/* 헤더 */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: #fff;
+}
+
+/* 투명 헤더 (사진 위에) */
+.detail-header.transparent {
+    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 100%);
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #333;
+    transition: opacity 0.2s;
+}
+
+.icon-btn:hover {
+    opacity: 0.7;
+}
+
+.icon-btn svg {
+    display: block;
+    stroke-width: 2;
+    stroke: currentColor;
+}
+
+.detail-header.transparent .icon-btn {
+    color: white;
+}
+
+/* 사진 섹션 */
+.photo-section {
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    position: relative;
+}
+
+.photo-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 즐겨찾기 버튼 (detail 페이지용) */
+.favorite-toggle-btn-detail {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 20;
+}
+
+.favorite-toggle-btn-detail:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.favorite-toggle-btn-detail.active {
+    background: var(--color-favorite-light);
+    border: none;
+}
+
+.favorite-toggle-btn-detail:active {
+    transform: scale(0.95);
+}
+
+/* 사진 없는 경우 */
+.container.no-photo .detail-header {
+    position: sticky;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.container.no-photo .detail-header .icon-btn {
+    color: #666;
+}
+
+/* 콘텐츠 섹션 */
+.content-section {
+    padding: 32px 24px;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 32px);
+}
+
+.container.no-photo .content-section {
+    padding-top: 24px;
+}
+
+/* 날짜 정보 */
+.date-info {
+    margin-bottom: 16px;
+}
+
+.date-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    letter-spacing: 1px;
+}
+
+/* 제목 */
+.content-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+/* 날씨 정보 */
+.weather-info {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.weather-icon {
+    stroke-width: 1.5;
+}
+
+.temp-display {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.temp-high {
+    color: #ff6b6b;
+    font-size: 20px;
+}
+
+.temp-separator {
+    color: #ccc;
+    font-size: 18px;
+}
+
+.temp-low {
+    color: #4dabf7;
+    font-size: 20px;
+}
+
+/* 본문 */
+.content-body {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 32px;
+}
+
+.content-body p {
+    margin-bottom: 16px;
+}
+
+.content-body p:last-child {
+    margin-bottom: 0;
+}
+
+/* 태그 */
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    display: inline-block;
+    padding: var(--tag-padding);
+    background-color: var(--tag-bg);
+    color: var(--tag-color);
+    font-size: var(--font-size-sm);
+    border-radius: var(--tag-radius);
+    font-weight: var(--font-weight-medium);
+}
+
+/* 하단 액션 버튼 */
+.bottom-actions {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 50;
+    max-width: 428px;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    width: var(--button-height-xl);
+    height: var(--button-height-xl);
+    border-radius: var(--radius-full);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: 0 4px 12px var(--color-shadow-lg);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--color-shadow-xl);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.edit-btn {
+    background-color: var(--color-action-edit);
+}
+
+.delete-btn {
+    background-color: var(--color-action-delete);
+}
+
+/* 모달 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--modal-overlay);
+    z-index: var(--z-index-modal);
+    align-items: flex-end;
+}
+
+.modal.active {
+    display: flex;
+    animation: fadeIn var(--transition-base);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background-color: var(--modal-bg);
+    width: 100%;
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    border-radius: var(--modal-border-radius);
+    padding: var(--modal-padding);
+    animation: slideUp var(--transition-base);
+    max-height: var(--modal-max-height);
+    overflow-y: auto;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* 모달 헤더 */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--modal-header-border);
+}
+
+.modal-header h3 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-tertiary);
+    letter-spacing: 1px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+}
+
+.modal-close:hover {
+    opacity: 0.7;
+}
+
+/* 날씨 옵션 */
+.weather-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.weather-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+    position: relative;
+}
+
+.weather-option:last-child {
+    border-bottom: none;
+}
+
+.weather-option input[type="radio"] {
+    display: none;
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #666;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.option-content svg {
+    stroke-width: 2;
+    color: #999;
+}
+
+.check-icon {
+    display: none;
+    stroke-width: 2.5;
+}
+
+.weather-option input[type="radio"]:checked ~ .check-icon {
+    display: block;
+}
+
+.weather-option input[type="radio"]:checked ~ .option-content {
+    color: #333;
+}
+
+.weather-option input[type="radio"]:checked ~ .option-content svg {
+    color: #333;
+}
+
+.weather-option:hover {
+    background-color: #fafafa;
+}
+
+/* 반응형 */
+@media (max-width: 428px) {
+    .container {
+        max-width: 100%;
+    }
+    
+    .photo-section {
+        height: 350px;
+    }
+    
+    .content-section {
+        padding: 24px 20px calc(56px + env(safe-area-inset-bottom, 0px) + 24px);
+    }
+    
+    .content-title {
+        font-size: 22px;
+    }
+}
+

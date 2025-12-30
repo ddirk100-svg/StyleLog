@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스타일로그 - 상세</title>
+    <link rel="stylesheet" href="styles/detail.css">
+    <link rel="stylesheet" href="styles/menu-popup.css">
+    <link rel="stylesheet" href="styles/photo-gallery.css">
+    <link rel="stylesheet" href="styles/bottom-nav.css">
+    <!-- Supabase 클라이언트 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 설정 및 API -->
+    <script src="scripts/config.js"></script>
+    <script src="scripts/api.js"></script>
+    <script src="scripts/common.js"></script>
+</head>
+<body class="has-bottom-nav">
+    <!-- 상세 화면 - 사진 포함 -->
+    <div class="container" id="detailView">
+        <!-- 헤더 (사진 위에 오버레이) -->
+        <header class="detail-header">
+            <button class="icon-btn back-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <button class="icon-btn menu-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="5" r="1.5"></circle>
+                    <circle cx="12" cy="12" r="1.5"></circle>
+                    <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+            </button>
+        </header>
+
+        <!-- 사진 섹션 (동적 생성) -->
+
+        <!-- 콘텐츠 섹션 -->
+        <div class="content-section">
+            <!-- 날짜 정보 -->
+            <div class="date-info">
+                <span class="date-label"></span>
+            </div>
+
+            <!-- 제목 -->
+            <h1 class="content-title">로딩 중...</h1>
+
+            <!-- 날씨 -->
+            <div class="weather-info"></div>
+
+            <!-- 본문 -->
+            <div class="content-body"></div>
+
+            <!-- 태그 (옵션) -->
+            <div class="tags"></div>
+        </div>
+    </div>
+
+    <!-- 메뉴 팝업 -->
+    <div class="menu-popup" id="menuPopup">
+        <div class="menu-overlay"></div>
+        <div class="menu-content">
+            <button class="menu-item edit-menu-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+                <span>수정</span>
+            </button>
+            <button class="menu-item delete-menu-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>삭제</span>
+            </button>
+            <button class="menu-item cancel-menu-btn">
+                <span>취소</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 날씨 선택 모달 -->
+    <div class="modal weather-modal" id="weatherModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>SELECT WEATHER</h3>
+                <button class="modal-close">Cancel</button>
+            </div>
+            <div class="weather-options">
+                <label class="weather-option">
+                    <input type="radio" name="weather" value="sunny">
+                    <div class="option-content">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
+                            <circle cx="16" cy="16" r="4"></circle>
+                            <path d="M16 2v4M16 26v4M30 16h-4M6 16H2M25.5 6.5l-2.8 2.8M9.3 22.7l-2.8 2.8M25.5 25.5l-2.8-2.8M9.3 9.3L6.5 6.5"></path>
+                        </svg>
+                        <span>Sunny</span>
+                    </div>
+                </label>
+
+                <label class="weather-option">
+                    <input type="radio" name="weather" value="cloudy" checked>
+                    <div class="option-content">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
+                            <path d="M22 16h-1.26A8 8 0 1 0 9 24h13a5 5 0 0 0 0-10z"></path>
+                        </svg>
+                        <span>Cloudy</span>
+                    </div>
+                    <svg class="check-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </label>
+
+                <label class="weather-option">
+                    <input type="radio" name="weather" value="rainy">
+                    <div class="option-content">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
+                            <path d="M22 16h-1.26A8 8 0 1 0 9 24h13a5 5 0 0 0 0-10z"></path>
+                            <line x1="8" y1="24" x2="8" y2="28"></line>
+                            <line x1="13" y1="24" x2="13" y2="28"></line>
+                            <line x1="18" y1="24" x2="18" y2="28"></line>
+                        </svg>
+                        <span>Rainy</span>
+                    </div>
+                </label>
+
+                <label class="weather-option">
+                    <input type="radio" name="weather" value="snowy">
+                    <div class="option-content">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
+                            <path d="M22 16h-1.26A8 8 0 1 0 9 24h13a5 5 0 0 0 0-10z"></path>
+                            <circle cx="8" cy="27" r="1"></circle>
+                            <circle cx="13" cy="27" r="1"></circle>
+                            <circle cx="18" cy="27" r="1"></circle>
+                        </svg>
+                        <span>Snowy</span>
+                    </div>
+                </label>
+
+                <label class="weather-option">
+                    <input type="radio" name="weather" value="lightning">
+                    <div class="option-content">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
+                            <polygon points="16 2 6 18 16 18 16 30 26 14 16 14 16 2"></polygon>
+                        </svg>
+                        <span>Lightning</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 네비게이션 바 -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="bottom-nav-item">
+            <div class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+            </div>
+            <span class="bottom-nav-label">홈</span>
+        </a>
+        <a href="calendar.html" class="bottom-nav-item">
+            <div class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <span class="bottom-nav-label">캘린더</span>
+        </a>
+        <a href="write.html" class="bottom-nav-item write-btn">
+            <div class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </div>
+            <span class="bottom-nav-label">작성</span>
+        </a>
+        <a href="favorite.html" class="bottom-nav-item">
+            <div class="bottom-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+            </div>
+            <span class="bottom-nav-label">즐겨찾기</span>
+        </a>
+    </nav>
+
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/detail.js"></script>
+    <script>
+        // 페이지 로드 시 인증 체크
+        window.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+        });
+    </script>
+</body>
+</html>
+

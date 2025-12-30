@@ -1,0 +1,119 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* 메뉴 팝업 */
+.menu-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-index-popup);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.menu-popup.active {
+    display: flex;
+}
+
+.menu-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--modal-overlay);
+    animation: fadeIn var(--transition-fast) var(--transition-ease);
+}
+
+.menu-content {
+    position: relative;
+    width: 100%;
+    max-width: var(--container-max-width);
+    background: var(--modal-bg);
+    border-radius: var(--modal-border-radius);
+    padding: 0;
+    animation: slideUp var(--transition-base) var(--transition-ease);
+    box-shadow: 0 -4px 20px var(--color-shadow-lg);
+    z-index: var(--z-index-base);
+    display: flex;
+    flex-direction: column;
+    max-height: fit-content;
+    height: auto;
+}
+
+.menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--menu-item-gap);
+    padding: var(--menu-item-padding);
+    border: none;
+    background: none;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.menu-item:first-child {
+    margin-top: var(--spacing-md);
+}
+
+.menu-item:last-child {
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+}
+
+.menu-item:hover {
+    background-color: var(--menu-item-hover);
+}
+
+.menu-item:active {
+    background-color: var(--menu-item-active);
+}
+
+.menu-item svg {
+    stroke-width: var(--icon-stroke-width);
+}
+
+.menu-item.delete-menu-btn {
+    color: var(--color-action-danger);
+}
+
+.menu-item.delete-menu-btn svg {
+    stroke: var(--color-action-danger);
+}
+
+.menu-item.cancel-menu-btn {
+    border-top: var(--spacing-sm) solid var(--color-bg-secondary);
+    padding: var(--menu-item-padding);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    justify-content: center;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+
+

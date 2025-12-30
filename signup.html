@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스타일로그 - 회원가입</title>
+    <link rel="stylesheet" href="styles/auth.css">
+    <!-- Supabase 클라이언트 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 설정 -->
+    <script src="scripts/config.js"></script>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- 로고 -->
+            <div class="auth-logo">
+                <h1>StyleLog</h1>
+                <p>오늘 뭐입지?</p>
+            </div>
+
+            <!-- 회원가입 폼 -->
+            <form id="signupForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="example@email.com"
+                        required
+                        autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="6자 이상 입력하세요"
+                        required
+                        autocomplete="new-password"
+                        minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="passwordConfirm">비밀번호 확인</label>
+                    <input 
+                        type="password" 
+                        id="passwordConfirm" 
+                        name="passwordConfirm" 
+                        placeholder="비밀번호를 다시 입력하세요"
+                        required
+                        autocomplete="new-password"
+                        minlength="6">
+                </div>
+
+                <button type="submit" class="auth-btn primary" id="signupBtn">
+                    회원가입
+                </button>
+
+                <div class="auth-divider">
+                    <span>또는</span>
+                </div>
+
+                <button type="button" class="auth-btn secondary" onclick="location.href='login.html'">
+                    로그인
+                </button>
+            </form>
+
+            <!-- 에러/성공 메시지 -->
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+        </div>
+    </div>
+
+    <script src="scripts/auth.js"></script>
+    <script>
+        // 이미 로그인된 경우 홈으로 리다이렉트
+        window.addEventListener('load', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // 회원가입 폼 제출
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('email').value;
+            const email = emailInput.toLowerCase().trim(); // 이메일 정규화 (전체 주소)
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+            const signupBtn = document.getElementById('signupBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            console.log('📝 회원가입 시도:', email);
+            
+            // 초기화
+            errorMessage.textContent = '';
+            successMessage.textContent = '';
+            
+            // 이메일 형식 체크
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                errorMessage.textContent = '올바른 이메일 형식을 입력해주세요.';
+                return;
+            }
+            
+            // 비밀번호 확인
+            if (password !== passwordConfirm) {
+                errorMessage.textContent = '비밀번호가 일치하지 않습니다.';
+                return;
+            }
+            
+            // 비밀번호 길이 확인
+            if (password.length < 6) {
+                errorMessage.textContent = '비밀번호는 최소 6자 이상이어야 합니다.';
+                return;
+            }
+            
+            // 버튼 비활성화
+            signupBtn.disabled = true;
+            signupBtn.textContent = '가입 중...';
+            
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email, // 정규화된 전체 이메일 주소
+                    password: password,
+                    options: {
+                        emailRedirectTo: window.location.origin + '/login.html'
+                    }
+                });
+                
+                // 디버깅: 응답 전체 확인
+                console.log('🔍 Supabase 응답:', { data, error });
+                
+                if (error) {
+                    console.error('❌ 에러 발생:', error);
+                    throw error;
+                }
+                
+                // 중복 체크: data.user가 있지만 identities가 비어있으면 중복
+                if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+                    console.log('❌ 중복된 이메일 (identities 없음)');
+                    throw new Error('User already registered');
+                }
+                
+                console.log('✅ 회원가입 성공:', data);
+                console.log('📧 가입된 이메일:', email);
+                
+                // 성공 메시지 표시 (이메일 인증 안내 포함)
+                successMessage.innerHTML = `
+                    <strong>회원가입이 완료되었습니다! 🎉</strong><br>
+                    <br>
+                    <strong style="color: #d32f2f;">⚠️ 중요: 이메일 인증 필요</strong><br>
+                    <strong>${email}</strong> 메일함을 확인하여<br>
+                    인증 링크를 클릭해주세요.<br>
+                    <br>
+                    <small style="color: #666;">이메일 인증을 완료해야 로그인할 수 있습니다.</small><br>
+                    <small style="color: #999;">3초 후 로그인 페이지로 이동합니다...</small>
+                `;
+                successMessage.style.lineHeight = '1.6';
+                
+                // 3초 후 로그인 페이지로 이동
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('❌ 회원가입 오류:', error);
+                console.error('에러 타입:', typeof error);
+                console.error('에러 메시지:', error.message);
+                console.error('에러 객체:', JSON.stringify(error, null, 2));
+                
+                // 에러 메시지 표시
+                if (error.message.includes('User already registered') || 
+                    error.message.includes('already been registered') ||
+                    error.message.includes('duplicate') ||
+                    error.message.includes('already exists')) {
+                    errorMessage.innerHTML = `
+                        <strong>⚠️ 이미 가입된 이메일입니다</strong><br>
+                        <strong>${email}</strong>은(는) 이미 사용 중입니다.<br>
+                        <small>다른 이메일을 사용하거나 <a href="login.html" style="color: #667eea; text-decoration: underline;">로그인</a>하세요.</small>
+                    `;
+                    errorMessage.style.lineHeight = '1.6';
+                } else if (error.message.includes('Password should be at least 6 characters')) {
+                    errorMessage.textContent = '비밀번호는 최소 6자 이상이어야 합니다.';
+                } else if (error.message.includes('Invalid email')) {
+                    errorMessage.textContent = '올바른 이메일 형식을 입력해주세요.';
+                } else {
+                    errorMessage.innerHTML = `
+                        회원가입에 실패했습니다.<br>
+                        <small style="color: #999;">${error.message}</small><br>
+                        <small style="color: #999;">콘솔을 확인하여 자세한 정보를 확인하세요.</small>
+                    `;
+                }
+                
+                // 버튼 활성화
+                signupBtn.disabled = false;
+                signupBtn.textContent = '회원가입';
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스타일로그 - 로그인</title>
+    <link rel="stylesheet" href="styles/auth.css">
+    <!-- Supabase 클라이언트 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 설정 -->
+    <script src="scripts/config.js"></script>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- 로고 -->
+            <div class="auth-logo">
+                <h1>StyleLog</h1>
+                <p>오늘 뭐입지?</p>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="example@email.com"
+                        required
+                        autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="비밀번호를 입력하세요"
+                        required
+                        autocomplete="current-password"
+                        minlength="6">
+                </div>
+
+                <button type="submit" class="auth-btn primary" id="loginBtn">
+                    로그인
+                </button>
+
+                <div class="auth-divider">
+                    <span>또는</span>
+                </div>
+
+                <button type="button" class="auth-btn secondary" onclick="location.href='signup.html'">
+                    회원가입
+                </button>
+            </form>
+
+            <!-- 에러 메시지 -->
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </div>
+
+    <script src="scripts/auth.js"></script>
+    <script>
+        // 이미 로그인된 경우 홈으로 리다이렉트
+        window.addEventListener('load', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // 로그인 폼 제출
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // 버튼 비활성화
+            loginBtn.disabled = true;
+            loginBtn.textContent = '로그인 중...';
+            errorMessage.textContent = '';
+            
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                console.log('✅ 로그인 성공:', data);
+                
+                // 홈으로 이동
+                window.location.href = 'index.html';
+                
+            } catch (error) {
+                console.error('❌ 로그인 오류:', error);
+                
+                // 에러 메시지 표시
+                if (error.message.includes('Invalid login credentials')) {
+                    errorMessage.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+                } else if (error.message.includes('Email not confirmed')) {
+                    errorMessage.innerHTML = `
+                        <strong>이메일 인증이 필요합니다</strong><br>
+                        <br>
+                        가입 시 받은 이메일의 인증 링크를 클릭해주세요.<br>
+                        <small style="color: #999;">이메일을 받지 못하셨나요? 스팸 메일함을 확인해보세요.</small>
+                    `;
+                    errorMessage.style.lineHeight = '1.6';
+                } else {
+                    errorMessage.textContent = '로그인에 실패했습니다. 다시 시도해주세요.';
+                }
+                
+                // 버튼 활성화
+                loginBtn.disabled = false;
+                loginBtn.textContent = '로그인';
+            }
+        });
+    </script>
+</body>
+</html>
+

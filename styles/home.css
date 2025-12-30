@@ -1,0 +1,941 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* 공통 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Day 뷰일 때 body 스크롤 허용 */
+body:has(.container.day-view-active) {
+    overflow-y: auto;
+    height: auto;
+    /* body가 스크롤 컨테이너가 되도록 */
+    position: relative;
+}
+
+.container {
+    max-width: var(--container-max-width);
+    min-height: 100vh;
+    margin: 0 auto;
+    background-color: var(--color-bg-primary);
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+}
+
+/* Day 뷰일 때는 container의 overflow를 완전히 제거하여 body가 스크롤 컨테이너가 되도록 */
+.container.day-view-active {
+    overflow: visible !important;
+}
+
+/* Month 뷰일 때는 고정 높이 */
+.container:not(.day-view-active) {
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Day 뷰일 때는 전체 스크롤 - body가 스크롤 컨테이너 */
+.container.day-view-active {
+    height: auto;
+    /* overflow는 위에서 !important로 처리 */
+}
+
+/* Day 뷰일 때 month-cards-container의 sticky 컨텍스트 보장 */
+.container.day-view-active .month-cards-container.day-list-view {
+    /* overflow를 visible로 확실히 설정 - sticky가 작동하도록 */
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+}
+
+/* 헤더 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    position: sticky;
+    top: 0;
+    background-color: var(--color-bg-primary);
+    z-index: var(--z-index-sticky);
+    flex-shrink: 0;
+}
+
+.logo {
+    margin: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.logo:hover {
+    opacity: 0.8;
+}
+
+.logo-img {
+    height: 45px;
+    max-height: 45px;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.icon-btn:hover {
+    color: var(--color-text-primary);
+}
+
+.icon-btn svg {
+    display: block;
+    stroke-width: 2;
+}
+
+/* 메뉴 팝업 */
+.menu-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.menu-popup.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.menu-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--color-overlay);
+}
+
+.menu-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80%;
+    max-width: 300px;
+    height: 100%;
+    background: white;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-popup.active .menu-content {
+    transform: translateX(0);
+}
+
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.menu-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+}
+
+.close-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #666;
+}
+
+.menu-user-info {
+    padding: 20px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.menu-user-info p {
+    font-size: 14px;
+    color: #666;
+    margin: 4px 0;
+}
+
+.menu-user-info strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.menu-items {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 15px;
+    color: #333;
+}
+
+.menu-item:hover {
+    background: #f5f5f5;
+}
+
+.menu-item svg {
+    stroke-width: 2;
+}
+
+/* 상단 컨트롤 영역 */
+.top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    flex-shrink: 0;
+}
+
+/* 연도 선택 */
+.year-selector {
+    display: flex;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+    padding: 0 20px;
+}
+
+.year-text {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.year-btn-text {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #667eea;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.year-btn-text:hover {
+    opacity: 0.7;
+}
+
+.year-btn-text::after {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #667eea;
+    margin-left: 4px;
+    transition: transform 0.3s;
+}
+
+.year-btn-text.active::after {
+    transform: rotate(180deg);
+}
+
+.year-suffix {
+    color: #333;
+    margin-left: 2px;
+}
+
+.year-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.year-btn:hover {
+    opacity: 0.7;
+}
+
+.year-btn svg {
+    stroke-width: 2;
+    transition: transform 0.3s;
+}
+
+.year-btn.active svg {
+    transform: rotate(180deg);
+}
+
+/* 연도 드롭다운 */
+.year-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 120px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.year-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.year-dropdown-item {
+    padding: 12px 24px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+}
+
+.year-dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.year-dropdown-item.selected {
+    color: #67d5f5;
+    font-weight: 600;
+}
+
+.year-dropdown-item:first-child {
+    border-radius: 12px 12px 0 0;
+}
+
+.year-dropdown-item:last-child {
+    border-radius: 0 0 12px 12px;
+}
+
+/* 뷰 모드 토글 */
+.view-toggle {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background-color: #f5f5f5;
+    border-radius: 12px;
+    width: fit-content;
+    flex-shrink: 0;
+}
+
+.view-btn {
+    background: none;
+    border: none;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #999;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.view-btn:hover {
+    color: #666;
+}
+
+.view-btn.active {
+    background-color: #fff;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 월별 카드 컨테이너 */
+.month-cards-container {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    cursor: grab;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    align-items: center;
+}
+
+/* Day 뷰 스타일 */
+.month-cards-container.day-list-view {
+    display: block !important;
+    padding: 20px;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scroll-snap-type: none;
+    cursor: default;
+    /* flex 속성 제거 - block으로 변경했으므로 */
+    min-height: 0;
+    height: auto;
+}
+
+/* Day 뷰에서 gap을 margin으로 처리 */
+.month-cards-container.day-list-view > * {
+    margin-bottom: 16px;
+}
+
+.month-cards-container.day-list-view > *:last-child {
+    margin-bottom: 0;
+}
+
+.month-cards-container:active {
+    cursor: grabbing;
+}
+
+.month-cards-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* 월별 카드 - 기본 (파란색) */
+.month-card {
+    flex: 0 0 calc(100% - 64px);
+    height: 100%;
+    max-height: 420px;
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    scroll-snap-align: center;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 20px rgba(79, 195, 240, 0.3);
+    user-select: none;
+    overflow: hidden;
+}
+
+.month-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    z-index: 1;
+    transition: opacity 0.3s;
+}
+
+.month-card.has-image::before {
+    opacity: 0.4;
+}
+
+.month-card-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 이미지가 있을 때 좌측 상단에 작게 표시 */
+.month-card-content.with-image {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.month-info {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.month-card-content.with-image .month-info {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.month-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(79, 195, 240, 0.4);
+}
+
+/* 드래그 중일 때 */
+.month-cards-container.dragging .month-card {
+    transition: none;
+}
+
+.month-cards-container.dragging .month-card:hover {
+    transform: none;
+}
+
+/* 월 카드 개수 표시 */
+.month-count {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.month-card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: white;
+}
+
+.month-number {
+    font-size: 120px;
+    font-weight: 300;
+    line-height: 1;
+    color: white;
+    opacity: 0.95;
+}
+
+.month-name {
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: white;
+    opacity: 0.95;
+}
+
+.month-count {
+    font-size: 14px;
+    color: white;
+    opacity: 0.8;
+}
+
+/* 이미지 있을 때 작게 */
+.month-card-content.with-image .month-number {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    opacity: 1;
+}
+
+.month-card-content.with-image .month-name {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #666;
+    opacity: 1;
+}
+
+.month-card-content.with-image .month-count {
+    font-size: 12px;
+    color: #999;
+    opacity: 1;
+}
+
+/* 월별 카드 - 사진 포함 */
+.month-card.with-photo {
+    background: none;
+    padding: 0;
+    overflow: hidden;
+}
+
+.card-photo {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-photo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%);
+}
+
+.month-info {
+    position: relative;
+    z-index: 1;
+    color: white;
+    text-align: center;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.month-info .month-number {
+    font-size: 100px;
+}
+
+.month-info .month-name {
+    font-size: 32px;
+}
+
+/* 오늘 날씨 섹션 */
+.bottom-section {
+    width: calc(100% - 40px);
+    margin: 0 20px 12px;
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    border-radius: 16px;
+    padding: 16px 20px;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* 날씨별 배경 색상 */
+.bottom-section.weather-sunny {
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.15);
+}
+
+.bottom-section.weather-cloudy {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
+}
+
+.bottom-section.weather-rainy {
+    background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 100%);
+    box-shadow: 0 8px 24px rgba(3, 169, 244, 0.15);
+}
+
+.bottom-section.weather-snowy {
+    background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+    box-shadow: 0 8px 24px rgba(156, 39, 176, 0.15);
+}
+
+.bottom-section.weather-lightning {
+    background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
+    box-shadow: 0 8px 24px rgba(255, 193, 7, 0.15);
+}
+
+.bottom-section::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -15%;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.bottom-section::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    left: -10%;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.weather-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.weather-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.2px;
+    margin: 0;
+}
+
+.date-weather-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex: 1;
+}
+
+.date-info-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.weather-title-date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.today-date {
+    font-size: 13px;
+    font-weight: 500;
+    color: #4a5568;
+    letter-spacing: 0.3px;
+}
+
+.weather-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+}
+
+.weather-icon {
+    color: #1a1a1a;
+    stroke-width: 2;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.weather-temp {
+    font-size: 18px;
+    color: #1a1a1a;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.weather-temp span {
+    display: inline-block;
+}
+
+.weather-temp .temp-low,
+.weather-temp span.temp-low {
+    color: #4a90e2 !important;
+    font-weight: 600;
+}
+
+.weather-temp .temp-high,
+.weather-temp span.temp-high {
+    color: #ff6b6b !important;
+    font-weight: 700;
+}
+
+.temp-range-inline {
+    font-size: 14px;
+    color: #1a1a1a;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+
+.temp-range-inline .temp-low {
+    color: #4a90e2;
+}
+
+.temp-range-inline .temp-high {
+    color: var(--color-favorite);
+    font-weight: 600;
+}
+
+/* 액션 버튼 제거됨 */
+
+.round-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.round-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.round-btn:active {
+    transform: translateY(0);
+}
+
+.favorite-btn {
+    background-color: #333;
+}
+
+.write-btn {
+    background-color: #333;
+}
+
+.calendar-btn {
+    background-color: #333;
+}
+
+.calendar-btn.active {
+    background-color: var(--color-accent);
+}
+
+/* 반응형 */
+@media (max-width: 428px) {
+    .container {
+        max-width: 100%;
+        padding-bottom: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--spacing-sm));
+    }
+    
+    .bottom-section {
+        width: calc(100% - 32px);
+        margin: 0 16px 12px;
+        padding: 14px 18px;
+        border-radius: 14px;
+    }
+    
+    .weather-title {
+        font-size: 14px;
+    }
+    
+    .weather-temp {
+        font-size: 16px;
+    }
+    
+    .weather-icon {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .weather-display {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+    
+    .weather-section {
+        gap: 12px;
+    }
+    
+    .weather-title-date-group {
+        gap: 3px;
+    }
+    
+    .today-date {
+        font-size: 12px;
+    }
+    
+    .logo-img {
+        height: 40px;
+        max-height: 40px;
+        max-width: none;
+    }
+    
+    .weather-display {
+        padding: 10px 14px;
+        border-radius: 14px;
+    }
+    
+    .month-cards-container {
+        padding: 12px 16px;
+        gap: 12px;
+    }
+    
+    .month-card {
+        flex: 0 0 calc(100% - 40px);
+        height: 100%;
+        max-height: 420px;
+        min-height: 300px;
+    }
+    
+    .month-number {
+        font-size: 100px;
+    }
+    
+    .month-name {
+        font-size: 32px;
+    }
+}
+

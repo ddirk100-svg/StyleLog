@@ -1,0 +1,340 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* Day 뷰 월 레이블 (index.html Day 뷰용) - 카드 위에 표시 */
+.month-label-day-view {
+    position: sticky;
+    /* header 높이만큼 아래에 sticky - header가 sticky일 때도 작동하도록 */
+    /* header padding (상하) + logo 높이 = 16px * 2 + 45px = 77px */
+    top: 77px;
+    padding: 0 var(--spacing-xl) var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+    margin-top: 0;
+    margin-bottom: 0;
+    z-index: 7;
+    width: 100%;
+    /* sticky가 작동하도록 보장 - header와 동일한 방식 */
+    display: block;
+}
+
+/* 모바일에서 header 높이에 맞춰 조정 */
+@media (max-width: 428px) {
+    .month-label-day-view {
+        /* 모바일 header 높이: padding (16px * 2) + logo (40px) = 72px */
+        top: 72px;
+    }
+}
+
+/* 공통 스타일 상속 */
+@import url('home.css');
+
+/* month-detail용 container 오버라이드 */
+#monthDetailView.container,
+#favoriteView.container {
+    overflow: visible;
+    max-width: var(--container-max-width);
+    width: 100%;
+    margin: 0 auto;
+    height: 100vh;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+}
+
+#monthDetailView.container .day-list {
+    overflow-y: auto;
+}
+
+/* 상세 헤더 */
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    background-color: #fff;
+    z-index: 100;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.back-btn:hover {
+    color: #333;
+}
+
+.back-btn svg {
+    display: block;
+    stroke-width: 2;
+}
+
+.month-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    letter-spacing: 1px;
+}
+
+/* 일별 리스트 */
+.day-list {
+    padding: 20px;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md) + 20px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 트렌디한 얇은 스크롤바 스타일 */
+.day-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.day-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.day-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    transition: background 0.2s ease;
+}
+
+.day-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+/* Firefox용 스크롤바 */
+.day-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* 일별 아이템 */
+.day-item {
+    display: flex;
+    gap: 16px;
+    background-color: #fafafa;
+    border-radius: 16px;
+    padding: 16px;
+    transition: background-color 0.2s;
+}
+
+.day-item:hover {
+    background-color: #f5f5f5;
+}
+
+/* 왼쪽: 날짜 & 날씨 */
+.day-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 60px;
+}
+
+.day-date {
+    text-align: center;
+}
+
+.day-number {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
+.day-week {
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.day-left .weather-icon {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+}
+
+/* 오른쪽: 콘텐츠 */
+.day-content {
+    flex: 1;
+    position: relative;
+}
+
+/* 사진 콘텐츠 */
+.day-content.photo {
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 200px;
+    background-color: #e0e0e0;
+}
+
+.day-content.photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 텍스트(메모) 콘텐츠 */
+.day-content.text {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    background-color: #fff;
+    border-radius: 12px;
+    position: relative;
+}
+
+.quote-mark {
+    font-size: 48px;
+    color: #e0e0e0;
+    line-height: 0.5;
+    font-family: Georgia, serif;
+}
+
+.quote-mark:first-child {
+    align-self: flex-start;
+    margin-bottom: 8px;
+}
+
+.quote-mark:last-of-type {
+    align-self: flex-end;
+    margin-top: 8px;
+}
+
+.memo-text {
+    flex: 1;
+    padding: 8px 0;
+}
+
+.memo-text h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.memo-text p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* 아이템 메뉴 버튼 (점 3개) */
+.item-menu-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.item-menu-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+}
+
+.item-menu-btn svg {
+    stroke-width: 2;
+    color: #333;
+}
+
+.day-content.text .item-menu-btn {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.day-content.text .item-menu-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* 즐겨찾기 토글 버튼 */
+.favorite-toggle-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+}
+
+.favorite-toggle-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.favorite-toggle-btn.active {
+    background: rgba(255, 107, 107, 0.15);
+    border: none;
+}
+
+.day-content.text .favorite-toggle-btn {
+    background: rgba(255, 107, 107, 0.1);
+    border: none;
+}
+
+/* 반응형 */
+@media (max-width: 428px) {
+    #monthDetailView.container,
+    #favoriteView.container {
+        max-width: 100%;
+        padding-bottom: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--spacing-sm));
+    }
+    
+    .day-list {
+        padding-bottom: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--spacing-sm) + 20px);
+    }
+    
+    .day-number {
+        font-size: 32px;
+    }
+    
+    .day-left {
+        min-width: 50px;
+    }
+    
+    .day-content.photo {
+        min-height: 180px;
+    }
+}
+
+

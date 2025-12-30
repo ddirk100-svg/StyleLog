@@ -1,0 +1,165 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* 하단 네비게이션 바 */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    box-sizing: border-box;
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-light);
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    gap: 0;
+    padding-top: 6px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+    padding-left: var(--spacing-xs);
+    padding-right: var(--spacing-xs);
+    z-index: var(--z-index-modal);
+    box-shadow: 0 -2px 10px var(--color-shadow-sm);
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    padding: 6px var(--spacing-xs);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+    position: relative;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.bottom-nav-item:active {
+    opacity: 0.6;
+}
+
+.bottom-nav-icon {
+    width: var(--bottom-nav-icon-size);
+    height: var(--bottom-nav-icon-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+
+.bottom-nav-icon svg {
+    width: var(--bottom-nav-icon-svg-size);
+    height: var(--bottom-nav-icon-svg-size);
+    stroke: currentColor;
+    stroke-width: var(--icon-stroke-width);
+    fill: none;
+}
+
+.bottom-nav-item.active .bottom-nav-icon svg {
+    stroke-width: var(--icon-stroke-width-active);
+}
+
+.bottom-nav-item.active {
+    color: var(--color-primary);
+}
+
+.bottom-nav-label {
+    font-size: var(--bottom-nav-label-size);
+    font-weight: var(--font-weight-medium);
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+}
+
+/* 작성 버튼 - 눈에 띄게 스타일링 */
+.bottom-nav-item.write-btn {
+    color: var(--color-text-primary);
+    background: none;
+}
+
+.bottom-nav-item.write-btn .bottom-nav-icon {
+    color: inherit;
+    background: none;
+    border: 2px solid var(--color-text-primary);
+    border-radius: var(--radius-sm);
+    width: calc(var(--bottom-nav-icon-size) + 4px);
+    height: calc(var(--bottom-nav-icon-size) + 4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.bottom-nav-item.write-btn .bottom-nav-icon svg {
+    stroke: currentColor;
+    color: inherit;
+}
+
+.bottom-nav-item.write-btn.active {
+    color: var(--color-primary);
+}
+
+.bottom-nav-item.write-btn.active .bottom-nav-icon {
+    border-color: var(--color-primary);
+}
+
+/* 페이지 컨텐츠에 하단 여백 추가 */
+body.has-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+}
+
+/* 반응형 */
+@media (max-width: 428px) {
+    .bottom-nav {
+        left: 0;
+        right: 0;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        height: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--spacing-sm));
+        padding-top: 5px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-sm));
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+    
+    .bottom-nav-item {
+        padding: 5px 2px;
+        gap: 2px;
+    }
+    
+    .bottom-nav-icon {
+        width: var(--bottom-nav-icon-size-mobile);
+        height: var(--bottom-nav-icon-size-mobile);
+    }
+    
+    .bottom-nav-item.write-btn .bottom-nav-icon {
+        width: calc(var(--bottom-nav-icon-size-mobile) + 4px);
+        height: calc(var(--bottom-nav-icon-size-mobile) + 4px);
+    }
+    
+    .bottom-nav-icon svg {
+        width: var(--bottom-nav-icon-svg-size-mobile);
+        height: var(--bottom-nav-icon-svg-size-mobile);
+    }
+    
+    .bottom-nav-label {
+        font-size: var(--bottom-nav-label-size-mobile);
+    }
+    
+    body.has-bottom-nav {
+        padding-bottom: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--spacing-sm));
+    }
+}

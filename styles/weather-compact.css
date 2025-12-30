@@ -1,0 +1,34 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* 날씨 정보 컴팩트 표시 */
+.weather-info-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.weather-info-compact svg {
+    color: var(--color-accent);
+}
+
+.temp-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.temp-high {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-temp-high);
+}
+
+.temp-low {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-temp-low-alt);
+}
+

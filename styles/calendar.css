@@ -1,0 +1,157 @@
+/* 디자인 토큰 import */
+@import url('variables.css');
+
+/* 공통 스타일 상속 */
+@import url('home.css');
+
+/* 캘린더 카드 */
+.calendar-card {
+    margin: var(--spacing-xl);
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-3xl) var(--spacing-2xl);
+    box-shadow: 0 4px 20px var(--color-shadow-sm);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 캘린더 헤더 */
+.calendar-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+}
+
+.current-month {
+    font-size: 80px;
+    font-weight: 300;
+    color: #333;
+    line-height: 1;
+}
+
+.calendar-header .month-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    letter-spacing: 2px;
+    margin-top: 4px;
+}
+
+/* 캘린더 그리드 */
+.calendar-grid {
+    margin-bottom: 20px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 요일 헤더 */
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.weekday {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    padding: 8px 0;
+}
+
+/* 날짜 그리드 */
+.dates {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.date-cell {
+    aspect-ratio: 1;
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333; /* 기본 검은색 */
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-cell:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+/* 일요일 */
+.date-cell.sunday {
+    color: #333; /* 기본 검은색 */
+}
+
+/* 토요일 */
+.date-cell.saturday {
+    color: #333; /* 기본 검은색 */
+}
+
+/* 기록이 있는 날 - 숫자 아래에 점만 표시 */
+.date-cell.has-entry::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-accent); /* 포인트 컬러 */
+}
+
+/* 선택된 날짜 */
+.date-cell:active,
+.date-cell.selected {
+    background-color: var(--color-text-primary);
+    color: var(--color-text-inverse);
+}
+
+/* 빈 셀 (첫 날 이전) */
+.date-cell.empty {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* 반응형 */
+@media (max-width: 428px) {
+    .calendar-card {
+        margin: 16px;
+        padding: 24px 16px;
+    }
+    
+    .current-month {
+        font-size: 64px;
+    }
+    
+    .calendar-header .month-name {
+        font-size: 20px;
+    }
+    
+    .date-cell {
+        font-size: 14px;
+    }
+    
+    .dates {
+        gap: 4px;
+    }
+}
+
+

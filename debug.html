@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLS 디버그</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .section {
+            background: #2d2d2d;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #4ec9b0;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .warning { color: #dcdcaa; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 StyleLog RLS 디버그</h1>
+    
+    <div class="section">
+        <h2>1. 현재 로그인 상태</h2>
+        <button onclick="checkAuth()">확인</button>
+        <pre id="authStatus">버튼을 클릭하세요</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. 모든 일기 목록 (RLS 적용됨)</h2>
+        <button onclick="checkLogs()">확인</button>
+        <pre id="logsStatus">버튼을 클릭하세요</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. 테스트 일기 작성</h2>
+        <button onclick="createTestLog()">테스트 일기 생성</button>
+        <pre id="createStatus">버튼을 클릭하세요</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. 문제 해결</h2>
+        <p class="warning">⚠️ 위의 결과를 확인한 후 문제가 있으면:</p>
+        <ul>
+            <li>로그인 상태가 NULL이면 → 다시 로그인하세요</li>
+            <li>일기에 user_id가 없으면 → simple_setup.sql을 다시 실행하세요</li>
+            <li>다른 사용자 일기가 보이면 → RLS가 작동하지 않는 것입니다</li>
+        </ul>
+        <button onclick="location.href='index.html'">홈으로 돌아가기</button>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="scripts/config.js"></script>
+    <script src="scripts/api.js"></script>
+
+    <script>
+        async function checkAuth() {
+            const output = document.getElementById('authStatus');
+            output.textContent = '확인 중...';
+            
+            try {
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
+                
+                if (error) throw error;
+                
+                if (user) {
+                    output.innerHTML = `
+<span class="success">✅ 로그인됨</span>
+
+이메일: ${user.email}
+사용자 ID: ${user.id}
+가입일: ${new Date(user.created_at).toLocaleString()}
+                    `.trim();
+                } else {
+                    output.innerHTML = `<span class="error">❌ 로그인 안됨</span>\n\n로그인이 필요합니다!`;
+                }
+            } catch (error) {
+                output.innerHTML = `<span class="error">❌ 오류</span>\n\n${error.message}`;
+            }
+        }
+
+        async function checkLogs() {
+            const output = document.getElementById('logsStatus');
+            output.textContent = '확인 중...';
+            
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                
+                const { data: logs, error } = await supabaseClient
+                    .from('style_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                if (!logs || logs.length === 0) {
+                    output.innerHTML = `<span class="warning">📭 일기가 없습니다</span>\n\n새로 작성해보세요!`;
+                    return;
+                }
+                
+                let result = `<span class="success">✅ ${logs.length}개의 일기 발견</span>\n\n`;
+                
+                logs.forEach((log, i) => {
+                    const isMine = log.user_id === user?.id;
+                    const icon = isMine ? '✅' : '❌';
+                    const status = log.user_id ? (isMine ? '내 일기' : '다른 사람 일기') : 'user_id 없음';
+                    
+                    result += `${i + 1}. [${icon}] ${log.date} - ${log.title || '제목없음'}\n`;
+                    result += `   user_id: ${log.user_id || 'NULL'} (${status})\n\n`;
+                });
+                
+                // 다른 사람 일기가 보이면 경고
+                const otherLogs = logs.filter(log => log.user_id && log.user_id !== user?.id);
+                if (otherLogs.length > 0) {
+                    result += `\n<span class="error">⚠️ 경고: 다른 사용자 일기 ${otherLogs.length}개가 보입니다!</span>\n`;
+                    result += `RLS가 제대로 작동하지 않고 있습니다.\n`;
+                    result += `simple_setup.sql을 다시 실행하세요.`;
+                }
+                
+                output.innerHTML = result;
+            } catch (error) {
+                output.innerHTML = `<span class="error">❌ 오류</span>\n\n${error.message}`;
+            }
+        }
+
+        async function createTestLog() {
+            const output = document.getElementById('createStatus');
+            output.textContent = '생성 중...';
+            
+            try {
+                const testLog = {
+                    date: new Date().toISOString().split('T')[0],
+                    title: '테스트 일기 - ' + new Date().toLocaleTimeString(),
+                    content: '이것은 RLS 테스트용 일기입니다.',
+                    weather: 'sunny',
+                    weather_temp: 20,
+                    weather_temp_min: 15,
+                    weather_temp_max: 25,
+                    tags: ['테스트'],
+                    photos: [],
+                    is_favorite: false
+                };
+                
+                const result = await StyleLogAPI.create(testLog);
+                
+                output.innerHTML = `
+<span class="success">✅ 생성 완료!</span>
+
+제목: ${result.title}
+날짜: ${result.date}
+user_id: ${result.user_id || 'NULL'}
+
+${result.user_id ? '✅ user_id가 자동으로 들어갔습니다!' : '❌ user_id가 없습니다. API 코드를 확인하세요.'}
+                `.trim();
+            } catch (error) {
+                output.innerHTML = `<span class="error">❌ 오류</span>\n\n${error.message}`;
+                console.error('상세 오류:', error);
+            }
+        }
+
+        // 페이지 로드 시 자동 확인
+        window.addEventListener('load', () => {
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
+
+
