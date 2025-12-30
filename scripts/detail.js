@@ -17,8 +17,34 @@ async function initPage() {
         // 날짜 표시 업데이트
         updateDateDisplay(dateParam);
         
-        // 실제 데이터 로드
-        currentLog = await StyleLogAPI.getByDate(dateParam);
+        // URL에 id 파라미터가 있으면 ID로 조회 시도
+        const idParam = urlParams.get('id');
+        if (idParam && idParam !== 'null' && idParam !== 'undefined') {
+            console.log('📋 ID로 로그 조회:', idParam);
+            try {
+                const { data, error } = await supabaseClient
+                    .from('style_logs')
+                    .select('*')
+                    .eq('id', idParam)
+                    .single();
+                
+                if (!error && data) {
+                    currentLog = data;
+                    console.log('✅ ID로 로그 조회 성공:', currentLog);
+                } else {
+                    // ID로 찾지 못하면 날짜로 조회
+                    console.log('⚠️ ID로 찾지 못함, 날짜로 조회 시도');
+                    currentLog = await StyleLogAPI.getByDate(dateParam);
+                }
+            } catch (error) {
+                console.error('❌ ID 조회 오류:', error);
+                // 오류 시 날짜로 조회
+                currentLog = await StyleLogAPI.getByDate(dateParam);
+            }
+        } else {
+            // 날짜로 조회
+            currentLog = await StyleLogAPI.getByDate(dateParam);
+        }
         
         if (!currentLog) {
             // 데이터 없으면 작성 화면으로

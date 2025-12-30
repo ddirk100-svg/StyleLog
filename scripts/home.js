@@ -594,6 +594,11 @@ function createDayItemForHome(log) {
     }
     
     // innerHTML 후에 dataset과 버튼 속성 설정
+    if (!log.id) {
+        console.error('❌ 로그 ID가 없습니다:', log);
+        return dayItem;
+    }
+    
     dayItem.dataset.logId = log.id;
     dayItem.dataset.date = log.date;
     
@@ -602,6 +607,9 @@ function createDayItemForHome(log) {
     if (menuBtn) {
         menuBtn.setAttribute('data-log-id', log.id);
         menuBtn.setAttribute('data-date', log.date);
+        console.log('✅ 메뉴 버튼 속성 설정:', { id: log.id, date: log.date });
+    } else {
+        console.error('❌ 메뉴 버튼을 찾을 수 없습니다');
     }
     
     // 즐겨찾기 버튼 찾아서 data 속성 설정
@@ -666,15 +674,35 @@ function attachDayListEventListeners() {
         });
     });
     
-    // 메뉴 버튼 클릭
+    // 메뉴 버튼 클릭 - 이벤트 위임 방식으로 변경
     document.querySelectorAll('.item-menu-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        // 기존 이벤트 리스너 제거 (중복 방지)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        newBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const logId = btn.getAttribute('data-log-id');
-            const date = btn.getAttribute('data-date');
+            
+            // 버튼에서 직접 읽기
+            let logId = newBtn.getAttribute('data-log-id');
+            let date = newBtn.getAttribute('data-date');
+            
+            console.log('🔍 메뉴 버튼 클릭:', { logId, date, button: newBtn });
+            
+            // 만약 버튼에 없으면 부모 day-item에서 읽기
+            if (!logId || logId === 'null' || logId === 'undefined') {
+                const dayItem = newBtn.closest('.day-item');
+                if (dayItem) {
+                    logId = dayItem.getAttribute('data-log-id') || dayItem.dataset.logId;
+                    date = dayItem.getAttribute('data-date') || dayItem.dataset.date;
+                }
+                
+                console.log('🔍 부모에서 읽기:', { logId, date });
+            }
             
             if (!logId || logId === 'null' || logId === 'undefined') {
                 console.error('❌ 유효하지 않은 로그 ID:', logId);
+                alert('로그 정보를 찾을 수 없습니다.');
                 return;
             }
             

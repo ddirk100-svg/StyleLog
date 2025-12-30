@@ -399,8 +399,16 @@ async function handleSubmit() {
             alert('저장되었습니다!');
         }
         
-        // 상세 페이지로 이동
-        window.location.href = `detail.html?date=${dateInput.value}`;
+        // 상세 페이지로 이동 (약간의 지연을 주어 DB 반영 시간 확보)
+        setTimeout(() => {
+            if (result && result.id) {
+                // 저장된 로그의 ID를 사용하여 상세 페이지로 이동
+                window.location.href = `detail.html?date=${dateInput.value}&id=${result.id}`;
+            } else {
+                // ID가 없으면 날짜만 사용
+                window.location.href = `detail.html?date=${dateInput.value}`;
+            }
+        }, 500);
         
     } catch (error) {
         console.error('❌ 저장 오류:', error);

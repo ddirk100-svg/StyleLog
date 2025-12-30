@@ -172,6 +172,11 @@ function createDayItem(log) {
     }
     
     // innerHTML 후에 dataset과 버튼 속성 설정 (중요!)
+    if (!log.id) {
+        console.error('❌ 로그 ID가 없습니다:', log);
+        return dayItem;
+    }
+    
     dayItem.dataset.logId = log.id;
     dayItem.dataset.date = log.date;
     
