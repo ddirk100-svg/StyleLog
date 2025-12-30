@@ -24,7 +24,7 @@ git add .
 git commit -m "Initial commit: StyleLog MVP"
 
 # GitHub 저장소 연결 (YOUR_USERNAME을 본인의 GitHub 사용자명으로 변경)
-git remote add origin "https://github.com/ddirk100-svg/stylelog.git"
+git remote add origin "https://github.com/ddirk100-svg/StyleLog.git"
 
 # 메인 브랜치로 이름 변경 (필요시)
 git branch -M main
@@ -69,12 +69,40 @@ git push -u origin main
 3. ✅ 프로덕션 Supabase 데이터베이스 연결 확인
 4. ✅ 모든 페이지 정상 작동 확인
 
-### 커스텀 도메인 설정 (선택사항)
+### URL 단순화하기
+
+현재 URL이 `style-ke89ghjqg-jongiks-projects.vercel.app`처럼 복잡합니다. 더 예쁜 URL로 변경하는 방법:
+
+#### 방법 1: 프로젝트 이름 변경 (가장 간단)
+1. Vercel 대시보드 → 프로젝트 선택
+2. "Settings" → "General"
+3. "Project Name"을 `stylelog`로 변경
+4. 변경 후 URL: `stylelog.vercel.app` 또는 `stylelog-[브랜치명]-[사용자명].vercel.app`
+
+#### 방법 2: 커스텀 도메인 설정 (가장 예쁨)
 1. Vercel 대시보드 → 프로젝트 선택
 2. "Settings" → "Domains"
-3. 원하는 도메인 입력 및 DNS 설정
+3. 원하는 도메인 입력 (예: `stylelog.com`, `mystylelog.com`)
+4. DNS 설정 안내에 따라 도메인 제공업체에서 설정
+5. 완료 후: `https://stylelog.com`으로 접속 가능
 
 ## 문제 해결
+
+### 데이터베이스 컬럼 오류 (`weather_temp_max` 컬럼을 찾을 수 없음)
+**증상**: 일기 저장 시 "Could not find the 'weather_temp_max' column" 오류 발생
+
+**해결 방법**:
+1. Supabase 대시보드 → 프로덕션 프로젝트 선택
+2. SQL Editor 열기
+3. `database/add_temp_columns.sql` 파일의 SQL 실행:
+   ```sql
+   ALTER TABLE style_logs 
+   ADD COLUMN IF NOT EXISTS weather_temp_min NUMERIC(5,2);
+   
+   ALTER TABLE style_logs 
+   ADD COLUMN IF NOT EXISTS weather_temp_max NUMERIC(5,2);
+   ```
+4. 자세한 가이드는 `database/PRODUCTION_MIGRATION.md` 참고
 
 ### 배포 후 Supabase 연결 오류
 - `config.js`의 프로덕션 설정이 올바른지 확인
