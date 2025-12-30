@@ -155,31 +155,51 @@ function showItemMenu(logId, date, onEdit, onDelete) {
     newCancelBtn.onclick = closeItemMenu;
     
     newEditBtn.onclick = () => {
+        // closeItemMenu()를 먼저 호출하면 currentSelectedLog가 초기화되므로
+        // 값을 먼저 저장
+        const logId = currentSelectedLog.id;
+        const logDate = currentSelectedLog.date;
+        
+        console.log('✏️ 수정 버튼 클릭:', { id: logId, date: logDate });
+        
         closeItemMenu();
-        console.log('✏️ 수정 버튼 클릭:', { id: currentSelectedLog.id, date: currentSelectedLog.date });
+        
+        if (!logId || logId === 'null' || logId === 'undefined') {
+            console.error('❌ 유효하지 않은 로그 ID:', logId);
+            alert('로그 정보를 찾을 수 없습니다.');
+            return;
+        }
         
         if (onEdit) {
-            onEdit(currentSelectedLog.id, currentSelectedLog.date);
+            onEdit(logId, logDate);
         } else {
             // 기본 동작: write.html로 이동
-            if (currentSelectedLog.id && currentSelectedLog.id !== 'null' && currentSelectedLog.id !== 'undefined') {
-                window.location.href = `write.html?id=${currentSelectedLog.id}&date=${currentSelectedLog.date}`;
-            } else {
-                console.error('❌ 유효하지 않은 로그 ID:', currentSelectedLog.id);
-                alert('로그 정보를 찾을 수 없습니다.');
-            }
+            window.location.href = `write.html?id=${logId}&date=${logDate}`;
         }
     };
     
     newDeleteBtn.onclick = () => {
+        // closeItemMenu()를 먼저 호출하면 currentSelectedLog가 초기화되므로
+        // 값을 먼저 저장
+        const logId = currentSelectedLog.id;
+        
+        console.log('🗑️ 삭제 버튼 클릭:', { id: logId });
+        
         closeItemMenu();
+        
+        if (!logId || logId === 'null' || logId === 'undefined') {
+            console.error('❌ 유효하지 않은 로그 ID:', logId);
+            alert('로그 정보를 찾을 수 없습니다.');
+            return;
+        }
+        
         if (onDelete) {
-            onDelete(currentSelectedLog.id);
+            onDelete(logId);
         } else {
             // 기본 동작: 확인 후 삭제
             if (confirm('정말 이 기록을 삭제하시겠습니까?')) {
                 if (typeof StyleLogAPI !== 'undefined' && StyleLogAPI.delete) {
-                    StyleLogAPI.delete(currentSelectedLog.id)
+                    StyleLogAPI.delete(logId)
                         .then(() => {
                             location.reload();
                         })
