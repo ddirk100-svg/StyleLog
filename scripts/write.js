@@ -13,15 +13,27 @@ let currentLog = null; // 수정할 로그 데이터
 
 // 페이지 초기화
 async function initPage() {
-    console.log('📝 write.html 초기화:', { editLogId, initialDate });
+    console.log('📝 write.html 초기화:', { 
+        editLogId, 
+        initialDate,
+        urlParams: window.location.search,
+        allParams: Object.fromEntries(urlParams.entries())
+    });
     
     // 수정 모드 확인 (id가 null, 빈 문자열, 'null' 문자열이 아닌 경우만)
     if (editLogId && editLogId !== 'null' && editLogId !== 'undefined' && editLogId.trim() !== '') {
         console.log('✏️ 수정 모드로 진입:', editLogId);
         isEditMode = true;
-        await loadLogForEdit(editLogId);
+        try {
+            await loadLogForEdit(editLogId);
+        } catch (error) {
+            console.error('❌ 로그 로드 실패:', error);
+            alert('일기를 불러오는데 실패했습니다. 새로 작성하시겠습니까?');
+            isEditMode = false;
+            await initNewLog();
+        }
     } else {
-        console.log('📝 새 로그 작성 모드');
+        console.log('📝 새 로그 작성 모드 (editLogId가 없거나 유효하지 않음)');
         // 새 로그 작성 모드
         await initNewLog();
     }
