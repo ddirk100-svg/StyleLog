@@ -1,19 +1,18 @@
 @echo off
-chcp 65001
+chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 echo.
 echo ============================================
-echo   Alpha 서버 배포 (테스트용)
+echo   Alpha server deploy (Test)
 echo ============================================
 echo.
 git add .
-git commit -m "update: 변경사항 Alpha 서버 배포"
+git commit -m "update: Alpha server deployment"
 git push origin alpha
 echo.
 echo ============================================
-echo   배포 완료!
-echo   URL: https://alpha.stylelog.vercel.app
+echo   Deploy complete!
+echo   URL: https://stylelog-git-alpha-jongiks-projects.vercel.app
 echo ============================================
 echo.
 pause
-

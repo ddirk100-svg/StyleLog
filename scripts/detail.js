@@ -629,12 +629,7 @@ document.addEventListener('keydown', (e) => {
     // Backspace: 뒤로가기
     if (e.key === 'Backspace' && !e.target.matches('input, textarea')) {
         e.preventDefault();
-        const referrer = urlParams.get('referrer');
-        if (referrer === 'calendar') {
-            window.location.href = 'calendar.html';
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
 });
 

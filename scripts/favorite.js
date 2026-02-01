@@ -260,8 +260,12 @@ function attachEventListeners() {
                 e.target.closest('.favorite-toggle-btn')) {
                 return;
             }
-            const date = item.dataset.date;
-            window.location.href = `detail.html?date=${date}`;
+            const logId = item.dataset.logId;
+            if (logId) {
+                window.location.href = `detail.html?id=${logId}`;
+            } else {
+                console.error('❌ 로그 ID가 없습니다');
+            }
         });
     });
     
