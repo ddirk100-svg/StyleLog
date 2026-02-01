@@ -723,8 +723,13 @@ function attachDayListEventListeners() {
                 e.target.closest('.favorite-toggle-btn')) {
                 return;
             }
+            const logId = item.dataset.logId;
             const date = item.dataset.date;
-            window.location.href = `detail.html?date=${date}`;
+            if (logId) {
+                window.location.href = `detail.html?id=${logId}`;
+            } else {
+                console.error('❌ 로그 ID가 없습니다');
+            }
         });
     });
     
