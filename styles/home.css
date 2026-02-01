@@ -22,6 +22,8 @@ body:has(.container.day-view-active) {
     height: auto;
     /* body가 스크롤 컨테이너가 되도록 */
     position: relative;
+    /* 최소 높이를 뷰포트보다 크게 설정하여 항상 스크롤 가능하도록 */
+    min-height: calc(100vh + 1px);
 }
 
 .container {
@@ -39,6 +41,10 @@ body:has(.container.day-view-active) {
 /* Day 뷰일 때는 container의 overflow를 완전히 제거하여 body가 스크롤 컨테이너가 되도록 */
 .container.day-view-active {
     overflow: visible !important;
+    /* 최소 높이를 더 크게 설정하여 sticky가 항상 작동하도록 */
+    min-height: calc(100vh + 200px);
+    /* Day 뷰일 때는 하단 패딩 제거 */
+    padding-bottom: 0;
 }
 
 /* Month 뷰일 때는 고정 높이 */

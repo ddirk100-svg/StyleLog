@@ -4,34 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 즐겨찾기</title>
+    <!-- 스타일시트 -->
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/bottom-nav.css">
+    <link rel="stylesheet" href="styles/home.css">
     <link rel="stylesheet" href="styles/month-detail.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
-    <link rel="stylesheet" href="styles/bottom-nav.css">
     <!-- Supabase 클라이언트 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 설정 및 API -->
+    <!-- 공통 스크립트 -->
     <script src="scripts/config.js"></script>
     <script src="scripts/api.js"></script>
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/components.js"></script>
 </head>
 <body class="has-bottom-nav">
     <!-- 즐겨찾기 목록 -->
-    <div class="container" id="favoriteView">
+    <main class="container" id="favoriteView">
         <!-- 헤더 -->
-        <header class="detail-header">
-            <button class="back-btn">
+        <header class="header">
+            <button class="icon-btn back-btn" style="margin-right: auto;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M19 12H5M12 19l-7-7 7-7"></path>
                 </svg>
             </button>
-            <h1 class="month-title">즐겨찾기</h1>
+            <h1 class="header-title" style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 600;">즐겨찾기</h1>
         </header>
 
         <!-- 즐겨찾기 기록 리스트 -->
-        <div class="day-list">
+        <section class="month-cards-container">
             <!-- JavaScript로 동적 생성됩니다 -->
-        </div>
-    </div>
+        </section>
+    </main>
 
     <!-- 메뉴 팝업 (바텀시트) -->
     <div class="menu-popup" id="itemMenuPopup">
@@ -67,17 +75,6 @@
             </div>
             <span class="bottom-nav-label">홈</span>
         </a>
-        <a href="calendar.html" class="bottom-nav-item">
-            <div class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-            </div>
-            <span class="bottom-nav-label">캘린더</span>
-        </a>
         <a href="write.html" class="bottom-nav-item write-btn">
             <div class="bottom-nav-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -97,8 +94,7 @@
         </a>
     </nav>
 
-    <script src="scripts/auth.js"></script>
-    <script src="scripts/common.js"></script>
+    <!-- 페이지 스크립트 -->
     <script src="scripts/favorite.js"></script>
     <script>
         // 페이지 로드 시 인증 체크 후 초기화
@@ -116,4 +112,3 @@
     </script>
 </body>
 </html>
-

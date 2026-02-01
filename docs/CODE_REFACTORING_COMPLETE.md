@@ -138,3 +138,4 @@ const newState = await toggleFavorite(logId, currentState, buttonElement);
 
 
 
+

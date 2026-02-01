@@ -412,13 +412,14 @@ async function handleSubmit() {
         }
         
         // 상세 페이지로 이동 (약간의 지연을 주어 DB 반영 시간 확보)
+        // replace를 사용하여 히스토리에서 write.html을 대체 (뒤로가기 시 홈으로 이동)
         setTimeout(() => {
             if (result && result.id) {
                 // 저장된 로그의 ID를 사용하여 상세 페이지로 이동
-                window.location.href = `detail.html?date=${dateInput.value}&id=${result.id}`;
+                window.location.replace(`detail.html?date=${dateInput.value}&id=${result.id}`);
             } else {
                 // ID가 없으면 날짜만 사용
-                window.location.href = `detail.html?date=${dateInput.value}`;
+                window.location.replace(`detail.html?date=${dateInput.value}`);
             }
         }, 500);
         

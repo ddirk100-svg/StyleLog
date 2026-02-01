@@ -2,6 +2,18 @@
 
 // 페이지 초기화
 async function initPage() {
+    // Day 뷰일 때 container에 클래스 추가 (index.html과 동일하게)
+    const container = document.getElementById('favoriteView');
+    if (container) {
+        container.classList.add('day-view-active');
+    }
+    
+    // month-cards-container에 day-list-view 클래스 추가
+    const monthCardsContainer = document.querySelector('.month-cards-container');
+    if (monthCardsContainer) {
+        monthCardsContainer.classList.add('day-list-view');
+    }
+    
     // 헤더 타이틀 설정
     const monthTitle = document.querySelector('.month-title');
     if (monthTitle) {
@@ -33,7 +45,7 @@ async function loadFavoriteData() {
         console.log('📊 데이터 개수:', logs ? logs.length : 0);
         
         // 기존 리스트 비우기
-        const dayList = document.querySelector('.day-list');
+        const dayList = document.querySelector('.month-cards-container');
         dayList.innerHTML = '';
         
         if (!logs || logs.length === 0) {
@@ -80,8 +92,35 @@ async function loadFavoriteData() {
         // 모든 업데이트가 완료될 때까지 대기
         await Promise.all(updatePromises);
         
+        // 이전 연도와 월을 추적하여 연도/월이 바뀔 때 레이블 표시
+        let previousYear = null;
+        let previousMonth = null;
+        
         // 날짜별로 렌더링
         logs.forEach(log => {
+            const date = new Date(log.date);
+            const currentYear = date.getFullYear();
+            const currentMonth = date.getMonth() + 1;
+            
+            // 연도가 바뀌면 연도 레이블 표시
+            if (previousYear !== currentYear) {
+                const yearLabel = document.createElement('div');
+                yearLabel.className = 'year-label-day-view';
+                yearLabel.textContent = `${currentYear}년`;
+                dayList.appendChild(yearLabel);
+                previousYear = currentYear;
+                previousMonth = null; // 연도가 바뀌면 월도 리셋
+            }
+            
+            // 월이 바뀌면 월 텍스트 표시
+            if (previousMonth !== currentMonth) {
+                const monthLabel = document.createElement('div');
+                monthLabel.className = 'month-label-day-view';
+                monthLabel.textContent = `${currentMonth}월`;
+                dayList.appendChild(monthLabel);
+                previousMonth = currentMonth;
+            }
+            
             const dayItem = createDayItem(log);
             dayList.appendChild(dayItem);
         });
@@ -125,6 +164,11 @@ function createDayItem(log) {
             </div>
             <div class="day-content photo">
                 <img src="${log.photos[0]}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
+                <button class="favorite-toggle-btn active" title="즐겨찾기 해제">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
                 <button class="item-menu-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="5" r="1.5"></circle>
@@ -160,6 +204,11 @@ function createDayItem(log) {
                     <p>${contentPreview}</p>
                 </div>
                 <div class="quote-mark">"</div>
+                <button class="favorite-toggle-btn active" title="즐겨찾기 해제">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
                 <button class="item-menu-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="5" r="1.5"></circle>
@@ -190,6 +239,13 @@ function createDayItem(log) {
         console.error('❌ 메뉴 버튼을 찾을 수 없음');
     }
     
+    // 즐겨찾기 버튼 찾아서 data 속성 설정
+    const favoriteBtn = dayItem.querySelector('.favorite-toggle-btn');
+    if (favoriteBtn) {
+        favoriteBtn.setAttribute('data-log-id', log.id);
+        favoriteBtn.setAttribute('data-is-favorite', 'true');
+    }
+    
     return dayItem;
 }
 
@@ -198,12 +254,60 @@ function attachEventListeners() {
     // 일별 아이템 클릭 - detail 페이지로 이동
     document.querySelectorAll('.day-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            // 메뉴 버튼이나 팝업 클릭은 무시
-            if (e.target.closest('.item-menu-btn') || e.target.closest('.menu-popup')) {
+            // 메뉴 버튼이나 팝업, 즐겨찾기 버튼 클릭은 무시
+            if (e.target.closest('.item-menu-btn') || 
+                e.target.closest('.menu-popup') ||
+                e.target.closest('.favorite-toggle-btn')) {
                 return;
             }
             const date = item.dataset.date;
             window.location.href = `detail.html?date=${date}`;
+        });
+    });
+    
+    // 즐겨찾기 버튼 클릭
+    document.querySelectorAll('.favorite-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            
+            const logId = btn.getAttribute('data-log-id');
+            const isFavorite = btn.getAttribute('data-is-favorite') === 'true';
+            
+            if (!logId) {
+                console.error('❌ 로그 ID 없음');
+                return;
+            }
+            
+            try {
+                // 즐겨찾기 해제
+                await StyleLogAPI.update(logId, { is_favorite: false });
+                
+                console.log('✅ 즐겨찾기 해제 완료');
+                
+                // 화면에서 해당 아이템 찾아서 제거
+                const dayItem = btn.closest('.day-item');
+                if (dayItem) {
+                    // 애니메이션 후 제거
+                    dayItem.style.transition = 'opacity 0.3s, transform 0.3s';
+                    dayItem.style.opacity = '0';
+                    dayItem.style.transform = 'translateX(-20px)';
+                    
+                    setTimeout(() => {
+                        dayItem.remove();
+                        
+                        // 리스트가 비었는지 확인
+                        const container = document.querySelector('.month-cards-container');
+                        const items = container.querySelectorAll('.day-item');
+                        if (items.length === 0) {
+                            loadFavoriteData();
+                        }
+                    }, 300);
+                }
+                
+            } catch (error) {
+                console.error('❌ 즐겨찾기 해제 오류:', error);
+                alert('즐겨찾기 변경에 실패했습니다.');
+            }
         });
     });
     
@@ -314,7 +418,7 @@ async function deleteLogFromMenu(logId) {
                 targetItem.remove();
                 
                 // 리스트가 비었는지 확인
-                const dayList = document.querySelector('.day-list');
+                const dayList = document.querySelector('.month-cards-container');
                 if (dayList.children.length === 0) {
                     loadFavoriteData();
                 }
