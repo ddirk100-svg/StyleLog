@@ -717,10 +717,6 @@ function attachDayListEventListeners() {
                 return;
             }
             const logId = item.dataset.logId;
-<<<<<<< HEAD
-            const date = item.dataset.date;
-=======
->>>>>>> alpha
             if (logId) {
                 window.location.href = `detail.html?id=${logId}`;
             } else {
