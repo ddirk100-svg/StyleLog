@@ -1,26 +1,26 @@
 @echo off
-chcp 65001
+chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 echo.
 echo ============================================
-echo   REAL 서버 배포 (실제 서비스)
+echo   REAL server deploy (Production)
 echo ============================================
 echo.
-echo 주의: 실제 사용자가 보는 서비스입니다!
+echo WARNING: This is the actual production service!
 echo.
-set /p confirm="정말 배포하시겠습니까? (yes 입력): "
+set /p confirm="Do you want to deploy? (yes to continue): "
 if not "%confirm%"=="yes" (
-    echo 배포가 취소되었습니다.
+    echo Deploy cancelled.
     pause
     exit
 )
 echo.
 git add .
-git commit -m "deploy: REAL 서버 배포"
+git commit -m "deploy: REAL server deployment"
 git push origin main
 echo.
 echo ============================================
-echo   배포 완료!
+echo   Deploy complete!
 echo   URL: https://stylelog.vercel.app
 echo ============================================
 echo.

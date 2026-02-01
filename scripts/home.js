@@ -282,15 +282,8 @@ function createMonthCard(month, monthName, count, imageUrl = null) {
 
 // 카드 이벤트 등록
 function attachCardEvents() {
-    // 월 카드 클릭 이벤트
-    document.querySelectorAll('.month-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            const month = card.dataset.month;
-            const yearBtnText = document.getElementById('yearBtnText');
-            const year = yearBtnText ? yearBtnText.textContent : initialYear;
-            window.location.href = `month-detail.html?year=${year}&month=${month}`;
-        });
-    });
+    // 월 카드는 더 이상 사용하지 않음 (Day 뷰만 사용)
+    // 필요시 여기에 다른 이벤트 추가 가능
 }
 
 // 현재 월로 즉시 스크롤 (애니메이션 없이)
@@ -724,7 +717,10 @@ function attachDayListEventListeners() {
                 return;
             }
             const logId = item.dataset.logId;
+<<<<<<< HEAD
             const date = item.dataset.date;
+=======
+>>>>>>> alpha
             if (logId) {
                 window.location.href = `detail.html?id=${logId}`;
             } else {
@@ -952,13 +948,6 @@ document.querySelector('.write-btn')?.addEventListener('click', () => {
 // 즐겨찾기 버튼
 document.querySelector('.favorite-btn')?.addEventListener('click', () => {
     window.location.href = 'favorite.html';
-});
-
-// 캘린더 버튼
-document.querySelector('.calendar-btn')?.addEventListener('click', () => {
-    const year = document.querySelector('.year-btn span').textContent;
-    const currentMonth = new Date().getMonth() + 1;
-    window.location.href = `calendar.html?year=${year}&month=${currentMonth}`;
 });
 
 // 페이지 로드 시 초기화

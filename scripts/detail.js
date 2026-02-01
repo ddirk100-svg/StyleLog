@@ -1,48 +1,44 @@
 // 상세 화면 스크립트
 
-// URL 파라미터에서 날짜 정보 가져오기
+// URL 파라미터에서 정보 가져오기
 const urlParams = new URLSearchParams(window.location.search);
-const dateParam = urlParams.get('date'); // YYYY-MM-DD 형식
+const dateParam = urlParams.get('date'); // YYYY-MM-DD 형식 (옵션)
+const idParam = urlParams.get('id'); // ID (옵션)
 let currentLog = null;
 
 // 페이지 초기화
 async function initPage() {
-    if (!dateParam) {
-        alert('날짜 정보가 없습니다.');
-        window.history.back();
+    // date나 id 중 하나라도 있어야 함
+    if (!dateParam && !idParam) {
+        alert('잘못된 접근입니다.');
+        window.location.href = 'index.html';
         return;
     }
     
     try {
-        // 날짜 표시 업데이트
-        updateDateDisplay(dateParam);
-        
-        // URL에 id 파라미터가 있으면 ID로 조회 시도
-        const idParam = urlParams.get('id');
+        // ID가 있으면 ID로 조회
         if (idParam && idParam !== 'null' && idParam !== 'undefined') {
             console.log('📋 ID로 로그 조회:', idParam);
-            try {
-                const { data, error } = await supabaseClient
-                    .from('style_logs')
-                    .select('*')
-                    .eq('id', idParam)
-                    .single();
-                
-                if (!error && data) {
-                    currentLog = data;
-                    console.log('✅ ID로 로그 조회 성공:', currentLog);
-                } else {
-                    // ID로 찾지 못하면 날짜로 조회
-                    console.log('⚠️ ID로 찾지 못함, 날짜로 조회 시도');
-                    currentLog = await StyleLogAPI.getByDate(dateParam);
-                }
-            } catch (error) {
-                console.error('❌ ID 조회 오류:', error);
-                // 오류 시 날짜로 조회
-                currentLog = await StyleLogAPI.getByDate(dateParam);
+            const { data, error } = await supabaseClient
+                .from('style_logs')
+                .select('*')
+                .eq('id', idParam)
+                .single();
+            
+            if (!error && data) {
+                currentLog = data;
+                console.log('✅ ID로 로그 조회 성공:', currentLog);
+                // 날짜 표시 업데이트
+                updateDateDisplay(currentLog.date);
+            } else {
+                throw new Error('데이터를 찾을 수 없습니다.');
             }
-        } else {
-            // 날짜로 조회
+        }
+        // date만 있으면 날짜로 조회
+        else if (dateParam) {
+            console.log('📋 날짜로 로그 조회:', dateParam);
+            // 날짜 표시 업데이트
+            updateDateDisplay(dateParam);
             currentLog = await StyleLogAPI.getByDate(dateParam);
         }
         
@@ -633,12 +629,7 @@ document.addEventListener('keydown', (e) => {
     // Backspace: 뒤로가기
     if (e.key === 'Backspace' && !e.target.matches('input, textarea')) {
         e.preventDefault();
-        const referrer = urlParams.get('referrer');
-        if (referrer === 'calendar') {
-            window.location.href = 'calendar.html';
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
 });
 

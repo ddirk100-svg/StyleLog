@@ -81,14 +81,8 @@ function initBackButton() {
     if (!backBtn) return;
     
     backBtn.addEventListener('click', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const referrer = urlParams.get('referrer');
-        
-        if (referrer === 'calendar') {
-            window.location.href = 'calendar.html';
-        } else {
-            window.history.back();
-        }
+        // 뒤로 가기
+        window.history.back();
     });
 }
 
