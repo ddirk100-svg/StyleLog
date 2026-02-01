@@ -20,17 +20,17 @@ let CONFIG;
 let environmentName;
 
 if (hostname === 'stylelog.vercel.app') {
-    // 🔴 REAL 서버: 실제 사용자용
+    // 🔴 REAL 서버: 실제 사용자용 (main 브랜치)
     CONFIG = REAL_CONFIG;
-    environmentName = 'REAL';
-} else if (hostname === 'alpha.stylelog.vercel.app') {
-    // 🟡 ALPHA 서버: 테스트용 (DEV DB 사용)
+    environmentName = 'REAL (Production)';
+} else if (hostname.includes('-git-alpha-') || hostname.includes('alpha')) {
+    // 🟡 ALPHA 서버: 테스트용 (alpha 브랜치, DEV DB 사용)
     CONFIG = DEV_CONFIG;
-    environmentName = 'ALPHA (TEST)';
+    environmentName = 'ALPHA (Test Server)';
 } else {
-    // 🟢 DEV: 로컬 개발 환경
+    // 🟢 DEV: 로컬 개발 환경 + 기타 Preview
     CONFIG = DEV_CONFIG;
-    environmentName = 'DEV (LOCAL)';
+    environmentName = 'DEV (Local)';
 }
 
 // Supabase 클라이언트 초기화
