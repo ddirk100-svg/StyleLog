@@ -1,10 +1,11 @@
 // ===================================
 // 환경 설정
 // ===================================
-// 개발 환경 체크 (localhost 또는 127.0.0.1이면 개발 환경)
+// 개발 환경 체크 (localhost, 로컬 IP, 또는 Vercel dev 브랜치)
 const isDevelopment = window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1' ||
-                      window.location.hostname.includes('192.168');
+                      window.location.hostname.includes('192.168') ||
+                      window.location.hostname.includes('-git-dev-');
 
 // ===================================
 // Supabase 설정
