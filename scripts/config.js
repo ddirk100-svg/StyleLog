@@ -141,18 +141,37 @@ function getWeatherDescription(code) {
 // 특정 날짜의 날씨 정보 가져오기 (서울 기준)
 async function getWeatherByDateAndCoords(lat, lon, date) {
     try {
+        // 날짜 유효성 체크 - Open-Meteo API는 최근 데이터만 제공
+        const requestDate = new Date(date);
+        const today = new Date();
+        const cutoffDate = new Date('2025-01-01'); // 2025년 1월 1일 이전은 불가
+        
+        // 미래 날짜는 오늘로 변경
+        if (requestDate > today) {
+            console.log(`⚠️ 미래 날짜 ${date}를 오늘로 변경`);
+            date = today.toISOString().split('T')[0];
+        }
+        
+        // 2025년 이전 날짜는 null 반환
+        if (requestDate < cutoffDate) {
+            console.log(`⏭️ ${date} - 2025년 이전 데이터, 날씨 API 지원 안 함`);
+            return null;
+        }
+        
         const response = await fetch(
             `${WEATHER_API_URL}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Seoul`
         );
         
         if (!response.ok) {
-            throw new Error('날씨 정보를 가져올 수 없습니다');
+            console.log(`⚠️ 날씨 API 응답 오류 (${response.status}): ${date}`);
+            return null;
         }
         
         const data = await response.json();
         
         if (!data.daily || !data.daily.weathercode || data.daily.weathercode.length === 0) {
-            throw new Error('날씨 데이터가 없습니다');
+            console.log(`⚠️ 날씨 데이터 없음: ${date}`);
+            return null;
         }
         
         const weatherCode = data.daily.weathercode[0];
@@ -166,7 +185,7 @@ async function getWeatherByDateAndCoords(lat, lon, date) {
             weatherCode: weatherCode
         };
     } catch (error) {
-        console.error('날씨 API 오류:', error);
+        console.error(`❌ 날씨 API 오류 (${date}):`, error.message);
         return null;
     }
 }

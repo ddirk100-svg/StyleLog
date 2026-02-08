@@ -7,6 +7,13 @@ let currentView = 'day'; // year, month, day
 let monthsWithData = []; // 데이터가 있는 월 목록
 let yearsWithData = []; // 일기가 있는 연도 목록
 
+// 페이지네이션 상태
+let currentOffset = 0;
+const PAGE_SIZE = 10; // 한 번에 10개씩 로드
+let isLoading = false;
+let hasMoreData = true;
+let allLoadedLogs = []; // 로드된 모든 로그 저장
+
 // 페이지 초기화
 async function initPage() {
     // 일기가 있는 연도 목록 로드
@@ -476,20 +483,15 @@ async function loadDayList(year) {
 }
 
 // 모든 연도의 일별 리스트 로드
+// 모든 연도의 일별 리스트 로드 (초기 로드)
 async function loadAllDayList() {
     try {
-        console.log('📅 모든 데이터 로딩 중...');
+        console.log('📅 초기 데이터 로딩 중...');
         
-        // 모든 로그 가져오기 (연도 필터 없이)
-        const { data: logs, error } = await supabaseClient
-            .from('style_logs')
-            .select('*')
-            .order('date', { ascending: false });
-        
-        if (error) throw error;
-        
-        console.log('📊 받은 데이터:', logs);
-        console.log('📊 데이터 개수:', logs ? logs.length : 0);
+        // 상태 초기화
+        currentOffset = 0;
+        hasMoreData = true;
+        allLoadedLogs = [];
         
         const container = document.querySelector('.month-cards-container');
         if (!container) {
@@ -501,84 +503,13 @@ async function loadAllDayList() {
         container.classList.add('day-list-view');
         container.innerHTML = '';
         
-        if (!logs || logs.length === 0) {
-            console.log('📭 데이터 없음');
-            container.innerHTML = `
-                <div style="text-align: center; padding: 60px 20px; color: #999;">
-                    <p>저장된 기록이 없습니다.</p>
-                    <button onclick="window.location.href='write.html'" 
-                            style="margin-top: 20px; padding: 12px 24px; background: #67d5f5; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        첫 기록 작성하기
-                    </button>
-                </div>
-            `;
-            return;
-        }
+        // 첫 페이지 로드
+        await loadMoreDayList();
         
-        // 최저/최고 기온이 없는 로그들을 찾아서 업데이트
-        const updatePromises = logs.map(async (log) => {
-            if ((log.weather_temp_min === null || log.weather_temp_min === undefined) &&
-                (log.weather_temp_max === null || log.weather_temp_max === undefined)) {
-                console.log(`⚠️ ${log.date} - 최저/최고 기온 없음. 날씨 API 재조회...`);
-                const weatherData = await getWeatherByDate(log.date);
-                
-                if (weatherData && weatherData.tempMin !== null && weatherData.tempMax !== null) {
-                    // DB 업데이트
-                    await StyleLogAPI.update(log.id, {
-                        weather_temp_min: weatherData.tempMin,
-                        weather_temp_max: weatherData.tempMax,
-                        weather_temp: weatherData.temp
-                    });
-                    
-                    // log 객체 업데이트
-                    log.weather_temp_min = weatherData.tempMin;
-                    log.weather_temp_max = weatherData.tempMax;
-                    log.weather_temp = weatherData.temp;
-                    
-                    console.log(`✅ ${log.date} - 날씨 데이터 업데이트 완료:`, weatherData);
-                }
-            }
-        });
+        // 무한 스크롤 이벤트 리스너 등록
+        initInfiniteScroll();
         
-        // 모든 업데이트가 완료될 때까지 대기
-        await Promise.all(updatePromises);
-        
-        // 이전 연도와 월을 추적하여 연도/월이 바뀔 때 레이블 표시
-        let previousYear = null;
-        let previousMonth = null;
-        
-        // 날짜별로 렌더링
-        logs.forEach(log => {
-            const date = new Date(log.date);
-            const currentYear = date.getFullYear();
-            const currentMonth = date.getMonth() + 1;
-            
-            // 연도가 바뀌면 연도 레이블 표시
-            if (previousYear !== currentYear) {
-                const yearLabel = document.createElement('div');
-                yearLabel.className = 'year-label-day-view';
-                yearLabel.textContent = `${currentYear}년`;
-                container.appendChild(yearLabel);
-                previousYear = currentYear;
-                previousMonth = null; // 연도가 바뀌면 월도 리셋
-            }
-            
-            // 월이 바뀌면 월 텍스트 표시
-            if (previousMonth !== currentMonth) {
-                const monthLabel = document.createElement('div');
-                monthLabel.className = 'month-label-day-view';
-                monthLabel.textContent = `${currentMonth}월`;
-                container.appendChild(monthLabel);
-                previousMonth = currentMonth;
-            }
-            
-            const dayItem = createDayItemForHome(log);
-            container.appendChild(dayItem);
-        });
-        
-        // 이벤트 리스너 등록
-        attachDayListEventListeners();
-        console.log('✅ 모든 데이터 로딩 완료');
+        console.log('✅ 초기 데이터 로딩 완료');
         
     } catch (error) {
         console.error('❌ 데이터 로드 오류:', error);
@@ -586,10 +517,233 @@ async function loadAllDayList() {
         if (container) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 60px 20px; color: #ff3b30;">
-                    <p>데이터를 불러오는데 실패했습니다.</p>
+                    <p style="font-size: 16px; margin-bottom: 12px;">데이터를 불러오는데 실패했습니다.</p>
+                    <p style="font-size: 14px; color: #999;">${error.message || '알 수 없는 오류'}</p>
+                    <button onclick="location.reload()" 
+                            style="margin-top: 20px; padding: 12px 24px; background: #67d5f5; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        다시 시도
+                    </button>
                 </div>
             `;
         }
+    }
+}
+
+// 추가 데이터 로드 (페이지네이션)
+async function loadMoreDayList() {
+    if (isLoading || !hasMoreData) {
+        console.log('⏸️ 로딩 중이거나 더 이상 데이터 없음');
+        return;
+    }
+    
+    isLoading = true;
+    
+    try {
+        console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${PAGE_SIZE}`);
+        
+        // 페이지네이션으로 데이터 가져오기
+        const { data, error } = await supabaseClient
+            .from('style_logs')
+            .select('*')
+            .order('date', { ascending: false })
+            .range(currentOffset, currentOffset + PAGE_SIZE - 1);
+        
+        if (error) throw error;
+        
+        console.log(`✅ ${data ? data.length : 0}개 로드됨`);
+        
+        // 더 이상 데이터가 없으면
+        if (!data || data.length === 0) {
+            hasMoreData = false;
+            isLoading = false;
+            
+            // 전체 데이터가 없으면 안내 메시지
+            if (allLoadedLogs.length === 0) {
+                const container = document.querySelector('.month-cards-container');
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: #999;">
+                        <p>저장된 기록이 없습니다.</p>
+                        <button onclick="window.location.href='write.html'" 
+                                style="margin-top: 20px; padding: 12px 24px; background: #67d5f5; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            첫 기록 작성하기
+                        </button>
+                    </div>
+                `;
+            }
+            return;
+        }
+        
+        // 페이지 크기보다 적게 받았으면 마지막 페이지
+        if (data.length < PAGE_SIZE) {
+            hasMoreData = false;
+        }
+        
+        // 로드된 데이터를 배열에 추가
+        allLoadedLogs = [...allLoadedLogs, ...data];
+        
+        // 날씨 데이터 업데이트 (비동기로 백그라운드 처리)
+        updateWeatherDataInBackground(data);
+        
+        // UI에 렌더링
+        await renderDayList(data);
+        
+        // 다음 페이지를 위해 offset 증가
+        currentOffset += PAGE_SIZE;
+        
+    } catch (error) {
+        console.error('❌ 추가 데이터 로드 오류:', error);
+        hasMoreData = false;
+    } finally {
+        isLoading = false;
+    }
+}
+
+// 날씨 데이터를 백그라운드에서 업데이트 (UI 렌더링을 차단하지 않음)
+async function updateWeatherDataInBackground(logs) {
+    // 최저/최고 기온이 없는 로그들만 필터링
+    const logsNeedingWeather = logs.filter(log => 
+        (log.weather_temp_min === null || log.weather_temp_min === undefined) &&
+        (log.weather_temp_max === null || log.weather_temp_max === undefined)
+    );
+    
+    if (logsNeedingWeather.length === 0) return;
+    
+    console.log(`⚠️ ${logsNeedingWeather.length}개 로그의 날씨 데이터 업데이트 시작...`);
+    
+    // 백그라운드에서 비동기로 처리 (await 하지 않음)
+    Promise.all(logsNeedingWeather.map(async (log) => {
+        try {
+            // 2025년 이전 데이터는 날씨 API에서 가져올 수 없으므로 스킵
+            const logYear = new Date(log.date).getFullYear();
+            if (logYear < 2025) {
+                console.log(`⏭️ ${log.date} - 2025년 이전 데이터, 날씨 업데이트 스킵`);
+                return;
+            }
+            
+            const weatherData = await getWeatherByDate(log.date);
+            
+            if (weatherData && weatherData.tempMin !== null && weatherData.tempMax !== null) {
+                // DB 업데이트
+                await StyleLogAPI.update(log.id, {
+                    weather_temp_min: weatherData.tempMin,
+                    weather_temp_max: weatherData.tempMax,
+                    weather_temp: weatherData.temp
+                });
+                
+                // 메모리의 log 객체도 업데이트
+                log.weather_temp_min = weatherData.tempMin;
+                log.weather_temp_max = weatherData.tempMax;
+                log.weather_temp = weatherData.temp;
+                
+                // UI 업데이트 (해당 아이템만)
+                updateDayItemWeather(log.id, weatherData);
+                
+                console.log(`✅ ${log.date} - 날씨 데이터 업데이트 완료`);
+            }
+        } catch (error) {
+            console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
+        }
+    })).then(() => {
+        console.log('✅ 백그라운드 날씨 업데이트 완료');
+    });
+}
+
+// 특정 아이템의 날씨 정보만 업데이트
+function updateDayItemWeather(logId, weatherData) {
+    const dayItem = document.querySelector(`[data-log-id="${logId}"]`);
+    if (!dayItem) return;
+    
+    const weatherInfo = dayItem.querySelector('.weather-info-compact');
+    if (!weatherInfo) return;
+    
+    const tempCompact = weatherInfo.querySelector('.temp-compact');
+    if (tempCompact && weatherData.tempMin !== null && weatherData.tempMax !== null) {
+        tempCompact.innerHTML = `
+            <span class="temp-high">${Math.round(weatherData.tempMax)}°</span>
+            <span class="temp-low">${Math.round(weatherData.tempMin)}°</span>
+        `;
+    }
+}
+
+// 데이터를 UI에 렌더링
+async function renderDayList(logs) {
+    const container = document.querySelector('.month-cards-container');
+    if (!container) return;
+    
+    // 이전 연도와 월을 추적하여 연도/월이 바뀔 때 레이블 표시
+    let previousYear = null;
+    let previousMonth = null;
+    
+    // 이미 렌더링된 마지막 항목의 연도/월 확인
+    const allYearLabels = container.querySelectorAll('.year-label-day-view');
+    const allMonthLabels = container.querySelectorAll('.month-label-day-view');
+    
+    if (allYearLabels.length > 0) {
+        const lastYearLabel = allYearLabels[allYearLabels.length - 1];
+        previousYear = parseInt(lastYearLabel.textContent);
+    }
+    if (allMonthLabels.length > 0) {
+        const lastMonthLabel = allMonthLabels[allMonthLabels.length - 1];
+        previousMonth = parseInt(lastMonthLabel.textContent);
+    }
+    
+    // 날짜별로 렌더링
+    logs.forEach(log => {
+        const date = new Date(log.date);
+        const currentYear = date.getFullYear();
+        const currentMonth = date.getMonth() + 1;
+        
+        // 연도가 바뀌면 연도 레이블 표시
+        if (previousYear !== currentYear) {
+            const yearLabel = document.createElement('div');
+            yearLabel.className = 'year-label-day-view';
+            yearLabel.textContent = `${currentYear}년`;
+            container.appendChild(yearLabel);
+            previousYear = currentYear;
+            previousMonth = null; // 연도가 바뀌면 월도 리셋
+        }
+        
+        // 월이 바뀌면 월 텍스트 표시
+        if (previousMonth !== currentMonth) {
+            const monthLabel = document.createElement('div');
+            monthLabel.className = 'month-label-day-view';
+            monthLabel.textContent = `${currentMonth}월`;
+            container.appendChild(monthLabel);
+            previousMonth = currentMonth;
+        }
+        
+        const dayItem = createDayItemForHome(log);
+        container.appendChild(dayItem);
+    });
+    
+    // 이벤트 리스너 등록
+    attachDayListEventListeners();
+}
+
+// 무한 스크롤 초기화
+function initInfiniteScroll() {
+    // Day 뷰에서는 window(body)가 스크롤 컨테이너
+    // 기존 이벤트 리스너 제거 (중복 방지)
+    window.removeEventListener('scroll', handleInfiniteScroll);
+    
+    // 새 이벤트 리스너 등록
+    window.addEventListener('scroll', handleInfiniteScroll);
+    
+    console.log('✅ 무한 스크롤 초기화 완료 (window scroll)');
+}
+
+// 무한 스크롤 핸들러
+function handleInfiniteScroll() {
+    // body의 스크롤 위치 사용
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+    
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    
+    if (distanceFromBottom < 500 && !isLoading && hasMoreData) {
+        console.log('📜 스크롤 바닥 근처 - 추가 데이터 로드');
+        loadMoreDayList();
     }
 }
 
