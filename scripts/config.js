@@ -1,37 +1,29 @@
 // ===================================
 // 환경 설정
 // ===================================
+// 개발 환경 체크 (localhost 또는 127.0.0.1이면 개발 환경)
+const isDevelopment = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1' ||
+                      window.location.hostname.includes('192.168');
 
-// DEV DB 설정 (로컬 + Alpha 테스트 서버)
+// ===================================
+// Supabase 설정
+// ===================================
+
+// 개발(테스트) 서버 설정
 const DEV_CONFIG = {
     SUPABASE_URL: 'https://roeurruguzxipevppnko.supabase.co',
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvZXVycnVndXp4aXBldnBwbmtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MTY0MDcsImV4cCI6MjA4MjM5MjQwN30.JGkCsUGdiW4NKIcrM2dOVV0AqiFX4IwfVCsz3sC6sEM'
 };
 
-// REAL DB 설정 (실제 서비스)
-const REAL_CONFIG = {
+// 프로덕션(리얼) 서버 설정
+const PROD_CONFIG = {
     SUPABASE_URL: 'https://zymszibiwojzrtxhiesc.supabase.co',
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bXN6aWJpd29qenJ0eGhpZXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MTY5MTksImV4cCI6MjA4MjM5MjkxOX0.9TLof1cyqSkZ33Y-stvBaqQ3iT9lpoMnljsk-XPMBHM'
 };
 
-// 환경 감지 및 설정 선택
-const hostname = window.location.hostname;
-let CONFIG;
-let environmentName;
-
-if (hostname === 'stylelog.vercel.app') {
-    // 🔴 REAL 서버: 실제 사용자용 (main 브랜치)
-    CONFIG = REAL_CONFIG;
-    environmentName = 'REAL (Production)';
-} else if (hostname.includes('-git-alpha-') || hostname.includes('alpha')) {
-    // 🟡 ALPHA 서버: 테스트용 (alpha 브랜치, DEV DB 사용)
-    CONFIG = DEV_CONFIG;
-    environmentName = 'ALPHA (Test Server)';
-} else {
-    // 🟢 DEV: 로컬 개발 환경 + 기타 Preview
-    CONFIG = DEV_CONFIG;
-    environmentName = 'DEV (Local)';
-}
+// 현재 환경에 맞는 설정 선택
+const CONFIG = isDevelopment ? DEV_CONFIG : PROD_CONFIG;
 
 // Supabase 클라이언트 초기화
 const SUPABASE_URL = CONFIG.SUPABASE_URL;
@@ -42,9 +34,8 @@ const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 환경 정보 출력 (디버깅용)
-console.log(`🚀 환경: ${environmentName}`);
+console.log(`🚀 환경: ${isDevelopment ? '개발(테스트)' : '프로덕션(리얼)'}`);
 console.log(`📍 Supabase URL: ${SUPABASE_URL}`);
-console.log(`🌐 Domain: ${hostname}`);
 console.log('✅ Supabase 클라이언트 초기화 완료');
 
 // 날씨 API 설정 - Open-Meteo (완전 무료, API 키 불필요!)

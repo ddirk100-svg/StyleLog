@@ -1,16 +1,30 @@
 // 스타일로그 API 서비스
 
 const StyleLogAPI = {
-    // 모든 로그 가져오기
-    async getAll() {
+    // 모든 로그 가져오기 (페이지네이션 지원)
+    async getAll(options = {}) {
         try {
-            const { data, error } = await supabaseClient
+            const { 
+                limit = 50,  // 기본 50개씩 로드
+                offset = 0,  // 시작 위치
+                orderBy = 'date',
+                ascending = false
+            } = options;
+            
+            let query = supabaseClient
                 .from('style_logs')
-                .select('*')
-                .order('date', { ascending: false });
+                .select('*', { count: 'exact' })
+                .order(orderBy, { ascending });
+            
+            // 페이지네이션 적용
+            if (limit) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            
+            const { data, error, count } = await query;
             
             if (error) throw error;
-            return data;
+            return { data, count };
         } catch (error) {
             console.error('로그 조회 오류:', error);
             throw error;

@@ -4,23 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 작성</title>
-    <!-- 스타일시트 -->
-    <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/layout.css">
-    <link rel="stylesheet" href="styles/components.css">
-    <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/write.css">
-    <!-- Supabase 클라이언트 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 공통 스크립트 -->
-    <script src="scripts/config.js"></script>
-    <script src="scripts/api.js"></script>
-    <script src="scripts/auth.js"></script>
-    <script src="scripts/components.js"></script>
+    <link rel="stylesheet" href="styles/bottom-nav.css">
 </head>
 <body class="has-bottom-nav">
     <!-- 작성 화면 -->
-    <main class="container" id="writeView">
+    <div class="container" id="writeView">
         <!-- 헤더 -->
         <header class="write-header">
             <button class="icon-btn cancel-btn">
@@ -35,12 +24,12 @@
         <!-- 폼 -->
         <form class="write-form" id="writeForm">
             <!-- 날짜 선택 -->
-            <section class="form-section">
+            <div class="form-section">
                 <input type="date" class="form-input date-input" id="dateInput" required>
-            </section>
+            </div>
 
             <!-- 날씨 정보 -->
-            <section class="form-section">
+            <div class="form-section">
                 <div class="weather-display" id="weatherDisplay">
                     <div class="weather-info-box">
                         <div class="weather-icon-container" id="weatherIconContainer">
@@ -61,10 +50,10 @@
                 <input type="hidden" id="weatherInput" name="weather" required>
                 <input type="hidden" id="weatherTempInput" name="weather_temp">
                 <input type="hidden" id="weatherDescInput" name="weather_description">
-            </section>
+            </div>
 
             <!-- 사진 업로드 -->
-            <section class="form-section">
+            <div class="form-section">
                 <label class="form-label">사진 (선택)</label>
                 <div class="photo-upload-area" id="photoUploadArea">
                     <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
@@ -78,31 +67,31 @@
                     </button>
                     <div class="photo-preview-list" id="photoPreviewList"></div>
                 </div>
-            </section>
+            </div>
 
             <!-- 제목 -->
-            <section class="form-section">
+            <div class="form-section">
                 <label class="form-label">제목 (선택)</label>
                 <input type="text" class="form-input title-input" id="titleInput" placeholder="오늘의 착장에 대한 제목을 입력하세요" maxlength="100">
-            </section>
+            </div>
 
             <!-- 본문 -->
-            <section class="form-section">
+            <div class="form-section">
                 <label class="form-label">메모 (선택)</label>
                 <textarea class="form-textarea" id="contentInput" placeholder="오늘의 스타일, 기분, 특별한 일 등을 기록해보세요..." rows="8"></textarea>
-            </section>
+            </div>
 
             <!-- 태그 -->
-            <section class="form-section">
+            <div class="form-section">
                 <label class="form-label">태그 (선택)</label>
                 <div class="tags-input-wrapper">
                     <div class="tags-display" id="tagsDisplay"></div>
                     <input type="text" class="form-input tags-input" id="tagsInput" placeholder="#태그를 입력하고 엔터">
                 </div>
                 <p class="form-hint">엔터 또는 쉼표로 태그 추가</p>
-            </section>
+            </div>
         </form>
-    </main>
+    </div>
 
     <!-- 하단 네비게이션 바 -->
     <nav class="bottom-nav">
@@ -134,6 +123,12 @@
         </a>
     </nav>
 
+    <!-- Supabase 클라이언트 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 설정 및 API -->
+    <script src="scripts/config.js"></script>
+    <script src="scripts/api.js"></script>
+    <script src="scripts/auth.js"></script>
     <!-- 페이지 스크립트 -->
     <script src="scripts/write.js"></script>
     <script>
@@ -144,3 +139,4 @@
     </script>
 </body>
 </html>
+

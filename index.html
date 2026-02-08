@@ -4,23 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 오늘 뭐입지?</title>
-    <!-- 스타일시트 -->
-    <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/layout.css">
-    <link rel="stylesheet" href="styles/components.css">
-    <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/home.css">
+    <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/month-detail.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
     <!-- Supabase 클라이언트 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 공통 스크립트 -->
+    <!-- 설정 및 API -->
     <script src="scripts/config.js"></script>
     <script src="scripts/api.js"></script>
     <script src="scripts/auth.js"></script>
     <script src="scripts/common.js"></script>
-    <script src="scripts/components.js"></script>
 </head>
 <body class="has-bottom-nav">
     <!-- 로딩 화면 -->
@@ -28,8 +23,8 @@
         <p style="font-size: 18px; color: #999;">로딩 중...</p>
     </div>
     
-    <!-- 홈 화면 -->
-    <main class="container" id="homeView">
+    <!-- 홈 화면 - 카드뷰 (가로형) -->
+    <div class="container" id="homeView">
         <!-- 헤더 -->
         <header class="header">
             <h1 class="logo">
@@ -60,7 +55,7 @@
                 <div class="menu-user-info" id="menuUserInfo">
                     <p>로딩 중...</p>
                 </div>
-                <nav class="menu-items">
+                <div class="menu-items">
                     <button class="menu-item" onclick="logout()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -69,16 +64,16 @@
                         </svg>
                         <span>로그아웃</span>
                     </button>
-                </nav>
+                </div>
             </div>
         </div>
 
         <!-- 오늘 날씨 정보 -->
-        <section class="bottom-section">
+        <div class="bottom-section">
             <div class="weather-section">
                 <div class="weather-title-date-group">
-                    <h2 class="weather-title">오늘 날씨는?</h2>
-                    <time class="today-date" id="todayDate">--</time>
+                    <div class="weather-title">오늘 날씨는?</div>
+                    <div class="today-date" id="todayDate">--</div>
                 </div>
                 <div class="weather-display" id="weatherDisplay">
                     <svg class="weather-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -87,13 +82,13 @@
                     <span class="weather-temp">--°C</span>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- 월별 카드 리스트 -->
-        <section class="month-cards-container">
+        <!-- 월별 카드 리스트 (가로 스크롤) -->
+        <div class="month-cards-container">
             <!-- JavaScript로 동적 생성됩니다 -->
-        </section>
-    </main>
+        </div>
+    </div>
 
     <!-- 메뉴 팝업 (바텀시트) - Day 뷰용 -->
     <div class="menu-popup" id="itemMenuPopup">
@@ -148,7 +143,6 @@
         </a>
     </nav>
 
-    <!-- 페이지 스크립트 -->
     <script src="scripts/home.js"></script>
     <script>
         // 페이지 로드 시 인증 체크
@@ -189,3 +183,4 @@
     </script>
 </body>
 </html>
+
