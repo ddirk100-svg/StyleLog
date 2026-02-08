@@ -43,8 +43,6 @@ body:has(.container.day-view-active) {
     overflow: visible !important;
     /* 최소 높이를 더 크게 설정하여 sticky가 항상 작동하도록 */
     min-height: calc(100vh + 200px);
-    /* Day 뷰일 때는 하단 패딩 제거 */
-    padding-bottom: 0;
 }
 
 /* Month 뷰일 때는 고정 높이 */
@@ -70,10 +68,10 @@ body:has(.container.day-view-active) {
 /* 헤더 */
 .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end; /* 메뉴 버튼을 오른쪽으로 */
     align-items: center;
     padding: var(--spacing-lg) var(--spacing-xl);
-    position: sticky;
+    position: sticky; /* 상단 고정 + 자식 absolute 기준점 역할 */
     top: 0;
     background-color: var(--color-bg-primary);
     z-index: var(--z-index-sticky);
@@ -82,13 +80,17 @@ body:has(.container.day-view-active) {
 
 .logo {
     margin: 0;
-    flex: 1;
+    position: absolute; /* 헤더 전체 기준 위치 */
+    left: 50%;
+    transform: translateX(-50%); /* 정중앙 정렬 */
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
     cursor: pointer;
     transition: opacity 0.2s;
+    pointer-events: auto; /* 클릭 가능하도록 */
+    z-index: 0; /* 메뉴 버튼보다 아래 */
 }
 
 .logo:hover {
@@ -112,6 +114,8 @@ body:has(.container.day-view-active) {
     padding: var(--spacing-sm);
     color: var(--color-text-secondary);
     transition: color var(--transition-fast);
+    position: relative; /* 로고보다 위에 표시 */
+    z-index: 10; /* 로고보다 높게 설정 */
 }
 
 .icon-btn:hover {
@@ -873,36 +877,32 @@ body:has(.container.day-view-active) {
 .year-label-day-view {
     position: sticky;
     top: 77px;
-    padding: 16px var(--spacing-xl) 12px;
-    font-size: 24px;
+    padding: 12px var(--spacing-xl) 8px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
-    z-index: 12;
+    z-index: 11;
     margin-top: 0;
-    margin-bottom: 0;
+    margin-bottom: 4px;
     width: 100%;
     display: block;
-    min-height: 60px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Day 뷰 월 레이블 */
 .month-label-day-view {
     position: sticky;
-    top: 137px;
-    padding: 12px var(--spacing-xl) 8px;
-    font-size: 18px;
+    top: 127px; /* Header(77) + YearLabel(50) = 127px */
+    padding: 8px var(--spacing-xl) 6px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--color-text-secondary);
     background-color: var(--color-bg-primary);
-    margin-top: 0;
-    margin-bottom: 0;
+    margin-top: 4px;
+    margin-bottom: 8px;
     z-index: 11;
     width: 100%;
     display: block;
-    min-height: 44px;
-    border-bottom: 1px solid #f0f0f0;
 }
 
 /* Day 아이템 */
@@ -1000,7 +1000,7 @@ body:has(.container.day-view-active) {
 /* 즐겨찾기 버튼 */
 .favorite-toggle-btn {
     position: absolute;
-    top: 8px;
+    bottom: 8px;
     right: 8px;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
@@ -1061,15 +1061,16 @@ body:has(.container.day-view-active) {
     .year-label-day-view {
         top: 72px;
         font-size: 20px;
-        padding: 12px var(--spacing-lg) 10px;
-        min-height: 50px;
+        padding: 10px var(--spacing-lg) 6px;
+        margin-bottom: 4px;
     }
     
     .month-label-day-view {
-        top: 122px;
-        font-size: 16px;
-        padding: 10px var(--spacing-lg) 6px;
-        min-height: 40px;
+        top: 116px; /* Header(72) + YearLabel(44) = 116px */
+        font-size: 15px;
+        padding: 6px var(--spacing-lg) 4px;
+        margin-top: 4px;
+        margin-bottom: 6px;
     }
     
     .bottom-section {

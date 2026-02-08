@@ -1,42 +1,24 @@
 // 상세 화면 스크립트
 
-// URL 파라미터에서 정보 가져오기
+// URL 파라미터에서 ID 또는 날짜 정보 가져오기
 const urlParams = new URLSearchParams(window.location.search);
-const dateParam = urlParams.get('date'); // YYYY-MM-DD 형식 (옵션)
-const idParam = urlParams.get('id'); // ID (옵션)
+const idParam = urlParams.get('id'); // ID로 조회 (우선)
+const dateParam = urlParams.get('date'); // YYYY-MM-DD 형식 (하위 호환)
 let currentLog = null;
 
 // 페이지 초기화
 async function initPage() {
-    // date나 id 중 하나라도 있어야 함
-    if (!dateParam && !idParam) {
-        alert('잘못된 접근입니다.');
-        window.location.href = 'index.html';
+    if (!idParam && !dateParam) {
+        alert('로그 정보가 없습니다.');
+        window.history.back();
         return;
     }
     
     try {
-        // ID가 있으면 ID로 조회
-        if (idParam && idParam !== 'null' && idParam !== 'undefined') {
-            console.log('📋 ID로 로그 조회:', idParam);
-            const { data, error } = await supabaseClient
-                .from('style_logs')
-                .select('*')
-                .eq('id', idParam)
-                .single();
-            
-            if (!error && data) {
-                currentLog = data;
-                console.log('✅ ID로 로그 조회 성공:', currentLog);
-                // 날짜 표시 업데이트
-                updateDateDisplay(currentLog.date);
-            } else {
-                throw new Error('데이터를 찾을 수 없습니다.');
-            }
-        }
-        // date만 있으면 날짜로 조회
-        else if (dateParam) {
-            console.log('📋 날짜로 로그 조회:', dateParam);
+        // ID로 조회 (우선) 또는 날짜로 조회 (하위 호환)
+        if (idParam) {
+            currentLog = await StyleLogAPI.getById(idParam);
+        } else if (dateParam) {
             // 날짜 표시 업데이트
             updateDateDisplay(dateParam);
             currentLog = await StyleLogAPI.getByDate(dateParam);
@@ -44,12 +26,18 @@ async function initPage() {
         
         if (!currentLog) {
             // 데이터 없으면 작성 화면으로
+            const targetDate = dateParam || new Date().toISOString().split('T')[0];
             if (confirm('이 날짜에 기록이 없습니다. 작성하시겠습니까?')) {
-                window.location.href = `write.html?date=${dateParam}`;
+                window.location.href = `write.html?date=${targetDate}`;
             } else {
                 window.history.back();
             }
             return;
+        }
+        
+        // ID로 조회한 경우 날짜 표시 업데이트
+        if (idParam) {
+            updateDateDisplay(currentLog.date);
         }
         
         // 최저/최고 기온이 없으면 날씨 API에서 가져와서 업데이트
@@ -114,7 +102,7 @@ function renderLogDetail(log) {
             photoSection.innerHTML = `
                 <img src="${log.photos[0]}" alt="착장 사진" onerror="this.style.display='none'">
                 <button class="favorite-toggle-btn-detail ${log.is_favorite ? 'active' : ''}" id="favoriteToggle" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#666'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#fff'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -136,7 +124,7 @@ function renderLogDetail(log) {
                     `).join('')}
                 </div>
                 <button class="favorite-toggle-btn-detail ${log.is_favorite ? 'active' : ''}" id="favoriteToggle" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#666'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#fff'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -351,15 +339,22 @@ function updateDateDisplay(dateStr) {
     }
 }
 
-// 뒤로가기 버튼은 common.js에서 처리됨
+// 뒤로가기 버튼
+document.querySelector('.back-btn')?.addEventListener('click', () => {
+    window.history.back();
+});
 
-// closeMenu 함수 정의 (common.js의 함수 사용)
-function closeMenu() {
-    const menuPopup = document.getElementById('menuPopup');
-    if (menuPopup) {
-        menuPopup.classList.remove('active');
-        document.body.style.overflow = '';
-    }
+// 메뉴 버튼
+document.querySelector('.menu-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showOptionsMenu();
+});
+
+// 옵션 메뉴 표시
+function showOptionsMenu() {
+    const options = ['수정', '삭제', '공유', '즐겨찾기'];
+    console.log('옵션 메뉴:', options);
+    // 실제 구현 시 액션 시트 표시
 }
 
 // 수정 버튼
@@ -481,27 +476,19 @@ function initScrollEffect() {
 
 // 이벤트 리스너 등록
 function attachEventListeners() {
-    // 뒤로가기 버튼은 common.js에서 처리됨
+    // 뒤로가기 버튼
+    const backBtn = document.querySelector('.back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
     
-    // 메뉴 버튼 (중복 등록 방지)
+    // 메뉴 버튼
     const menuBtn = document.querySelector('.menu-btn');
     if (menuBtn) {
-        // 기존 이벤트 리스너 제거 후 새로 등록
-        const newMenuBtn = menuBtn.cloneNode(true);
-        menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
-        
-        newMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (typeof openMenu === 'function') {
-                openMenu();
-            } else {
-                // openMenu가 없으면 직접 처리
-                const menuPopup = document.getElementById('menuPopup');
-                if (menuPopup) {
-                    menuPopup.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                }
-            }
+        menuBtn.addEventListener('click', () => {
+            openMenu();
         });
     }
     
@@ -559,7 +546,22 @@ function attachEventListeners() {
 }
 
 // 메뉴 열기
-// openMenu/closeMenu는 common.js에서 관리
+function openMenu() {
+    const menu = document.getElementById('menuPopup');
+    if (menu) {
+        menu.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// 메뉴 닫기
+function closeMenu() {
+    const menu = document.getElementById('menuPopup');
+    if (menu) {
+        menu.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
 
 // 이미지 로딩 에러 처리
 document.querySelectorAll('.photo-section img').forEach(img => {
@@ -598,11 +600,11 @@ async function toggleFavoriteDetail() {
                 button.classList.remove('active');
             }
             
-            // SVG fill 색상 변경
+            // SVG fill/stroke 색상 변경
             const svg = button.querySelector('svg');
             if (svg) {
                 svg.setAttribute('fill', newState ? '#ff6b6b' : 'none');
-                svg.setAttribute('stroke', newState ? '#ff6b6b' : '#666');
+                svg.setAttribute('stroke', newState ? '#ff6b6b' : '#fff');
             }
         }
         

@@ -1,150 +1,107 @@
-/* 디자인 토큰 import */
+/* 디자인 토큰 import - 모든 @import는 맨 위에 */
 @import url('variables.css');
+@import url('home.css');
 
 /* favoriteView 컨테이너 - index.html과 동일하게 설정 */
 #favoriteView.container {
-    /* index.html의 .container.day-view-active와 동일하게 */
-    overflow: visible !important;
+    max-width: var(--container-max-width);
     min-height: calc(100vh + 200px);
-    /* Day 뷰일 때는 하단 패딩 제거 */
-    padding-bottom: 0;
+    margin: 0 auto;
+    background-color: var(--color-bg-primary);
+    overflow: visible !important;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 100px);
 }
 
-/* favoriteView용 헤더 - index.html과 동일하게 sticky */
+/* favoriteView용 헤더 - index.html과 동일하게 sticky 사용 */
 #favoriteView .header {
     position: sticky;
     top: 0;
     background-color: var(--color-bg-primary);
     z-index: var(--z-index-sticky);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    flex-shrink: 0;
 }
 
-/* favoriteView의 컨텐츠 영역 - index.html과 동일하게 padding-top 없음 */
+/* favoriteView의 컨텐츠 영역 */
 #favoriteView.container.day-view-active .month-cards-container.day-list-view {
     overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: visible !important;
-    /* index.html과 동일한 패딩 */
-    padding: 20px !important;
+    display: flex;
+    flex-direction: column;
+    /* sticky 헤더이므로 padding-top 불필요 */
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-/* 연도 레이블 (favoriteView용) - index.html과 동일하게 */
+/* 연도 레이블 (favoriteView용) - 헤더 아래 배치 */
 #favoriteView .year-label-day-view {
     position: sticky;
-    /* index.html과 동일한 top 값 */
     top: 77px;
-    padding: 10px var(--spacing-xl) var(--spacing-sm);
-    font-size: 24px;
+    padding: 12px var(--spacing-xl) 8px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
     z-index: 11;
     margin-top: 0;
-    margin-bottom: 0;
+    margin-bottom: 4px;
     width: 100%;
     display: block;
-    min-height: 50px;
 }
 
-/* 월 레이블 (favoriteView용) - index.html과 동일하게 */
+/* 월 레이블 (favoriteView용) - 연도 레이블 아래 배치 */
 #favoriteView .month-label-day-view {
     position: sticky;
-    /* index.html과 동일한 top 값 */
+    /* header(77px) + year-label(50px) = 127px */
     top: 127px;
-    padding: 0 var(--spacing-xl) var(--spacing-sm);
-    font-size: var(--font-size-lg);
+    padding: 8px var(--spacing-xl) 6px;
+    font-size: 16px;
     font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
+    color: var(--color-text-secondary);
     background-color: var(--color-bg-primary);
-    margin-top: 0;
-    margin-bottom: 0;
-    z-index: 10;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    z-index: 11;
     width: 100%;
     display: block;
-    min-height: 40px;
 }
 
 /* 모바일 대응 (favoriteView용) */
 @media (max-width: 428px) {
     #favoriteView.container {
         max-width: 100%;
-        /* Day 뷰일 때는 하단 패딩 제거 */
-        padding-bottom: 0;
+        padding-bottom: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + 100px);
     }
     
     #favoriteView .header {
-        /* 모바일에서도 sticky */
+        /* sticky 유지 */
         position: sticky;
     }
     
     #favoriteView.container.day-view-active .month-cards-container.day-list-view {
-        /* index.html과 동일한 패딩 */
-        padding: 20px !important;
+        padding-top: 0;
+        padding-bottom: 0;
     }
     
     #favoriteView .year-label-day-view {
         top: 72px;
+        font-size: 20px;
+        padding: 10px var(--spacing-lg) 6px;
+        margin-bottom: 4px;
     }
     
     #favoriteView .month-label-day-view {
-        top: 122px;
+        top: 116px; /* Header(72) + YearLabel(44) = 116px */
+        font-size: 15px;
+        padding: 6px var(--spacing-lg) 4px;
+        margin-top: 4px;
+        margin-bottom: 6px;
     }
 }
-
-/* 연도 레이블 (index.html Day 뷰용) */
-.year-label-day-view {
-    position: sticky;
-    /* header 높이에 맞춰 sticky */
-    top: 77px;
-    padding: 10px var(--spacing-xl) var(--spacing-sm);
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    background-color: var(--color-bg-primary);
-    z-index: 11;
-    margin-top: 0;
-    margin-bottom: 0;
-    width: 100%;
-    display: block;
-    /* 하단에서도 고정되도록 최소 높이 확보 */
-    min-height: 50px;
-}
-
-/* Day 뷰 월 레이블 (index.html Day 뷰용) - 카드 위에 표시 */
-.month-label-day-view {
-    position: sticky;
-    /* header 높이 + year-label 높이 */
-    /* header(77px) + year-label(padding 10+sm약8px + font-size 24px) = 약 119px */
-    top: 127px;
-    padding: 0 var(--spacing-xl) var(--spacing-sm);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    background-color: var(--color-bg-primary);
-    margin-top: 0;
-    margin-bottom: 0;
-    z-index: 10;
-    width: 100%;
-    /* sticky가 작동하도록 보장 - header와 동일한 방식 */
-    display: block;
-    /* 하단에서도 고정되도록 최소 높이 확보 */
-    min-height: 40px;
-}
-
-/* 모바일에서 header 높이에 맞춰 조정 */
-@media (max-width: 428px) {
-    .year-label-day-view {
-        top: 72px;
-    }
-    
-    .month-label-day-view {
-        /* 모바일 header 높이 + year-label 높이 */
-        top: 122px;
-    }
-}
-
-/* 공통 스타일 상속 */
-@import url('home.css');
 
 /* month-detail용 container 오버라이드 */
 #monthDetailView.container {
@@ -212,18 +169,6 @@
     overflow-y: auto;
     flex: 1;
     min-height: 0;
-}
-
-/* favoriteView용 - day-view-active와 함께 사용될 때 overflow 제거 */
-#favoriteView.container.day-view-active .month-cards-container.day-list-view {
-    overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: visible !important;
-}
-
-/* favoriteView용 - display block으로 변경 */
-#favoriteView .month-cards-container.day-list-view {
-    display: block !important;
 }
 
 /* 트렌디한 얇은 스크롤바 스타일 */

@@ -2,18 +2,6 @@
 
 // 페이지 초기화
 async function initPage() {
-    // Day 뷰일 때 container에 클래스 추가 (index.html과 동일하게)
-    const container = document.getElementById('favoriteView');
-    if (container) {
-        container.classList.add('day-view-active');
-    }
-    
-    // month-cards-container에 day-list-view 클래스 추가
-    const monthCardsContainer = document.querySelector('.month-cards-container');
-    if (monthCardsContainer) {
-        monthCardsContainer.classList.add('day-list-view');
-    }
-    
     // 헤더 타이틀 설정
     const monthTitle = document.querySelector('.month-title');
     if (monthTitle) {
@@ -46,6 +34,9 @@ async function loadFavoriteData() {
         
         // 기존 리스트 비우기
         const dayList = document.querySelector('.month-cards-container');
+        
+        // Day 리스트 스타일 적용
+        dayList.classList.add('day-list-view');
         dayList.innerHTML = '';
         
         if (!logs || logs.length === 0) {
@@ -264,7 +255,7 @@ function attachEventListeners() {
             if (logId) {
                 window.location.href = `detail.html?id=${logId}`;
             } else {
-                console.error('❌ 로그 ID가 없습니다');
+                console.error('❌ 로그 ID 없음:', item);
             }
         });
     });

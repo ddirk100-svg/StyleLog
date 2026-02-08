@@ -37,11 +37,13 @@ async function loadYearsWithData() {
     try {
         console.log('📅 연도 목록 로딩 중...');
         
-        // Supabase에서 모든 로그의 날짜를 가져와서 연도 추출
+        // Supabase에서 연도만 가져오기 (distinct)
+        // date 컬럼만 select하고 정렬하여 중복 제거
         const { data, error } = await supabaseClient
             .from('style_logs')
             .select('date')
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
+            .limit(1000); // 최대 1000개만 조회
         
         if (error) throw error;
         
@@ -289,8 +291,15 @@ function createMonthCard(month, monthName, count, imageUrl = null) {
 
 // 카드 이벤트 등록
 function attachCardEvents() {
-    // 월 카드는 더 이상 사용하지 않음 (Day 뷰만 사용)
-    // 필요시 여기에 다른 이벤트 추가 가능
+    // 월 카드 클릭 이벤트
+    document.querySelectorAll('.month-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const month = card.dataset.month;
+            const yearBtnText = document.getElementById('yearBtnText');
+            const year = yearBtnText ? yearBtnText.textContent : initialYear;
+            window.location.href = `month-detail.html?year=${year}&month=${month}`;
+        });
+    });
 }
 
 // 현재 월로 즉시 스크롤 (애니메이션 없이)
@@ -482,7 +491,6 @@ async function loadDayList(year) {
     }
 }
 
-// 모든 연도의 일별 리스트 로드
 // 모든 연도의 일별 리스트 로드 (초기 로드)
 async function loadAllDayList() {
     try {
@@ -538,6 +546,9 @@ async function loadMoreDayList() {
     
     isLoading = true;
     
+    // 로딩 인디케이터 표시
+    showLoadingIndicator();
+    
     try {
         console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${PAGE_SIZE}`);
         
@@ -556,6 +567,7 @@ async function loadMoreDayList() {
         if (!data || data.length === 0) {
             hasMoreData = false;
             isLoading = false;
+            hideLoadingIndicator();
             
             // 전체 데이터가 없으면 안내 메시지
             if (allLoadedLogs.length === 0) {
@@ -569,6 +581,9 @@ async function loadMoreDayList() {
                         </button>
                     </div>
                 `;
+            } else {
+                // 모든 데이터를 불러온 경우 완료 메시지 표시
+                showEndMessage();
             }
             return;
         }
@@ -590,12 +605,95 @@ async function loadMoreDayList() {
         // 다음 페이지를 위해 offset 증가
         currentOffset += PAGE_SIZE;
         
+        // 마지막 페이지면 완료 메시지 표시
+        if (!hasMoreData) {
+            showEndMessage();
+        }
+        
     } catch (error) {
         console.error('❌ 추가 데이터 로드 오류:', error);
         hasMoreData = false;
     } finally {
         isLoading = false;
+        hideLoadingIndicator();
     }
+}
+
+// 로딩 인디케이터 표시
+function showLoadingIndicator() {
+    // 이미 있으면 제거
+    hideLoadingIndicator();
+    
+    const container = document.querySelector('.month-cards-container');
+    if (!container) return;
+    
+    const loader = document.createElement('div');
+    loader.id = 'infinite-scroll-loader';
+    loader.innerHTML = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            gap: 12px;
+        ">
+            <div style="
+                width: 40px;
+                height: 40px;
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #67d5f5;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            "></div>
+            <p style="
+                font-size: 14px;
+                color: #999;
+                margin: 0;
+            ">로딩 중...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+    
+    container.appendChild(loader);
+}
+
+// 로딩 인디케이터 숨기기
+function hideLoadingIndicator() {
+    const loader = document.getElementById('infinite-scroll-loader');
+    if (loader) {
+        loader.remove();
+    }
+}
+
+// 끝 메시지 표시
+function showEndMessage() {
+    // 이미 있으면 제거
+    const existingMsg = document.getElementById('end-message');
+    if (existingMsg) return;
+    
+    const container = document.querySelector('.month-cards-container');
+    if (!container) return;
+    
+    const endMsg = document.createElement('div');
+    endMsg.id = 'end-message';
+    endMsg.innerHTML = `
+        <div style="
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 14px;
+        ">
+            <p style="margin: 0;">모든 기록을 불러왔습니다 ✨</p>
+        </div>
+    `;
+    
+    container.appendChild(endMsg);
 }
 
 // 날씨 데이터를 백그라운드에서 업데이트 (UI 렌더링을 차단하지 않음)
@@ -874,7 +972,7 @@ function attachDayListEventListeners() {
             if (logId) {
                 window.location.href = `detail.html?id=${logId}`;
             } else {
-                console.error('❌ 로그 ID가 없습니다');
+                console.error('❌ 로그 ID 없음:', item);
             }
         });
     });
@@ -1086,7 +1184,56 @@ function initSwipe() {
 }
 
 // 메뉴 버튼
-// 메뉴 관련 기능은 common.js로 이동됨
+document.querySelector('.menu-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menuPopup = document.getElementById('menuPopup');
+    if (menuPopup) {
+        menuPopup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+});
+
+// 메뉴 닫기 버튼
+document.querySelector('.close-menu-btn')?.addEventListener('click', () => {
+    const menuPopup = document.getElementById('menuPopup');
+    if (menuPopup) {
+        menuPopup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// 메뉴 오버레이 클릭 시 닫기
+document.querySelector('#menuPopup .menu-overlay')?.addEventListener('click', () => {
+    const menuPopup = document.getElementById('menuPopup');
+    if (menuPopup) {
+        menuPopup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// 메뉴 사용자 정보 업데이트
+async function updateMenuUserInfo() {
+    const menuUserInfo = document.getElementById('menuUserInfo');
+    if (!menuUserInfo) return;
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+            menuUserInfo.innerHTML = `
+                <p style="font-weight: 600; margin-bottom: 4px;">${user.email}</p>
+                <p style="font-size: 14px; color: #999;">로그인 중</p>
+            `;
+        }
+    } catch (error) {
+        console.error('사용자 정보 로드 오류:', error);
+        menuUserInfo.innerHTML = `<p>사용자 정보를 불러올 수 없습니다.</p>`;
+    }
+}
+
+// 페이지 로드 시 사용자 정보 업데이트
+window.addEventListener('load', () => {
+    updateMenuUserInfo();
+});
 
 // 작성 버튼
 document.querySelector('.write-btn')?.addEventListener('click', () => {
@@ -1098,6 +1245,13 @@ document.querySelector('.write-btn')?.addEventListener('click', () => {
 // 즐겨찾기 버튼
 document.querySelector('.favorite-btn')?.addEventListener('click', () => {
     window.location.href = 'favorite.html';
+});
+
+// 캘린더 버튼
+document.querySelector('.calendar-btn')?.addEventListener('click', () => {
+    const year = document.querySelector('.year-btn span').textContent;
+    const currentMonth = new Date().getMonth() + 1;
+    window.location.href = `calendar.html?year=${year}&month=${currentMonth}`;
 });
 
 // 페이지 로드 시 초기화

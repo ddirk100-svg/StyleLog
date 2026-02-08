@@ -4,25 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 상세</title>
-    <!-- 스타일시트 -->
-    <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/layout.css">
-    <link rel="stylesheet" href="styles/components.css">
-    <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/detail.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/photo-gallery.css">
+    <link rel="stylesheet" href="styles/bottom-nav.css">
     <!-- Supabase 클라이언트 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 공통 스크립트 -->
+    <!-- 설정 및 API -->
     <script src="scripts/config.js"></script>
     <script src="scripts/api.js"></script>
     <script src="scripts/common.js"></script>
-    <script src="scripts/components.js"></script>
 </head>
 <body class="has-bottom-nav">
-    <!-- 상세 화면 -->
-    <main class="container" id="detailView">
+    <!-- 상세 화면 - 사진 포함 -->
+    <div class="container" id="detailView">
         <!-- 헤더 (사진 위에 오버레이) -->
         <header class="detail-header">
             <button class="icon-btn back-btn">
@@ -42,10 +37,10 @@
         <!-- 사진 섹션 (동적 생성) -->
 
         <!-- 콘텐츠 섹션 -->
-        <article class="content-section">
+        <div class="content-section">
             <!-- 날짜 정보 -->
             <div class="date-info">
-                <time class="date-label"></time>
+                <span class="date-label"></span>
             </div>
 
             <!-- 제목 -->
@@ -58,9 +53,9 @@
             <div class="content-body"></div>
 
             <!-- 태그 (옵션) -->
-            <nav class="tags"></nav>
-        </article>
-    </main>
+            <div class="tags"></div>
+        </div>
+    </div>
 
     <!-- 메뉴 팝업 -->
     <div class="menu-popup" id="menuPopup">
@@ -179,14 +174,13 @@
         <a href="favorite.html" class="bottom-nav-item">
             <div class="bottom-nav-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
             </div>
             <span class="bottom-nav-label">즐겨찾기</span>
         </a>
     </nav>
 
-    <!-- 페이지 스크립트 -->
     <script src="scripts/auth.js"></script>
     <script src="scripts/detail.js"></script>
     <script>
@@ -197,3 +191,4 @@
     </script>
 </body>
 </html>
+

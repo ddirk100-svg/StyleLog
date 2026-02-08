@@ -1,16 +1,30 @@
 // 스타일로그 API 서비스
 
 const StyleLogAPI = {
-    // 모든 로그 가져오기
-    async getAll() {
+    // 모든 로그 가져오기 (페이지네이션 지원)
+    async getAll(options = {}) {
         try {
-            const { data, error } = await supabaseClient
+            const { 
+                limit = 50,  // 기본 50개씩 로드
+                offset = 0,  // 시작 위치
+                orderBy = 'date',
+                ascending = false
+            } = options;
+            
+            let query = supabaseClient
                 .from('style_logs')
-                .select('*')
-                .order('date', { ascending: false });
+                .select('*', { count: 'exact' })
+                .order(orderBy, { ascending });
+            
+            // 페이지네이션 적용
+            if (limit) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            
+            const { data, error, count } = await query;
             
             if (error) throw error;
-            return data;
+            return { data, count };
         } catch (error) {
             console.error('로그 조회 오류:', error);
             throw error;
@@ -71,6 +85,27 @@ const StyleLogAPI = {
         }
     },
     
+    // ID로 특정 로그 가져오기
+    async getById(id) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('style_logs')
+                .select('*')
+                .eq('id', id)
+                .single();
+            
+            if (error) {
+                throw error;
+            }
+            
+            console.log(`✅ ID ${id} 데이터 조회 성공:`, data);
+            return data;
+        } catch (error) {
+            console.error('ID 조회 오류:', error);
+            throw error;
+        }
+    },
+    
     // 특정 날짜의 로그 가져오기
     async getByDate(date) {
         try {
@@ -78,19 +113,22 @@ const StyleLogAPI = {
                 .from('style_logs')
                 .select('*')
                 .eq('date', date)
-                .single();
+                .order('created_at', { ascending: false })
+                .limit(1);
             
             if (error) {
-                if (error.code === 'PGRST116') {
-                    // 데이터 없음 - 에러가 아닌 null 반환
-                    console.log(`📭 ${date} 날짜에 데이터 없음`);
-                    return null;
-                }
                 throw error;
             }
             
-            console.log(`✅ ${date} 데이터 조회 성공:`, data);
-            return data;
+            // 데이터가 없으면 null 반환
+            if (!data || data.length === 0) {
+                console.log(`📭 ${date} 날짜에 데이터 없음`);
+                return null;
+            }
+            
+            // 첫 번째 데이터 반환 (가장 최근 생성된 것)
+            console.log(`✅ ${date} 데이터 조회 성공:`, data[0]);
+            return data[0];
         } catch (error) {
             console.error('날짜별 조회 오류:', error);
             throw error;
