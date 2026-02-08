@@ -1,10 +1,18 @@
 // ===================================
 // 환경 설정
 // ===================================
-// 개발 환경 체크 (localhost 또는 127.0.0.1이면 개발 환경)
+// 개발 환경 체크
+// - localhost, 127.0.0.1, 192.168.x.x (로컬)
+// - alpha 포함 도메인 (Alpha 배포 환경)
 const isDevelopment = window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1' ||
                       window.location.hostname.includes('192.168');
+
+const isAlpha = window.location.hostname.includes('alpha') || 
+                window.location.hostname.includes('-git-alpha-');
+
+// 테스트 환경 여부 (dev 또는 alpha)
+const isTestEnvironment = isDevelopment || isAlpha;
 
 // ===================================
 // Supabase 설정
@@ -23,7 +31,9 @@ const PROD_CONFIG = {
 };
 
 // 현재 환경에 맞는 설정 선택
-const CONFIG = isDevelopment ? DEV_CONFIG : PROD_CONFIG;
+// dev 또는 alpha → 테스트 DB
+// real → 리얼 DB
+const CONFIG = isTestEnvironment ? DEV_CONFIG : PROD_CONFIG;
 
 // Supabase 클라이언트 초기화
 const SUPABASE_URL = CONFIG.SUPABASE_URL;
@@ -34,8 +44,16 @@ const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 환경 정보 출력 (디버깅용)
-console.log(`🚀 환경: ${isDevelopment ? '개발(테스트)' : '프로덕션(리얼)'}`);
+let environmentName = '프로덕션(리얼)';
+if (isDevelopment) {
+    environmentName = '개발(로컬)';
+} else if (isAlpha) {
+    environmentName = '알파(테스트)';
+}
+
+console.log(`🚀 환경: ${environmentName}`);
 console.log(`📍 Supabase URL: ${SUPABASE_URL}`);
+console.log(`🗄️ DB: ${isTestEnvironment ? '테스트 DB' : '리얼 DB'}`);
 console.log('✅ Supabase 클라이언트 초기화 완료');
 
 // 날씨 API 설정 - Open-Meteo (완전 무료, API 키 불필요!)
