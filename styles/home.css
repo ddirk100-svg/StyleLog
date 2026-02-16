@@ -763,6 +763,7 @@ body:has(.container.day-view-active) {
     gap: 8px;
     padding: 10px 14px;
     background: #f5f6f8;
+    position: relative;
 }
 .filter-btn {
     flex-shrink: 0;
@@ -779,12 +780,12 @@ body:has(.container.day-view-active) {
     cursor: pointer;
 }
 .filter-btn:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 .filter-btn.has-active {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
     position: relative;
 }
 .filter-btn.has-active::after {
@@ -794,7 +795,7 @@ body:has(.container.day-view-active) {
     right: 4px;
     width: 6px;
     height: 6px;
-    background: var(--color-accent);
+    background: var(--color-primary);
     border-radius: 50%;
 }
 .filter-category-chips-wrap {
@@ -804,23 +805,39 @@ body:has(.container.day-view-active) {
     -webkit-overflow-scrolling: touch;
     position: relative;
 }
-.filter-category-chips-wrap::before,
-.filter-category-chips-wrap::after {
+/* 좌측 페이드: 화면 맨 좌측 고정 (버튼/갭 영역에 배치해 콘텐츠와 겹치지 않음) */
+.filter-row-category::before {
     content: '';
     position: absolute;
+    left: 0;
     top: 0;
     bottom: 0;
-    width: 16px;
+    width: 48px; /* filter-btn(40) + gap(8) */
     pointer-events: none;
-    z-index: 1;
-}
-.filter-category-chips-wrap::before {
-    left: 0;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
     background: linear-gradient(to right, #f5f6f8, transparent);
 }
-.filter-category-chips-wrap::after {
+.filter-row-category.fade-left::before {
+    opacity: 1;
+}
+/* 우측 페이드: 화면 맨 우측 고정 (컨테이너 오른쪽 끝) */
+.filter-row-category::after {
+    content: '';
+    position: absolute;
     right: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
     background: linear-gradient(to left, #f5f6f8, transparent);
+}
+.filter-row-category.fade-right::after {
+    opacity: 1;
 }
 .filter-category-chips-wrap::-webkit-scrollbar {
     display: none;
@@ -845,13 +862,13 @@ body:has(.container.day-view-active) {
     white-space: nowrap;
 }
 .filter-category-chip:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 .filter-category-chip.has-filter {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-    background: rgba(103, 213, 245, 0.08);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-bg-hover);
 }
 .filter-row-active {
     display: none;
@@ -861,6 +878,7 @@ body:has(.container.day-view-active) {
     padding: 8px 14px;
     background: #eef2f7;
     border-top: 1px solid #e0e3e8;
+    position: relative;
 }
 .filter-bar.has-active-filters .filter-row-active {
     display: flex;
@@ -874,23 +892,39 @@ body:has(.container.day-view-active) {
     scrollbar-width: none;
     position: relative;
 }
-.filter-active-chips-wrap::before,
-.filter-active-chips-wrap::after {
+/* 좌측 페이드: 화면 맨 좌측 고정 (패딩 영역, 콘텐츠와 겹치지 않음) */
+.filter-row-active::before {
     content: '';
     position: absolute;
+    left: 0;
     top: 0;
     bottom: 0;
-    width: 16px;
+    width: 14px; /* row padding-left 만큼, 패딩 영역에만 배치 */
     pointer-events: none;
-    z-index: 1;
-}
-.filter-active-chips-wrap::before {
-    left: 0;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
     background: linear-gradient(to right, #eef2f7, transparent);
 }
-.filter-active-chips-wrap::after {
+.filter-row-active.fade-left::before {
+    opacity: 1;
+}
+/* 우측 페이드: 화면 맨 우측 고정 */
+.filter-row-active::after {
+    content: '';
+    position: absolute;
     right: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
     background: linear-gradient(to left, #eef2f7, transparent);
+}
+.filter-row-active.fade-right::after {
+    opacity: 1;
 }
 .filter-active-chips-wrap::-webkit-scrollbar {
     display: none;
@@ -908,18 +942,18 @@ body:has(.container.day-view-active) {
     gap: 6px;
     padding: 6px 12px;
     background: #fff;
-    border: 1px solid #d1e8f0;
+    border: 1px solid rgba(102, 126, 234, 0.4);
     border-radius: 6px;
     font-size: 13px;
-    color: #2a9dba;
+    color: var(--color-primary);
     cursor: pointer;
     flex-shrink: 0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 .filter-active-chip:hover {
-    background: rgba(103, 213, 245, 0.12);
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    background: var(--color-bg-hover);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 .filter-active-chip-remove {
     background: none;
@@ -941,9 +975,43 @@ body:has(.container.day-view-active) {
     padding: 10px 20px;
     background: #eef2f7;
     border-bottom: 1px solid #e0e3e8;
+    position: relative;
 }
 .filter-modal.has-selection .filter-modal-active-row {
     display: flex;
+}
+/* filter-modal-active-row 좌/우 페이드 (overflow 시 화면 끝 고정) */
+.filter-modal-active-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: linear-gradient(to right, #eef2f7, transparent);
+}
+.filter-modal-active-row.fade-left::before {
+    opacity: 1;
+}
+.filter-modal-active-row::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: linear-gradient(to left, #eef2f7, transparent);
+}
+.filter-modal-active-row.fade-right::after {
+    opacity: 1;
 }
 .filter-modal-active-wrap {
     flex: 1;
@@ -968,7 +1036,7 @@ body:has(.container.day-view-active) {
 }
 .filter-modal-reset-btn:hover,
 .filter-reset-btn:hover {
-    color: var(--color-accent);
+    color: var(--color-primary);
 }
 .filter-modal-reset-btn {
     padding: 6px 12px;
@@ -1053,12 +1121,12 @@ body:has(.container.day-view-active) {
     margin-bottom: -1px;
 }
 .filter-tab:hover {
-    color: var(--color-accent);
+    color: var(--color-primary);
 }
 .filter-tab.active {
-    color: var(--color-accent);
+    color: var(--color-primary);
     font-weight: 600;
-    border-bottom-color: var(--color-accent);
+    border-bottom-color: var(--color-primary);
 }
 .filter-modal-body {
     overflow-y: auto;
@@ -1077,6 +1145,10 @@ body:has(.container.day-view-active) {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
+/* 연, 날씨적합도: 1열 세로 배치 */
+.filter-options-column {
+    grid-template-columns: 1fr;
+}
 .filter-options-favorites .filter-option {
     grid-column: 1 / -1;
 }
@@ -1093,23 +1165,23 @@ body:has(.container.day-view-active) {
     transition: all 0.2s;
 }
 .filter-option:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-primary);
 }
 .filter-option input[type="radio"],
 .filter-option input[type="checkbox"] {
     margin: 0;
     width: 20px;
     height: 20px;
-    accent-color: var(--color-accent);
+    accent-color: var(--color-primary);
 }
 .filter-option input:checked + span,
 .filter-option:has(input:checked) span {
     font-weight: 600;
-    color: var(--color-accent);
+    color: var(--color-primary);
 }
 .filter-option:has(input:checked) {
-    border-color: var(--color-accent);
-    background: rgba(103, 213, 245, 0.08);
+    border-color: var(--color-primary);
+    background: var(--color-bg-hover);
 }
 .filter-option-full {
     width: 100%;
@@ -1117,7 +1189,10 @@ body:has(.container.day-view-active) {
 .filter-temp-sliders {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 28px;
+    min-height: 160px;
+    padding: 28px 0;
+    justify-content: center;
 }
 .filter-temp-row {
     display: flex;
@@ -1167,6 +1242,31 @@ body:has(.container.day-view-active) {
     font-weight: 600;
     min-width: 60px;
 }
+/* 기온 슬라이더 토스트 (잠깐 나타났다 사라짐) - 적용 버튼과 슬라이더 사이 */
+.filter-temp-toast {
+    position: fixed;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%) translateY(24px);
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 13px;
+    border-radius: 8px;
+    z-index: 10001;
+    opacity: 0;
+    transition: opacity 0.12s, transform 0.12s;
+    pointer-events: none;
+    min-width: 320px;
+    max-width: calc(100vw - 40px);
+    text-align: center;
+    white-space: nowrap;
+}
+.filter-temp-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
 .filter-modal-footer {
     padding: 20px;
     border-top: 1px solid var(--color-border-lighter);
@@ -1197,7 +1297,7 @@ body:has(.container.day-view-active) {
     padding: 8px;
 }
 .filter-reset-all-btn:hover {
-    color: var(--color-accent);
+    color: var(--color-primary);
 }
 
 .weather-section {

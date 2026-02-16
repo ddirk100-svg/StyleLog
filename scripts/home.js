@@ -1162,6 +1162,7 @@ function initFilterModal() {
         renderMonthOptions();
         switchTab(activeTab);
         updateModalChipsFromUI();
+        requestAnimationFrame(() => refreshAllFilterFades());
     }
 
     function getFilterStateFromModalUI() {
@@ -1264,6 +1265,7 @@ function initFilterModal() {
                 updateModalChipsFromUI();
             });
         });
+        requestAnimationFrame(() => refreshAllFilterFades());
     }
 
     function clearModalFilterByKey(key) {
@@ -1479,17 +1481,40 @@ function initFilterModal() {
     document.getElementById('filterModalResetBtn')?.addEventListener('click', doResetModalOnly);
     document.getElementById('filterBarResetBtn')?.addEventListener('click', doReset);
 
+    function showTempToast(msg) {
+        const existing = document.getElementById('filter-temp-toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.id = 'filter-temp-toast';
+        toast.className = 'filter-temp-toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 200);
+        }, 2000);
+    }
+
     sliderLow?.addEventListener('input', () => {
         let v = parseInt(sliderLow.value);
         const high = parseInt(sliderHigh?.value ?? 40);
-        if (v > high) { v = high; sliderLow.value = v; }
+        if (v > high) {
+            v = high;
+            sliderLow.value = v;
+            showTempToast('최저 기온은 최고 기온(' + high + '°)보다 높을 수 없어요.');
+        }
         if (valueLow) valueLow.textContent = `${v}° 이상`;
         updateModalChipsFromUI();
     });
     sliderHigh?.addEventListener('input', () => {
         let v = parseInt(sliderHigh.value);
         const low = parseInt(sliderLow?.value ?? -20);
-        if (v < low) { v = low; sliderHigh.value = v; }
+        if (v < low) {
+            v = low;
+            sliderHigh.value = v;
+            showTempToast('최고 기온은 최저 기온(' + low + '°)보다 낮을 수 없어요.');
+        }
         if (valueHigh) valueHigh.textContent = `${v}° 이하`;
         updateModalChipsFromUI();
     });
@@ -1500,7 +1525,36 @@ function initFilterModal() {
         }
     });
 
+    // 스크롤 overflow 시 좌/우 페이드 표시 (항목이 한 줄 초과할 때만)
+    // 좌/우 모두 row에 적용해 화면 맨 좌/우에 고정 (콘텐츠와 겹치지 않음)
+    function updateScrollFade(wrap) {
+        if (!wrap || wrap.offsetParent === null) return;
+        const overflow = wrap.scrollWidth > wrap.clientWidth;
+        const atLeft = wrap.scrollLeft <= 2;
+        const atRight = wrap.scrollLeft >= wrap.scrollWidth - wrap.clientWidth - 2;
+        const row = wrap.closest('.filter-row-category, .filter-row-active, .filter-modal-active-row');
+        if (row) {
+            row.classList.toggle('fade-left', overflow && !atLeft);
+            row.classList.toggle('fade-right', overflow && !atRight);
+        }
+    }
+    function refreshAllFilterFades() {
+        document.querySelectorAll('.filter-category-chips-wrap, .filter-active-chips-wrap, .filter-modal-active-wrap').forEach(updateScrollFade);
+    }
+
+    document.querySelectorAll('.filter-category-chips-wrap, .filter-active-chips-wrap, .filter-modal-active-wrap').forEach(wrap => {
+        wrap.addEventListener('scroll', () => updateScrollFade(wrap));
+    });
+    window.addEventListener('resize', refreshAllFilterFades);
+
+    const origRenderActiveChips = renderActiveChips;
+    renderActiveChips = function() {
+        origRenderActiveChips();
+        requestAnimationFrame(refreshAllFilterFades);
+    };
+
     renderActiveChips();
+    refreshAllFilterFades();
 
     // URL 파라미터 ?filter=fav → 즐겨찾기 필터 적용 (마이페이지 "즐겨찾기 보기" 링크용)
     if (new URLSearchParams(location.search).get('filter') === 'fav') {

@@ -31,7 +31,7 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-accent) 0%, #5cc4e8 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: white;
     font-size: 24px;
     font-weight: 700;
@@ -94,7 +94,7 @@
     display: block;
     font-size: 24px;
     font-weight: 700;
-    color: var(--color-accent);
+    color: var(--color-primary);
     margin-bottom: 4px;
 }
 
@@ -131,7 +131,7 @@
     width: 32px;
     font-size: 18px;
     text-align: center;
-    color: var(--color-accent);
+    color: var(--color-primary);
 }
 
 .menu-label {
