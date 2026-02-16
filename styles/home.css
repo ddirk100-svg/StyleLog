@@ -802,6 +802,25 @@ body:has(.container.day-view-active) {
     min-width: 0;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    position: relative;
+}
+.filter-category-chips-wrap::before,
+.filter-category-chips-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    pointer-events: none;
+    z-index: 1;
+}
+.filter-category-chips-wrap::before {
+    left: 0;
+    background: linear-gradient(to right, #f5f6f8, transparent);
+}
+.filter-category-chips-wrap::after {
+    right: 0;
+    background: linear-gradient(to left, #f5f6f8, transparent);
 }
 .filter-category-chips-wrap::-webkit-scrollbar {
     display: none;
@@ -853,6 +872,25 @@ body:has(.container.day-view-active) {
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    position: relative;
+}
+.filter-active-chips-wrap::before,
+.filter-active-chips-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    pointer-events: none;
+    z-index: 1;
+}
+.filter-active-chips-wrap::before {
+    left: 0;
+    background: linear-gradient(to right, #eef2f7, transparent);
+}
+.filter-active-chips-wrap::after {
+    right: 0;
+    background: linear-gradient(to left, #eef2f7, transparent);
 }
 .filter-active-chips-wrap::-webkit-scrollbar {
     display: none;
