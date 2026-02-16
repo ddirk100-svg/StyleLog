@@ -716,23 +716,23 @@ async function updateWeatherDataInBackground(logs) {
     (async () => {
         for (const log of logsNeedingWeather) {
             try {
-                const weatherData = await getWeatherByDate(log.date);
+            const weatherData = await getWeatherByDate(log.date);
                 if (weatherData?.unavailable && weatherData?.reason === 'future') continue;
                 if (weatherData?.tempMin != null && weatherData?.tempMax != null) {
-                    await StyleLogAPI.update(log.id, {
-                        weather_temp_min: weatherData.tempMin,
-                        weather_temp_max: weatherData.tempMax,
-                        weather_temp: weatherData.temp
-                    });
-                    log.weather_temp_min = weatherData.tempMin;
-                    log.weather_temp_max = weatherData.tempMax;
-                    log.weather_temp = weatherData.temp;
-                    updateDayItemWeather(log.id, weatherData);
-                }
-                await new Promise(r => setTimeout(r, 250));
-            } catch (error) {
-                console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
+                await StyleLogAPI.update(log.id, {
+                    weather_temp_min: weatherData.tempMin,
+                    weather_temp_max: weatherData.tempMax,
+                    weather_temp: weatherData.temp
+                });
+                log.weather_temp_min = weatherData.tempMin;
+                log.weather_temp_max = weatherData.tempMax;
+                log.weather_temp = weatherData.temp;
+                updateDayItemWeather(log.id, weatherData);
             }
+                await new Promise(r => setTimeout(r, 250));
+        } catch (error) {
+            console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
+        }
         }
     })();
 }
@@ -849,7 +849,7 @@ function createDayItemForHome(log) {
     
     const weatherFitChip = (log.weather_fit && ['cold','good','hot'].includes(log.weather_fit))
         ? `<span class="day-weather-fit-chip day-weather-fit-chip--${log.weather_fit}">${log.weather_fit}</span>` : '';
-
+    
     // 사진이 있는 경우
     if (log.photos && log.photos.length > 0) {
         dayItem.innerHTML = `
@@ -980,8 +980,8 @@ function attachDayListEventListeners() {
             } catch (err) {
                 alert('즐겨찾기 변경에 실패했습니다.');
             }
-            return;
-        }
+                return;
+            }
         
         // 메뉴 버튼
         const menuBtn = e.target.closest('.item-menu-btn');
@@ -1084,9 +1084,9 @@ function renderFullDayList(logs) {
     if (logs.length === 0) {
         container.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: #999;"><p>해당 조건의 기록이 없습니다.</p></div>`;
         attachDayListEventListeners();
-        return;
-    }
-    
+                return;
+            }
+            
     let previousYear = null;
     let previousMonth = null;
     const fragment = document.createDocumentFragment();
@@ -1259,7 +1259,7 @@ function initFilterModal() {
         modalActiveChipsEl.innerHTML = chipsHTML;
         modalActiveChipsEl.querySelectorAll('.filter-active-chip, .filter-active-chip-remove').forEach(el => {
             el.addEventListener('click', (e) => {
-                e.stopPropagation();
+            e.stopPropagation();
                 const key = el.dataset.key || el.closest('.filter-active-chip')?.dataset.key;
                 clearModalFilterByKey(key);
                 updateModalChipsFromUI();
