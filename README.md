@@ -22,7 +22,7 @@ stylelog/
 ├── index.html              # 홈 화면
 ├── write.html              # 착장 작성/수정
 ├── detail.html             # 상세 보기
-├── favorite.html           # 즐겨찾기 목록
+├── mypage.html             # 마이페이지
 ├── landing.html            # 랜딩 페이지
 ├── login.html              # 로그인
 ├── signup.html             # 회원가입
@@ -41,7 +41,7 @@ stylelog/
     ├── home.js
     ├── detail.js
     ├── write.js
-    ├── favorite.js
+    ├── mypage.js
     ├── config.js
     ├── api.js
     ├── common.js
@@ -78,7 +78,12 @@ stylelog/
 
 ### 즐겨찾기
 - 상세 화면에서 하트 아이콘으로 등록
-- `favorite.html`에서 즐겨찾기 목록 조회
+- 홈 필터에서 "즐겨찾기만 보기" 선택 또는 마이페이지 "즐겨찾기 보기" 링크로 조회
+
+### 마이페이지 (mypage.html)
+- 프로필(이메일) 및 기록/즐겨찾기 통계
+- 즐겨찾기 보기(홈 필터 적용), 새 기록 작성 링크
+- 로그아웃
 
 ## 🚀 실행 방법
 

@@ -34,6 +34,13 @@ body {
     border-bottom: 1px solid var(--color-border-lighter);
 }
 
+.write-header .cancel-btn {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .write-header .header-title {
     position: absolute;
     left: 50%;
@@ -113,28 +120,86 @@ body {
     border-color: var(--color-border-focus);
 }
 
+/* 날씨적합도 단일선택 버튼 */
+.weather-fit-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.weather-fit-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    font-size: var(--font-size-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background, border-color, color 0.2s;
+}
+
+.weather-fit-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.weather-fit-btn.active {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: white;
+}
+
 .form-textarea {
     width: 100%;
-    padding: 12px 16px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 15px;
-    color: #333;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-md);
+    color: var(--color-text-primary);
     line-height: 1.6;
     resize: vertical;
     font-family: inherit;
-    transition: border-color 0.2s;
+    transition: border-color var(--transition-fast);
 }
 
 .form-textarea:focus {
     outline: none;
-    border-color: #67d5f5;
+    border-color: var(--color-border-focus);
 }
 
 .form-hint {
-    margin-top: 8px;
-    font-size: 13px;
-    color: #999;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.form-input[readonly],
+input.form-input[readonly] {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+/* 풀폭 주요 버튼 (폼 제출 등) */
+.btn-primary {
+    width: 100%;
+    padding: 14px var(--spacing-xl);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* 날씨 표시 */

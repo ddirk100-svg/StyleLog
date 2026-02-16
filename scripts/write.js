@@ -106,6 +106,14 @@ async function loadLogForEdit(logId) {
             description: currentLog.weather_description || '흐림'
         };
         updateWeatherDisplay(currentWeather);
+
+        // 날씨적합도 로드
+        const weatherFit = currentLog.weather_fit || 'good';
+        const weatherFitInput = document.getElementById('weatherFitInput');
+        if (weatherFitInput) weatherFitInput.value = weatherFit;
+        document.querySelectorAll('.weather-fit-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === weatherFit);
+        });
         
         // 헤더 타이틀 변경
         const headerTitle = document.querySelector('.write-header h1');
@@ -291,6 +299,16 @@ function attachEventListeners() {
     document.getElementById('dateInput').addEventListener('change', validateForm);
     document.getElementById('titleInput').addEventListener('input', validateForm);
     document.getElementById('contentInput').addEventListener('input', validateForm);
+
+    // 날씨적합도 단일선택 버튼
+    document.querySelectorAll('.weather-fit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.weather-fit-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const input = document.getElementById('weatherFitInput');
+            if (input) input.value = btn.dataset.value;
+        });
+    });
 }
 
 // 사진 선택 처리
@@ -413,6 +431,9 @@ async function handleSubmit() {
         // 지금은 data URL을 그대로 저장 (임시)
         const photoUrls = selectedPhotos.map(photo => photo.dataUrl);
         
+        const weatherFitInput = document.getElementById('weatherFitInput');
+        const weatherFit = weatherFitInput?.value || 'good';
+
         // 로그 데이터 생성
         const logData = {
             date: dateInput.value,
@@ -423,6 +444,7 @@ async function handleSubmit() {
             weather_temp_min: currentWeather?.tempMin || null,
             weather_temp_max: currentWeather?.tempMax || null,
             weather_description: currentWeather?.description || null,
+            weather_fit: weatherFit,
             photos: photoUrls.length > 0 ? photoUrls : null,
             tags: tags.length > 0 ? tags : null,
             is_favorite: isEditMode ? currentLog.is_favorite : false // 수정 시에는 기존 값 유지, 신규는 false

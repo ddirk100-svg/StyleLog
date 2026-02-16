@@ -5,23 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 오늘 뭐입지?</title>
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
+    <link rel="stylesheet" href="styles/variables.css">
     <link rel="stylesheet" href="styles/home.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/month-detail.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
-    <!-- Supabase 클라이언트 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 설정 및 API -->
-    <script src="scripts/config.js"></script>
-    <script src="scripts/api.js"></script>
-    <script src="scripts/auth.js"></script>
-    <script src="scripts/common.js"></script>
 </head>
 <body class="has-bottom-nav">
     <!-- 로딩 화면 -->
-    <div id="authLoading" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center;">
-        <p style="font-size: 18px; color: #999;">로딩 중...</p>
+    <div id="authLoading" class="auth-loading" style="display: none;">
+        <p>로딩 중...</p>
     </div>
     
     <!-- 홈 화면 - 카드뷰 (가로형) -->
@@ -85,30 +79,97 @@
             </div>
         </div>
 
-        <!-- 날씨 필터 (기온으로 기록 필터링) -->
-        <div class="weather-filter-section" id="weatherFilterSection">
-            <div class="weather-filter-inner">
-                <div class="weather-filter-sliders">
-                    <div class="weather-filter-slider-group weather-filter-min">
-                        <span class="weather-filter-slider-label">최저</span>
-                        <input type="range" class="weather-filter-slider" id="weatherFilterSliderLow" min="-20" max="40" value="-20">
-                        <span class="weather-filter-slider-value" id="weatherFilterValueLow">-20° 이상</span>
-                    </div>
-                    <div class="weather-filter-slider-group weather-filter-max">
-                        <span class="weather-filter-slider-label">최고</span>
-                        <input type="range" class="weather-filter-slider" id="weatherFilterSliderHigh" min="-20" max="40" value="40">
-                        <span class="weather-filter-slider-value" id="weatherFilterValueHigh">40° 이하</span>
+        <!-- 필터 바 (무신사 스타일) -->
+        <div class="filter-bar" id="filterBar">
+            <div class="filter-row filter-row-category">
+                <button type="button" class="filter-btn filter-btn-icon" id="filterOpenBtn" title="필터">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                </button>
+                <div class="filter-category-chips-wrap">
+                    <div class="filter-category-chips">
+                        <button type="button" class="filter-category-chip" data-tab="year">연</button>
+                        <button type="button" class="filter-category-chip" data-tab="month">월</button>
+                        <button type="button" class="filter-category-chip" data-tab="weatherFit">날씨적합도</button>
+                        <button type="button" class="filter-category-chip" data-tab="temp">기온</button>
+                        <button type="button" class="filter-category-chip" data-tab="favorites">즐겨찾기</button>
                     </div>
                 </div>
-                <div class="weather-filter-select-wrap">
-                    <button type="button" class="weather-filter-select-btn" id="weatherFilterSelectBtn" aria-expanded="false">
-                        <span id="weatherFilterSelectText">전체</span>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="filter-row filter-row-active">
+                <div class="filter-active-chips-wrap">
+                    <div class="filter-active-chips" id="filterActiveChips"></div>
+                </div>
+                <button type="button" class="filter-reset-btn" id="filterBarResetBtn">초기화</button>
+            </div>
+        </div>
+
+        <!-- 필터 모달 -->
+        <div class="filter-modal" id="filterModal">
+            <div class="filter-modal-overlay"></div>
+            <div class="filter-modal-content">
+                <div class="filter-modal-header">
+                    <h3>필터</h3>
+                    <button type="button" class="filter-modal-close" id="filterModalClose">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
-                    <div class="weather-filter-select-dropdown" id="weatherFilterSelectDropdown">
-                        <button type="button" class="weather-filter-select-item" data-value="today">오늘</button>
-                        <button type="button" class="weather-filter-select-item" data-value="all">전체</button>
+                </div>
+                <div class="filter-modal-tabs">
+                    <button type="button" class="filter-tab active" data-tab="year">연</button>
+                    <button type="button" class="filter-tab" data-tab="month">월</button>
+                    <button type="button" class="filter-tab" data-tab="weatherFit">날씨적합도</button>
+                    <button type="button" class="filter-tab" data-tab="temp">기온</button>
+                    <button type="button" class="filter-tab" data-tab="favorites">즐겨찾기</button>
+                </div>
+                <div class="filter-modal-active-row" id="filterModalActiveRow">
+                    <div class="filter-modal-active-wrap">
+                        <div class="filter-active-chips" id="filterModalActiveChips"></div>
                     </div>
+                    <button type="button" class="filter-modal-reset-btn" id="filterModalResetBtn">초기화</button>
+                </div>
+                <div class="filter-modal-body">
+                    <div class="filter-tab-panel active" id="filterPanelYear">
+                        <div class="filter-options filter-options-grid" id="filterYearOptions"></div>
+                    </div>
+                    <div class="filter-tab-panel" id="filterPanelMonth">
+                        <div class="filter-options filter-options-grid" id="filterMonthOptions"></div>
+                    </div>
+                    <div class="filter-tab-panel" id="filterPanelWeatherFit">
+                        <div class="filter-options filter-options-grid" id="filterWeatherFitOptions">
+                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="cold"><span>cold</span></label>
+                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="good"><span>good</span></label>
+                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="hot"><span>hot</span></label>
+                        </div>
+                    </div>
+                    <div class="filter-tab-panel" id="filterPanelTemp">
+                        <div class="filter-temp-sliders">
+                            <div class="filter-temp-row">
+                                <span class="filter-temp-label">최저</span>
+                                <input type="range" id="filterSliderLow" min="-20" max="40" value="-20">
+                                <span id="filterValueLow">-20° 이상</span>
+                            </div>
+                            <div class="filter-temp-row">
+                                <span class="filter-temp-label">최고</span>
+                                <input type="range" id="filterSliderHigh" min="-20" max="40" value="40">
+                                <span id="filterValueHigh">40° 이하</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-tab-panel" id="filterPanelFavorites">
+                        <div class="filter-options filter-options-grid filter-options-favorites">
+                            <label class="filter-option filter-option-full">
+                                <input type="radio" name="filterFavorites" value=""><span>전체</span>
+                            </label>
+                            <label class="filter-option filter-option-full">
+                                <input type="radio" name="filterFavorites" value="only" id="filterFavoritesOnly"><span>즐겨찾기만 보기</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-modal-footer">
+                    <button type="button" class="filter-apply-btn" id="filterApplyBtn">0개 확인하기</button>
+                    <button type="button" class="filter-reset-all-btn" id="filterResetAllBtn">선택 초기화</button>
                 </div>
             </div>
         </div>
@@ -162,18 +223,23 @@
             </div>
             <span class="bottom-nav-label">작성</span>
         </a>
-        <a href="favorite.html" class="bottom-nav-item">
+        <a href="mypage.html" class="bottom-nav-item">
             <div class="bottom-nav-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
                 </svg>
             </div>
-            <span class="bottom-nav-label">즐겨찾기</span>
+            <span class="bottom-nav-label">마이</span>
         </a>
     </nav>
 
-    <script src="scripts/common.js"></script>
-    <script src="scripts/home.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="scripts/config.js" defer></script>
+    <script src="scripts/api.js" defer></script>
+    <script src="scripts/auth.js" defer></script>
+    <script src="scripts/common.js" defer></script>
+    <script src="scripts/home.js" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

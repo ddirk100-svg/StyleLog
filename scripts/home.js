@@ -14,10 +14,13 @@ let isLoading = false;
 let hasMoreData = true;
 let allLoadedLogs = []; // 로드된 모든 로그 저장
 
-// 날씨 필터 상태 (최저/최고 슬라이더)
+// 필터 상태
 let weatherFilterLow = -20;
 let weatherFilterHigh = 40;
-let weatherFilterMode = 'all'; // 'today' | 'all' | 'custom'
+let filterYears = [];
+let filterMonths = [];
+let filterWeatherFit = [];
+let filterFavoritesOnly = false;
 
 // 페이지 초기화
 async function initPage() {
@@ -33,11 +36,11 @@ async function initPage() {
     // 모든 연도의 데이터를 로드
     await loadAllDayList();
     
-        // 스와이프 기능 초기화
-        initSwipe();
-        
-        // 날씨 필터 초기화
-        initWeatherFilter();
+    // 스와이프 기능 초기화
+    initSwipe();
+    
+    // 필터 모달 초기화
+    initFilterModal();
 }
 
 // 일기가 있는 연도 목록 로드
@@ -585,8 +588,8 @@ async function loadMoreDayList() {
                     </div>
                 `;
             } else {
-                // 모든 데이터를 불러온 경우 완료 메시지 표시
-                showEndMessage();
+                // 모든 데이터를 불러온 경우 완료 메시지 표시 (필터 부합 항목이 있을 때만)
+                if (getFilteredLogs().length > 0) showEndMessage();
             }
             return;
         }
@@ -609,8 +612,8 @@ async function loadMoreDayList() {
         // 다음 페이지를 위해 offset 증가
         currentOffset += PAGE_SIZE;
         
-        // 마지막 페이지면 완료 메시지 표시
-        if (!hasMoreData) {
+        // 마지막 페이지면 완료 메시지 표시 (필터 부합 항목이 있을 때만)
+        if (!hasMoreData && getFilteredLogs().length > 0) {
             showEndMessage();
         }
         
@@ -751,87 +754,90 @@ function updateDayItemWeather(logId, weatherData) {
     }
 }
 
-// 데이터를 UI에 렌더링
+// 데이터를 UI에 렌더링 (DocumentFragment로 배치 reflow 최소화)
 async function renderDayList(logs) {
     const container = document.querySelector('.month-cards-container');
     if (!container) return;
     
-    // 이전 연도와 월을 추적하여 연도/월이 바뀔 때 레이블 표시
     let previousYear = null;
     let previousMonth = null;
-    
-    // 이미 렌더링된 마지막 항목의 연도/월 확인
     const allYearLabels = container.querySelectorAll('.year-label-day-view');
     const allMonthLabels = container.querySelectorAll('.month-label-day-view');
     
     if (allYearLabels.length > 0) {
-        const lastYearLabel = allYearLabels[allYearLabels.length - 1];
-        previousYear = parseInt(lastYearLabel.textContent);
+        previousYear = parseInt(allYearLabels[allYearLabels.length - 1].textContent);
     }
     if (allMonthLabels.length > 0) {
-        const lastMonthLabel = allMonthLabels[allMonthLabels.length - 1];
-        previousMonth = parseInt(lastMonthLabel.textContent);
+        previousMonth = parseInt(allMonthLabels[allMonthLabels.length - 1].textContent);
     }
     
-    // 날짜별로 렌더링
+    const fragment = document.createDocumentFragment();
     logs.forEach(log => {
         const date = new Date(log.date);
         const currentYear = date.getFullYear();
         const currentMonth = date.getMonth() + 1;
         
-        // 연도가 바뀌면 연도 레이블 표시
         if (previousYear !== currentYear) {
             const yearLabel = document.createElement('div');
             yearLabel.className = 'year-label-day-view';
             yearLabel.textContent = `${currentYear}년`;
-            container.appendChild(yearLabel);
+            fragment.appendChild(yearLabel);
             previousYear = currentYear;
-            previousMonth = null; // 연도가 바뀌면 월도 리셋
+            previousMonth = null;
         }
         
-        // 월이 바뀌면 월 텍스트 표시
         if (previousMonth !== currentMonth) {
             const monthLabel = document.createElement('div');
             monthLabel.className = 'month-label-day-view';
             monthLabel.textContent = `${currentMonth}월`;
-            container.appendChild(monthLabel);
+            fragment.appendChild(monthLabel);
             previousMonth = currentMonth;
         }
         
-        const dayItem = createDayItemForHome(log);
-        container.appendChild(dayItem);
+        fragment.appendChild(createDayItemForHome(log));
     });
     
-    // 이벤트 리스너 등록
+    container.appendChild(fragment);
     attachDayListEventListeners();
+}
+
+// throttle 헬퍼 (스크롤 등 고빈도 이벤트 최적화)
+function throttle(fn, delay) {
+    let last = 0;
+    let timer = null;
+    return function(...args) {
+        const now = Date.now();
+        const remaining = delay - (now - last);
+        if (remaining <= 0) {
+            if (timer) clearTimeout(timer);
+            last = now;
+            fn.apply(this, args);
+        } else if (!timer) {
+            timer = setTimeout(() => {
+                last = Date.now();
+                timer = null;
+                fn.apply(this, args);
+            }, remaining);
+        }
+    };
 }
 
 // 무한 스크롤 초기화
 function initInfiniteScroll() {
-    // Day 뷰에서는 window(body)가 스크롤 컨테이너
-    // 기존 이벤트 리스너 제거 (중복 방지)
-    window.removeEventListener('scroll', handleInfiniteScroll);
-    
-    // 새 이벤트 리스너 등록
-    window.addEventListener('scroll', handleInfiniteScroll);
-    
-    console.log('✅ 무한 스크롤 초기화 완료 (window scroll)');
+    window.removeEventListener('scroll', throttledHandleInfiniteScroll);
+    window.addEventListener('scroll', throttledHandleInfiniteScroll, { passive: true });
 }
 
-// 무한 스크롤 핸들러
-function handleInfiniteScroll() {
-    // body의 스크롤 위치 사용
+// 무한 스크롤 핸들러 (throttle 적용 - 150ms)
+const throttledHandleInfiniteScroll = throttle(function handleInfiniteScroll() {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollHeight = document.documentElement.scrollHeight;
     const clientHeight = window.innerHeight;
-    
     const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
-    
     if (distanceFromBottom < 500 && !isLoading && hasMoreData) {
-        console.log('📜 스크롤 바닥 근처 - 추가 데이터 로드');
         loadMoreDayList();
     }
-}
+}, 150);
 
 // 일별 아이템 생성 (home.js용)
 function createDayItemForHome(log) {
@@ -841,6 +847,9 @@ function createDayItemForHome(log) {
     const dayItem = document.createElement('div');
     dayItem.className = 'day-item';
     
+    const weatherFitChip = (log.weather_fit && ['cold','good','hot'].includes(log.weather_fit))
+        ? `<span class="day-weather-fit-chip day-weather-fit-chip--${log.weather_fit}">${log.weather_fit}</span>` : '';
+
     // 사진이 있는 경우
     if (log.photos && log.photos.length > 0) {
         dayItem.innerHTML = `
@@ -856,6 +865,7 @@ function createDayItemForHome(log) {
                             <span class="temp-high">${Math.round(log.weather_temp_max)}°</span>
                             <span class="temp-low">${Math.round(log.weather_temp_min)}°</span>
                         </div>` : ''}
+                    ${weatherFitChip}
                 </div>
             </div>
             <div class="day-content photo">
@@ -891,6 +901,7 @@ function createDayItemForHome(log) {
                             <span class="temp-high">${Math.round(log.weather_temp_max)}°</span>
                             <span class="temp-low">${Math.round(log.weather_temp_min)}°</span>
                         </div>` : ''}
+                    ${weatherFitChip}
                 </div>
             </div>
             <div class="day-content text">
@@ -916,23 +927,15 @@ function createDayItemForHome(log) {
         `;
     }
     
-    // innerHTML 후에 dataset과 버튼 속성 설정
-    if (!log.id) {
-        console.error('❌ 로그 ID가 없습니다:', log);
-        return dayItem;
-    }
+    if (!log.id) return dayItem;
     
     dayItem.dataset.logId = log.id;
     dayItem.dataset.date = log.date;
     
-    // 메뉴 버튼 찾아서 data 속성 설정
     const menuBtn = dayItem.querySelector('.item-menu-btn');
     if (menuBtn) {
         menuBtn.setAttribute('data-log-id', log.id);
         menuBtn.setAttribute('data-date', log.date);
-        console.log('✅ 메뉴 버튼 속성 설정:', { id: log.id, date: log.date });
-    } else {
-        console.error('❌ 메뉴 버튼을 찾을 수 없습니다');
     }
     
     // 즐겨찾기 버튼 찾아서 data 속성 설정
@@ -945,162 +948,133 @@ function createDayItemForHome(log) {
     return dayItem;
 }
 
-// Day 뷰 이벤트 리스너 등록
+// Day 뷰 이벤트 위임 (단일 리스너로 모든 day-item 처리 - 메모리/성능 최적화)
+let dayListDelegationAttached = false;
+
 function attachDayListEventListeners() {
-    // 일별 아이템 클릭 - detail 페이지로 이동
-    document.querySelectorAll('.day-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            // 메뉴 버튼이나 팝업, 즐겨찾기 버튼 클릭은 무시
-            if (e.target.closest('.item-menu-btn') || 
-                e.target.closest('.menu-popup') ||
-                e.target.closest('.favorite-toggle-btn')) {
-                return;
-            }
-            const logId = item.dataset.logId;
-            if (logId) {
-                window.location.href = `detail.html?id=${logId}`;
-            } else {
-                console.error('❌ 로그 ID 없음:', item);
-            }
-        });
-    });
+    const container = document.querySelector('.month-cards-container');
+    if (!container || dayListDelegationAttached) return;
+    dayListDelegationAttached = true;
     
-    // 즐겨찾기 버튼 클릭
-    document.querySelectorAll('.favorite-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+    container.addEventListener('click', async function handleDayListClick(e) {
+        const dayItem = e.target.closest('.day-item');
+        if (!dayItem) return;
+        
+        // 즐겨찾기 버튼
+        const favBtn = e.target.closest('.favorite-toggle-btn');
+        if (favBtn) {
             e.stopPropagation();
-            
-            const logId = btn.getAttribute('data-log-id');
-            const isFavorite = btn.getAttribute('data-is-favorite') === 'true';
-            
-            if (!logId) {
-                console.error('❌ 로그 ID 없음');
-                return;
-            }
-            
+            const logId = favBtn.getAttribute('data-log-id');
+            const isFavorite = favBtn.getAttribute('data-is-favorite') === 'true';
+            if (!logId) return;
             try {
                 await StyleLogAPI.update(logId, { is_favorite: !isFavorite });
-                
-                // UI 업데이트
-                btn.classList.toggle('active');
-                btn.setAttribute('data-is-favorite', (!isFavorite).toString());
-                btn.setAttribute('title', !isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가');
-                
-                // SVG fill 업데이트
-                const svg = btn.querySelector('svg');
+                favBtn.classList.toggle('active');
+                favBtn.setAttribute('data-is-favorite', (!isFavorite).toString());
+                favBtn.setAttribute('title', !isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가');
+                const svg = favBtn.querySelector('svg');
                 if (svg) {
                     svg.setAttribute('fill', !isFavorite ? '#ff6b6b' : 'none');
                     svg.setAttribute('stroke', !isFavorite ? '#ff6b6b' : '#555');
                 }
-                
-                console.log('✅ 즐겨찾기 토글 완료');
-            } catch (error) {
-                console.error('❌ 즐겨찾기 토글 오류:', error);
+            } catch (err) {
                 alert('즐겨찾기 변경에 실패했습니다.');
             }
-        });
-    });
-    
-    // 메뉴 버튼 클릭 - 이벤트 위임 방식으로 변경
-    document.querySelectorAll('.item-menu-btn').forEach(btn => {
-        // 기존 이벤트 리스너 제거 (중복 방지)
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
+            return;
+        }
         
-        newBtn.addEventListener('click', (e) => {
+        // 메뉴 버튼
+        const menuBtn = e.target.closest('.item-menu-btn');
+        if (menuBtn) {
             e.stopPropagation();
-            
-            // 버튼에서 직접 읽기
-            let logId = newBtn.getAttribute('data-log-id');
-            let date = newBtn.getAttribute('data-date');
-            
-            console.log('🔍 메뉴 버튼 클릭:', { logId, date, button: newBtn });
-            
-            // 만약 버튼에 없으면 부모 day-item에서 읽기
+            let logId = menuBtn.getAttribute('data-log-id');
+            let date = menuBtn.getAttribute('data-date');
             if (!logId || logId === 'null' || logId === 'undefined') {
-                const dayItem = newBtn.closest('.day-item');
-                if (dayItem) {
-                    logId = dayItem.getAttribute('data-log-id') || dayItem.dataset.logId;
-                    date = dayItem.getAttribute('data-date') || dayItem.dataset.date;
-                }
-                
-                console.log('🔍 부모에서 읽기:', { logId, date });
+                logId = dayItem.getAttribute('data-log-id') || dayItem.dataset.logId;
+                date = dayItem.getAttribute('data-date') || dayItem.dataset.date;
             }
-            
             if (!logId || logId === 'null' || logId === 'undefined') {
-                console.error('❌ 유효하지 않은 로그 ID:', logId);
                 alert('로그 정보를 찾을 수 없습니다.');
                 return;
             }
-            
-            // common.js의 showItemMenu 사용
             if (typeof showItemMenu === 'function') {
-                console.log('📋 메뉴 열기:', { logId, date });
-                showItemMenu(logId, date, 
-                    // 수정 버튼 클릭 시
-                    (id, date) => {
-                        console.log('✏️ 수정 콜백 호출:', { id, date });
-                        if (!id || id === 'null' || id === 'undefined') {
-                            console.error('❌ 유효하지 않은 로그 ID:', id);
-                            alert('로그 정보를 찾을 수 없습니다.');
-                            return;
-                        }
-                        window.location.href = `write.html?id=${id}&date=${date}`;
-                    },
-                    // 삭제 버튼 클릭 시
+                showItemMenu(logId, date,
+                    (id, d) => { if (id) window.location.href = `write.html?id=${id}&date=${d}`; },
                     async (id) => {
                         if (confirm('정말 이 기록을 삭제하시겠습니까?')) {
                             try {
-                                console.log('🗑️ 삭제 시작:', id);
-                                
-                                if (!id || id === 'null' || id === 'undefined') {
-                                    throw new Error('유효하지 않은 로그 ID입니다.');
+                                if (id && StyleLogAPI?.delete) {
+                                    await StyleLogAPI.delete(id);
+                                    alert('삭제되었습니다.');
+                                    location.reload();
                                 }
-                                
-                                if (typeof StyleLogAPI === 'undefined' || !StyleLogAPI.delete) {
-                                    throw new Error('StyleLogAPI가 정의되지 않았습니다.');
-                                }
-                                
-                                const result = await StyleLogAPI.delete(id);
-                                console.log('✅ 삭제 성공:', result);
-                                alert('삭제되었습니다.');
-                                location.reload();
-                            } catch (error) {
-                                console.error('❌ 삭제 오류:', error);
-                                console.error('오류 상세:', {
-                                    message: error.message,
-                                    code: error.code,
-                                    details: error.details,
-                                    hint: error.hint
-                                });
-                                alert(`삭제에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
+                            } catch (err) {
+                                alert(`삭제에 실패했습니다: ${err?.message || '알 수 없는 오류'}`);
                             }
                         }
                     }
                 );
-            } else {
-                console.error('❌ showItemMenu 함수를 찾을 수 없습니다.');
             }
-        });
+            return;
+        }
+        
+        // day-item 클릭 (상세로 이동) - 메뉴/즐겨찾기 제외
+        if (e.target.closest('.menu-popup')) return;
+        const logId = dayItem.dataset.logId;
+        if (logId) window.location.href = `detail.html?id=${logId}`;
     });
 }
 
 // 날씨 필터: 해당 날의 최저 ≥ low 이고 최고 ≤ high 인 기록만
 function passesWeatherFilter(log) {
     const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
-    if (isFullRange) return true;
-    if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
-    return log.weather_temp_min >= weatherFilterLow && log.weather_temp_max <= weatherFilterHigh;
+    if (!isFullRange) {
+        if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
+        if (log.weather_temp_min < weatherFilterLow || log.weather_temp_max > weatherFilterHigh) return false;
+    }
+    if (filterYears.length > 0) {
+        const y = new Date(log.date).getFullYear();
+        if (!filterYears.includes(y)) return false;
+    }
+    if (filterMonths.length > 0) {
+        const m = new Date(log.date).getMonth() + 1;
+        if (!filterMonths.includes(m)) return false;
+    }
+    if (filterWeatherFit.length > 0) {
+        const fit = log.weather_fit || 'good';
+        if (!filterWeatherFit.includes(fit)) return false;
+    }
+    if (filterFavoritesOnly && !log.is_favorite) return false;
+    return true;
 }
 
 // 필터 적용된 로그 목록
 function getFilteredLogs() {
-    const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
-    if (isFullRange) return allLoadedLogs;
     return allLoadedLogs.filter(passesWeatherFilter);
 }
 
-// 전체 리스트 클리어 후 재렌더링 (필터 변경 시)
+// 적용된 필터 chip 목록 (표시용)
+function getActiveFilterChips() {
+    const chips = [];
+    if (filterYears.length > 0) {
+        const sorted = [...filterYears].sort((a, b) => b - a);
+        chips.push({ key: 'year', label: sorted.map(y => `${y}년`).join(', '), value: 'year' });
+    }
+    if (filterMonths.length > 0) {
+        const sorted = [...filterMonths].sort((a, b) => a - b);
+        chips.push({ key: 'months', label: sorted.map(m => `${m}월`).join(', '), value: 'months' });
+    }
+    if (filterWeatherFit.length > 0) {
+        const labels = filterWeatherFit.map(v => WEATHER_FIT_LABELS[v]).filter(Boolean);
+        chips.push({ key: 'weatherFit', label: labels.join(', '), value: 'weatherFit' });
+    }
+    const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
+    if (!isFullRange) chips.push({ key: 'temp', label: `${weatherFilterLow}°~${weatherFilterHigh}°`, value: 'temp' });
+    if (filterFavoritesOnly) chips.push({ key: 'fav', label: '즐겨찾기만', value: 'fav' });
+    return chips;
+}
+
+// 전체 리스트 클리어 후 재렌더링 (필터 변경 시, DocumentFragment 사용)
 function renderFullDayList(logs) {
     const container = document.querySelector('.month-cards-container');
     if (!container) return;
@@ -1108,17 +1082,14 @@ function renderFullDayList(logs) {
     container.innerHTML = '';
     
     if (logs.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 60px 20px; color: #999;">
-                <p>해당 기온의 기록이 없습니다.</p>
-            </div>
-        `;
+        container.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: #999;"><p>해당 조건의 기록이 없습니다.</p></div>`;
         attachDayListEventListeners();
         return;
     }
     
     let previousYear = null;
     let previousMonth = null;
+    const fragment = document.createDocumentFragment();
     
     logs.forEach(log => {
         const date = new Date(log.date);
@@ -1129,7 +1100,7 @@ function renderFullDayList(logs) {
             const yearLabel = document.createElement('div');
             yearLabel.className = 'year-label-day-view';
             yearLabel.textContent = `${currentYear}년`;
-            container.appendChild(yearLabel);
+            fragment.appendChild(yearLabel);
             previousYear = currentYear;
             previousMonth = null;
         }
@@ -1138,130 +1109,406 @@ function renderFullDayList(logs) {
             const monthLabel = document.createElement('div');
             monthLabel.className = 'month-label-day-view';
             monthLabel.textContent = `${currentMonth}월`;
-            container.appendChild(monthLabel);
+            fragment.appendChild(monthLabel);
             previousMonth = currentMonth;
         }
         
-        const dayItem = createDayItemForHome(log);
-        container.appendChild(dayItem);
+        fragment.appendChild(createDayItemForHome(log));
     });
     
+    container.appendChild(fragment);
     attachDayListEventListeners();
 }
 
-// 날씨 필터 UI 초기화
-function initWeatherFilter() {
-    const sliderLow = document.getElementById('weatherFilterSliderLow');
-    const sliderHigh = document.getElementById('weatherFilterSliderHigh');
-    const valueLow = document.getElementById('weatherFilterValueLow');
-    const valueHigh = document.getElementById('weatherFilterValueHigh');
-    
-    if (!sliderLow || !sliderHigh) return;
-    
-    function updateValues() {
+// 필터 모달 초기화
+function initFilterModal() {
+    const modal = document.getElementById('filterModal');
+    const closeBtn = document.getElementById('filterModalClose');
+    const overlay = modal?.querySelector('.filter-modal-overlay');
+    const applyBtn = document.getElementById('filterApplyBtn');
+    const resetAllBtn = document.getElementById('filterResetAllBtn');
+    const filterOpenBtn = document.getElementById('filterOpenBtn');
+    const sliderLow = document.getElementById('filterSliderLow');
+    const sliderHigh = document.getElementById('filterSliderHigh');
+    const valueLow = document.getElementById('filterValueLow');
+    const valueHigh = document.getElementById('filterValueHigh');
+    const yearOptions = document.getElementById('filterYearOptions');
+    const monthOptions = document.getElementById('filterMonthOptions');
+    const activeChipsEl = document.getElementById('filterActiveChips');
+    const tabs = modal?.querySelectorAll('.filter-tab');
+    const panels = modal?.querySelectorAll('.filter-tab-panel');
+    const categoryChips = document.querySelectorAll('.filter-category-chip');
+
+    function switchTab(tabId) {
+        tabs?.forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tabId);
+        });
+        panels?.forEach(p => {
+            const panelId = p.id;
+            const isActive = (tabId === 'year' && panelId === 'filterPanelYear') ||
+                (tabId === 'month' && panelId === 'filterPanelMonth') ||
+                (tabId === 'weatherFit' && panelId === 'filterPanelWeatherFit') ||
+                (tabId === 'temp' && panelId === 'filterPanelTemp') ||
+                (tabId === 'favorites' && panelId === 'filterPanelFavorites');
+            p.classList.toggle('active', isActive);
+        });
+    }
+
+    function openModal(activeTab = 'year') {
+        modal?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        syncModalFromState();
+        renderYearOptions();
+        renderMonthOptions();
+        switchTab(activeTab);
+        updateModalChipsFromUI();
+    }
+
+    function getFilterStateFromModalUI() {
+        const years = [];
+        document.querySelectorAll('#filterYearOptions input[type="checkbox"]:checked').forEach(cb => {
+            const v = parseInt(cb.value);
+            if (!isNaN(v)) years.push(v);
+        });
+        const months = [];
+        document.querySelectorAll('#filterMonthOptions input:checked').forEach(cb => {
+            const v = parseInt(cb.value);
+            if (!isNaN(v)) months.push(v);
+        });
+        const weatherFit = [];
+        document.querySelectorAll('#filterWeatherFitOptions input:checked').forEach(cb => {
+            weatherFit.push(cb.value);
+        });
+        const low = parseInt(sliderLow?.value ?? -20);
+        const high = parseInt(sliderHigh?.value ?? 40);
+        const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
+        const favOnly = favChecked?.value === 'only';
+        return { years, months, weatherFit, low, high, favOnly };
+    }
+
+    function passesFilterWithState(log, state) {
+        const { years, months, weatherFit, low, high, favOnly } = state;
+        const isFullRange = low <= -20 && high >= 40;
+        if (!isFullRange) {
+            if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
+            if (log.weather_temp_min < low || log.weather_temp_max > high) return false;
+        }
+        if (years.length > 0) {
+            const y = new Date(log.date).getFullYear();
+            if (!years.includes(y)) return false;
+        }
+        if (months.length > 0) {
+            const m = new Date(log.date).getMonth() + 1;
+            if (!months.includes(m)) return false;
+        }
+        if (weatherFit.length > 0) {
+            const fit = log.weather_fit || 'good';
+            if (!weatherFit.includes(fit)) return false;
+        }
+        if (favOnly && !log.is_favorite) return false;
+        return true;
+    }
+
+    function getFilteredCountFromModalUI() {
+        const state = getFilterStateFromModalUI();
+        return allLoadedLogs.filter(log => passesFilterWithState(log, state)).length;
+    }
+
+    function updateApplyButtonCount() {
+        if (!applyBtn) return;
+        const count = getFilteredCountFromModalUI();
+        applyBtn.textContent = `${count}개 확인하기`;
+    }
+
+    function getChipsFromModalUI() {
+        const chips = [];
+        const yearChecked = document.querySelectorAll('#filterYearOptions input[type="checkbox"]:checked');
+        if (yearChecked.length > 0) {
+            const years = Array.from(yearChecked).map(cb => parseInt(cb.value)).filter(n => !isNaN(n)).sort((a, b) => b - a);
+            if (years.length) chips.push({ key: 'year', label: years.map(y => `${y}년`).join(', '), value: 'year' });
+        }
+        const monthChecked = document.querySelectorAll('#filterMonthOptions input:checked');
+        if (monthChecked.length > 0) {
+            const months = Array.from(monthChecked).map(cb => parseInt(cb.value)).filter(n => !isNaN(n)).sort((a, b) => a - b);
+            if (months.length) chips.push({ key: 'months', label: months.map(m => `${m}월`).join(', '), value: 'months' });
+        }
+        const weatherFitChecked = document.querySelectorAll('#filterWeatherFitOptions input:checked');
+        if (weatherFitChecked.length > 0) {
+            const vals = Array.from(weatherFitChecked).map(cb => cb.value);
+            chips.push({ key: 'weatherFit', label: vals.join(', '), value: 'weatherFit' });
+        }
+        const low = parseInt(sliderLow?.value ?? -20), high = parseInt(sliderHigh?.value ?? 40);
+        if (low > -20 || high < 40) chips.push({ key: 'temp', label: `${low}°~${high}°`, value: 'temp' });
+        const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
+        if (favChecked?.value === 'only') chips.push({ key: 'fav', label: '즐겨찾기만', value: 'fav' });
+        return chips;
+    }
+
+    function updateModalChipsFromUI() {
+        if (!modalActiveChipsEl) return;
+        const chips = getChipsFromModalUI();
+        filterModalEl?.classList.toggle('has-selection', chips.length > 0);
+        updateApplyButtonCount();
+        const chipsHTML = chips.map(c => `
+            <span class="filter-active-chip" data-key="${c.key}">
+                ${c.label}
+                <button type="button" class="filter-active-chip-remove" data-key="${c.key}">×</button>
+            </span>
+        `).join('');
+        modalActiveChipsEl.innerHTML = chipsHTML;
+        modalActiveChipsEl.querySelectorAll('.filter-active-chip, .filter-active-chip-remove').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const key = el.dataset.key || el.closest('.filter-active-chip')?.dataset.key;
+                clearModalFilterByKey(key);
+                updateModalChipsFromUI();
+            });
+        });
+    }
+
+    function clearModalFilterByKey(key) {
+        if (key === 'year') {
+            document.querySelectorAll('#filterYearOptions input').forEach(cb => { cb.checked = false; });
+        } else if (key === 'months') {
+            document.querySelectorAll('#filterMonthOptions input').forEach(cb => { cb.checked = false; });
+        } else if (key === 'weatherFit') {
+            document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => { cb.checked = false; });
+        } else if (key === 'temp') {
+            if (sliderLow) sliderLow.value = -20;
+            if (sliderHigh) sliderHigh.value = 40;
+            if (valueLow) valueLow.textContent = '-20° 이상';
+            if (valueHigh) valueHigh.textContent = '40° 이하';
+        } else if (key === 'fav') {
+            const allRadio = document.querySelector('input[name="filterFavorites"][value=""]');
+            if (allRadio) allRadio.checked = true;
+        }
+    }
+
+    function closeModal() {
+        modal?.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function syncModalFromState() {
+        if (sliderLow) sliderLow.value = weatherFilterLow;
+        if (sliderHigh) sliderHigh.value = weatherFilterHigh;
         if (valueLow) valueLow.textContent = `${weatherFilterLow}° 이상`;
         if (valueHigh) valueHigh.textContent = `${weatherFilterHigh}° 이하`;
-    }
-    
-    function applyFilter() {
-        renderFullDayList(getFilteredLogs());
-        if (!hasMoreData) showEndMessage();
-    }
-    
-    const selectText = document.getElementById('weatherFilterSelectText');
-    const selectBtn = document.getElementById('weatherFilterSelectBtn');
-    const selectDropdown = document.getElementById('weatherFilterSelectDropdown');
-
-    function setWeatherFilterSelectText(text) {
-        if (selectText) selectText.textContent = text;
-    }
-
-    function closeDropdown() {
-        if (selectDropdown) selectDropdown.classList.remove('active');
-        if (selectBtn) selectBtn.setAttribute('aria-expanded', 'false');
-    }
-
-    sliderLow.addEventListener('input', () => {
-        let v = parseInt(sliderLow.value);
-        if (v > weatherFilterHigh) {
-            v = weatherFilterHigh;
-            sliderLow.value = v;
-        }
-        weatherFilterLow = v;
-        weatherFilterMode = 'custom';
-        setWeatherFilterSelectText('커스텀');
-        updateValues();
-        applyFilter();
-    });
-
-    sliderHigh.addEventListener('input', () => {
-        let v = parseInt(sliderHigh.value);
-        if (v < weatherFilterLow) {
-            v = weatherFilterLow;
-            sliderHigh.value = v;
-        }
-        weatherFilterHigh = v;
-        weatherFilterMode = 'custom';
-        setWeatherFilterSelectText('커스텀');
-        updateValues();
-        applyFilter();
-    });
-
-    if (selectBtn) {
-        selectBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = selectDropdown?.classList.toggle('active');
-            selectBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        const yearChecks = document.querySelectorAll('#filterYearOptions input[type="checkbox"]');
+        yearChecks.forEach(cb => { cb.checked = filterYears.includes(parseInt(cb.value)); });
+        const monthChecks = document.querySelectorAll('#filterMonthOptions input');
+        monthChecks.forEach(cb => { cb.checked = filterMonths.includes(parseInt(cb.value)); });
+        document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => {
+            cb.checked = filterWeatherFit.includes(cb.value);
+        });
+        document.querySelectorAll('input[name="filterFavorites"]').forEach(r => {
+            r.checked = (r.value === 'only' && filterFavoritesOnly) || (r.value === '' && !filterFavoritesOnly);
         });
     }
-    document.addEventListener('click', closeDropdown);
 
-    const items = document.querySelectorAll('.weather-filter-select-item');
-    items.forEach(item => {
-        item.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const value = item.dataset.value;
-            if (value === 'today') {
-                const weather = await getCurrentWeather();
-                if (weather?.tempMin != null && weather?.tempMax != null) {
-                    setWeatherFilterFromToday(weather);
-                }
-                weatherFilterMode = 'today';
-                setWeatherFilterSelectText('오늘');
-            } else if (value === 'all') {
-                weatherFilterLow = -20;
-                weatherFilterHigh = 40;
-                sliderLow.value = -20;
-                sliderHigh.value = 40;
-                weatherFilterMode = 'all';
-                setWeatherFilterSelectText('전체');
-                updateValues();
-                applyFilter();
+    function syncStateFromModal() {
+        weatherFilterLow = parseInt(sliderLow?.value ?? -20);
+        weatherFilterHigh = parseInt(sliderHigh?.value ?? 40);
+        filterYears = [];
+        document.querySelectorAll('#filterYearOptions input[type="checkbox"]:checked').forEach(cb => {
+            if (cb.value !== '') filterYears.push(parseInt(cb.value));
+        });
+        filterMonths = [];
+        document.querySelectorAll('#filterMonthOptions input:checked').forEach(cb => {
+            filterMonths.push(parseInt(cb.value));
+        });
+        filterWeatherFit = [];
+        document.querySelectorAll('#filterWeatherFitOptions input:checked').forEach(cb => {
+            filterWeatherFit.push(cb.value);
+        });
+        const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
+        filterFavoritesOnly = favChecked?.value === 'only';
+    }
+
+    function renderYearOptions() {
+        if (!yearOptions) return;
+        yearOptions.innerHTML = '';
+        const years = yearsWithData.length > 0 ? yearsWithData : [new Date().getFullYear()];
+        years.forEach(year => {
+            const label = document.createElement('label');
+            label.className = 'filter-option';
+            label.innerHTML = `<input type="checkbox" name="filterYear" value="${year}"><span>${year}년</span>`;
+            yearOptions.appendChild(label);
+        });
+        syncModalFromState();
+    }
+
+    function renderMonthOptions() {
+        if (!monthOptions) return;
+        monthOptions.innerHTML = '';
+        for (let m = 1; m <= 12; m++) {
+            const label = document.createElement('label');
+            label.className = 'filter-option';
+            label.innerHTML = `<input type="checkbox" name="filterMonth" value="${m}"><span>${m}월</span>`;
+            monthOptions.appendChild(label);
+        }
+        syncModalFromState();
+    }
+
+    const modalActiveChipsEl = document.getElementById('filterModalActiveChips');
+    const filterBar = document.getElementById('filterBar');
+    const filterModalEl = document.getElementById('filterModal');
+
+    function renderActiveChips() {
+        const chips = getActiveFilterChips();
+        const chipsHTML = chips.map(c => `
+            <span class="filter-active-chip" data-key="${c.key}">
+                ${c.label}
+                <button type="button" class="filter-active-chip-remove" data-key="${c.key}">×</button>
+            </span>
+        `).join('');
+        [activeChipsEl, modalActiveChipsEl].forEach(container => {
+            if (!container) return;
+            container.innerHTML = chipsHTML;
+            container.querySelectorAll('.filter-active-chip, .filter-active-chip-remove').forEach(el => {
+                el.addEventListener('click', () => {
+                    const key = el.dataset.key || el.closest('.filter-active-chip')?.dataset.key;
+                    removeFilterByKey(key);
+                });
+            });
+        });
+        const hasFilters = chips.length > 0;
+        filterBar?.classList.toggle('has-active-filters', hasFilters);
+        filterModalEl?.classList.toggle('has-active-filters', hasFilters);
+        filterOpenBtn?.classList.toggle('has-active', hasFilters);
+        const activeKeys = chips.map(c => c.key);
+        categoryChips?.forEach(chip => {
+            const tab = chip.dataset.tab;
+            const keyMap = { year: 'year', month: 'months', weatherFit: 'weatherFit', temp: 'temp', favorites: 'fav' };
+            chip.classList.toggle('has-filter', keyMap[tab] && activeKeys.includes(keyMap[tab]));
+        });
+    }
+
+    function removeFilterByKey(key) {
+        if (key === 'year') filterYears = [];
+        else if (key === 'months') filterMonths = [];
+        else if (key === 'weatherFit') filterWeatherFit = [];
+        else if (key === 'temp') {
+            weatherFilterLow = -20;
+            weatherFilterHigh = 40;
+            if (sliderLow) sliderLow.value = -20;
+            if (sliderHigh) sliderHigh.value = 40;
+        }
+        else if (key === 'fav') filterFavoritesOnly = false;
+        syncModalFromState();
+        renderActiveChips();
+        applyFilterAndRender();
+    }
+
+    async function ensureAllDataLoadedForFilter() {
+        const hasFilters = getActiveFilterChips().length > 0;
+        if (!hasFilters || !hasMoreData) return;
+        const container = document.querySelector('.month-cards-container');
+        if (!container) return;
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'filter-load-more-indicator';
+        loadingEl.style.cssText = 'text-align: center; padding: 16px; color: #999; font-size: 14px;';
+        loadingEl.textContent = '필터 결과를 불러오는 중...';
+        container.appendChild(loadingEl);
+        try {
+            while (hasMoreData) {
+                await loadMoreDayList();
             }
-            closeDropdown();
-        });
-    });
-}
-
-// 오늘 날씨 기반으로 필터 초기값 설정 (weather-display와 동일한 수치)
-function setWeatherFilterFromToday(weather) {
-    if (!weather || weather.tempMin == null || weather.tempMax == null) return;
-    weatherFilterLow = Math.max(-20, Math.round(weather.tempMin));
-    weatherFilterHigh = Math.min(40, Math.round(weather.tempMax));
-    if (weatherFilterLow >= weatherFilterHigh) {
-        weatherFilterLow = Math.max(-20, Math.round(weather.tempMin) - 1);
-        weatherFilterHigh = Math.min(40, Math.round(weather.tempMax) + 1);
+        } finally {
+            loadingEl.remove();
+        }
     }
-    const sliderLow = document.getElementById('weatherFilterSliderLow');
-    const sliderHigh = document.getElementById('weatherFilterSliderHigh');
-    const valueLow = document.getElementById('weatherFilterValueLow');
-    const valueHigh = document.getElementById('weatherFilterValueHigh');
-    if (sliderLow) sliderLow.value = weatherFilterLow;
-    if (sliderHigh) sliderHigh.value = weatherFilterHigh;
-    if (valueLow) valueLow.textContent = `${weatherFilterLow}° 이상`;
-    if (valueHigh) valueHigh.textContent = `${weatherFilterHigh}° 이하`;
-    renderFullDayList(getFilteredLogs());
-    if (!hasMoreData) showEndMessage();
+
+    function applyFilterAndRender() {
+        const filtered = getFilteredLogs();
+        renderFullDayList(filtered);
+        if (filtered.length > 0 && !hasMoreData) showEndMessage();
+        ensureAllDataLoadedForFilter().then(() => {
+            const updated = getFilteredLogs();
+            renderFullDayList(updated);
+            if (updated.length > 0 && !hasMoreData) showEndMessage();
+        });
+    }
+
+    function doApply() {
+        syncStateFromModal();
+        closeModal();
+        renderActiveChips();
+        applyFilterAndRender();
+    }
+
+    function doResetModalOnly() {
+        document.querySelectorAll('#filterYearOptions input').forEach(cb => { cb.checked = false; });
+        document.querySelectorAll('#filterMonthOptions input').forEach(cb => { cb.checked = false; });
+        document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => { cb.checked = false; });
+        if (sliderLow) sliderLow.value = -20;
+        if (sliderHigh) sliderHigh.value = 40;
+        if (valueLow) valueLow.textContent = '-20° 이상';
+        if (valueHigh) valueHigh.textContent = '40° 이하';
+        const allRadio = document.querySelector('input[name="filterFavorites"][value=""]');
+        if (allRadio) allRadio.checked = true;
+        updateModalChipsFromUI();
+    }
+
+    function doReset() {
+        filterYears = [];
+        filterMonths = [];
+        filterWeatherFit = [];
+        weatherFilterLow = -20;
+        weatherFilterHigh = 40;
+        filterFavoritesOnly = false;
+        if (sliderLow) sliderLow.value = -20;
+        if (sliderHigh) sliderHigh.value = 40;
+        syncModalFromState();
+        renderActiveChips();
+        applyFilterAndRender();
+        closeModal();
+    }
+
+    filterOpenBtn?.addEventListener('click', () => openModal('year'));
+    categoryChips?.forEach(chip => {
+        chip.addEventListener('click', () => openModal(chip.dataset.tab || 'year'));
+    });
+    tabs?.forEach(tabBtn => {
+        tabBtn.addEventListener('click', () => switchTab(tabBtn.dataset.tab));
+    });
+    closeBtn?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+    applyBtn?.addEventListener('click', doApply);
+    resetAllBtn?.addEventListener('click', doReset);
+    document.getElementById('filterModalResetBtn')?.addEventListener('click', doResetModalOnly);
+    document.getElementById('filterBarResetBtn')?.addEventListener('click', doReset);
+
+    sliderLow?.addEventListener('input', () => {
+        let v = parseInt(sliderLow.value);
+        const high = parseInt(sliderHigh?.value ?? 40);
+        if (v > high) { v = high; sliderLow.value = v; }
+        if (valueLow) valueLow.textContent = `${v}° 이상`;
+        updateModalChipsFromUI();
+    });
+    sliderHigh?.addEventListener('input', () => {
+        let v = parseInt(sliderHigh.value);
+        const low = parseInt(sliderLow?.value ?? -20);
+        if (v < low) { v = low; sliderHigh.value = v; }
+        if (valueHigh) valueHigh.textContent = `${v}° 이하`;
+        updateModalChipsFromUI();
+    });
+
+    modal?.addEventListener('change', (e) => {
+        if (e.target.matches('#filterYearOptions input, #filterMonthOptions input, #filterWeatherFitOptions input, input[name="filterFavorites"]')) {
+            updateModalChipsFromUI();
+        }
+    });
+
+    renderActiveChips();
+
+    // URL 파라미터 ?filter=fav → 즐겨찾기 필터 적용 (마이페이지 "즐겨찾기 보기" 링크용)
+    if (new URLSearchParams(location.search).get('filter') === 'fav') {
+        filterFavoritesOnly = true;
+        syncModalFromState();
+        renderActiveChips();
+        applyFilterAndRender();
+    }
 }
 
 // 스와이프 기능 초기화
@@ -1382,7 +1629,6 @@ document.querySelector('#menuPopup .menu-overlay')?.addEventListener('click', ()
 async function updateMenuUserInfo() {
     const menuUserInfo = document.getElementById('menuUserInfo');
     if (!menuUserInfo) return;
-    
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (user) {
@@ -1397,7 +1643,6 @@ async function updateMenuUserInfo() {
     }
 }
 
-// 페이지 로드 시 사용자 정보 업데이트
 window.addEventListener('load', () => {
     updateMenuUserInfo();
 });
@@ -1411,7 +1656,7 @@ document.querySelector('.write-btn')?.addEventListener('click', () => {
 
 // 즐겨찾기 버튼
 document.querySelector('.favorite-btn')?.addEventListener('click', () => {
-    window.location.href = 'favorite.html';
+    window.location.href = 'mypage.html';
 });
 
 // 캘린더 버튼
@@ -1458,7 +1703,7 @@ async function updateTodayInfo() {
                 const tempSpan = weatherDisplay.querySelector('.weather-temp');
                 
                 if (iconContainer) {
-                    iconContainer.outerHTML = getWeatherIconSVG(weather.weather, 32);
+                    iconContainer.outerHTML = getWeatherIconSVG(weather.weather, 24);
                 }
                 
                 if (tempSpan) {

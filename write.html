@@ -52,6 +52,17 @@
                 <input type="hidden" id="weatherDescInput" name="weather_description">
             </div>
 
+            <!-- 날씨적합도 -->
+            <div class="form-section">
+                <label class="form-label">날씨적합도</label>
+                <div class="weather-fit-btns" role="group">
+                    <button type="button" class="weather-fit-btn" data-value="cold">cold</button>
+                    <button type="button" class="weather-fit-btn active" data-value="good">good</button>
+                    <button type="button" class="weather-fit-btn" data-value="hot">hot</button>
+                </div>
+                <input type="hidden" id="weatherFitInput" name="weather_fit" value="good">
+            </div>
+
             <!-- 사진 업로드 -->
             <div class="form-section">
                 <label class="form-label">사진 (선택)</label>
@@ -113,24 +124,23 @@
             </div>
             <span class="bottom-nav-label">작성</span>
         </a>
-        <a href="favorite.html" class="bottom-nav-item">
+        <a href="mypage.html" class="bottom-nav-item">
             <div class="bottom-nav-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
                 </svg>
             </div>
-            <span class="bottom-nav-label">즐겨찾기</span>
+            <span class="bottom-nav-label">마이</span>
         </a>
     </nav>
 
-    <!-- Supabase 클라이언트 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 설정 및 API -->
-    <script src="scripts/config.js"></script>
-    <script src="scripts/api.js"></script>
-    <script src="scripts/auth.js"></script>
-    <!-- 페이지 스크립트 -->
-    <script src="scripts/write.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="scripts/config.js" defer></script>
+    <script src="scripts/api.js" defer></script>
+    <script src="scripts/auth.js" defer></script>
+    <script src="scripts/common.js" defer></script>
+    <script src="scripts/write.js" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

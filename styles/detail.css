@@ -206,6 +206,32 @@ body {
     color: var(--color-text-tertiary);
 }
 
+/* 날씨적합도 칩 */
+.day-weather-fit-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    margin-top: 6px;
+}
+.day-weather-fit-chip--cold {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #93c5fd;
+}
+.day-weather-fit-chip--good {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+.day-weather-fit-chip--hot {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
 /* 본문 */
 .content-body {
     color: #666;

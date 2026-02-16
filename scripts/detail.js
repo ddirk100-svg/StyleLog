@@ -179,6 +179,13 @@ function renderLogDetail(log) {
         } else {
             weatherInfo.innerHTML += `<div class="temp-display temp-unavailable"><span>날씨를 알 수 없어요</span></div>`;
         }
+
+        // 날씨적합도 칩 표시
+        const weatherFitVal = log.weather_fit && ['cold','good','hot'].includes(log.weather_fit)
+            ? log.weather_fit : null;
+        if (weatherFitVal) {
+            weatherInfo.innerHTML += `<span class="day-weather-fit-chip day-weather-fit-chip--${weatherFitVal}">${weatherFitVal}</span>`;
+        }
     }
     
     // 본문

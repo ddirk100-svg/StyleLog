@@ -51,10 +51,9 @@ if (isDevelopment) {
     environmentName = '알파(테스트)';
 }
 
-console.log(`🚀 환경: ${environmentName}`);
-console.log(`📍 Supabase URL: ${SUPABASE_URL}`);
-console.log(`🗄️ DB: ${isTestEnvironment ? '테스트 DB' : '리얼 DB'}`);
-console.log('✅ Supabase 클라이언트 초기화 완료');
+if (isTestEnvironment) {
+    console.log(`🚀 환경: ${environmentName}`, `DB: 테스트`);
+}
 
 // 날씨 API 설정 - Open-Meteo (완전 무료, API 키 불필요!)
 // 출처: https://open-meteo.com/

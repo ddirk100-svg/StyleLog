@@ -1,5 +1,5 @@
 // 공통 함수들
-console.log('✅ common.js 로드됨');
+const WEATHER_FIT_LABELS = { cold: 'cold', good: 'good', hot: 'hot' };
 
 // 아이템 메뉴 표시
 function showItemMenu(logId, date, onEdit, onDelete) {
@@ -134,4 +134,3 @@ if (typeof utils !== 'undefined') {
     };
 }
 
-console.log('✅ common.js 초기화 완료');

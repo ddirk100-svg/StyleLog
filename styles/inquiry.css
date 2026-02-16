@@ -1,0 +1,100 @@
+/* 고객센터 페이지 */
+@import url('variables.css');
+
+#inquiryView.container,
+#inquiryWriteView.container {
+    max-width: var(--container-max-width);
+    min-height: calc(100vh - var(--bottom-nav-height));
+    margin: 0 auto;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
+    background: var(--color-bg-primary);
+}
+
+.inquiry-section {
+    padding: 20px var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border-lighter);
+}
+
+.inquiry-section:last-of-type {
+    border-bottom: none;
+}
+
+.inquiry-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.inquiry-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.inquiry-write-btn {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--color-accent);
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: background, color 0.2s;
+}
+
+.inquiry-write-btn:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* 문의내역 placeholder */
+.inquiry-list-placeholder,
+.faq-placeholder {
+    padding: 24px 0;
+    text-align: center;
+}
+
+.placeholder-text {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
+
+.placeholder-hint {
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+}
+
+/* 문의 작성 폼 (inquiry-write.html) */
+.inquiry-write-form {
+    padding: 20px var(--spacing-xl);
+}
+
+/* 문의작성 폼 - write.css 폼 스타일 상속, 추가 오버라이드 */
+.inquiry-form .form-textarea {
+    min-height: 120px;
+}
+
+.inquiry-submit-btn {
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    background: var(--color-accent);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.inquiry-submit-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.inquiry-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
