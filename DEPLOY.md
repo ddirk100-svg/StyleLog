@@ -1,6 +1,46 @@
 # Vercel 배포 가이드
 
-## 1단계: GitHub 저장소 생성 및 푸시
+---
+
+## Alpha 배포 (가장 자주 사용)
+
+**목적**: 테스트 서버(Alpha)에 코드 배포. Alpha는 테스트 DB 사용.
+
+### 방법 1: bat 파일 (권장)
+
+프로젝트 폴더에서 **`deploy-to-alpha.bat`** 더블클릭.
+
+### 방법 2: 수동 실행 (bat 실패 시)
+
+**PowerShell** 또는 **CMD**를 열고, 프로젝트 폴더로 이동한 뒤 아래 순서대로 입력:
+
+```bash
+cd "프로젝트폴더경로"
+git add .
+git commit -m "update: Alpha deployment"
+git checkout alpha
+git merge main --no-edit
+git push origin alpha
+git checkout main
+```
+
+**배포 확인**: 1~2분 후 https://stylelog-git-alpha-jongiks-projects.vercel.app 접속
+
+**프로젝트 폴더로 이동하는 법**:
+- Windows: 프로젝트 폴더에서 `Shift + 우클릭` → "여기에 PowerShell 창 열기" 또는 "경로로 창 열기"
+- 또는 CMD에서 `cd` 뒤에 폴더 경로 붙여넣기
+
+### 배포 bat 파일 정리
+
+| 파일 | 용도 |
+|------|------|
+| `deploy-to-alpha.bat` | Alpha 테스트 서버 배포 |
+| `deploy-alpha-to-real.bat` | Alpha 테스트 완료 후 프로덕션 배포 |
+| `setup-git.bat` | Git 최초 설정 (원격 저장소 연결 등) |
+
+---
+
+## 1단계: GitHub 저장소 생성 및 푸시 (최초 1회)
 
 ### 1. GitHub에서 새 저장소 생성
 1. GitHub (https://github.com)에 로그인

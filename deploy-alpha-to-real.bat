@@ -3,11 +3,10 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================
-echo   Step 2: Deploy Alpha to Real
+echo   Deploy Alpha to Production
 echo ============================================
 echo.
-echo WARNING: This will deploy to PRODUCTION!
-echo.
+echo WARNING: This deploys to PRODUCTION!
 set /p confirm="Continue? (y/n): "
 
 if /i not "%confirm%"=="y" (
@@ -17,20 +16,18 @@ if /i not "%confirm%"=="y" (
 )
 
 echo.
-echo Deploying to Real...
-
-REM Switch to main
+echo [1/3] Switching to main...
 git checkout main
 
-REM Merge alpha to main
+echo [2/3] Merging alpha into main...
 git merge alpha --no-edit
 
-REM Push to main (Real deployment)
+echo [3/3] Pushing to production...
 git push origin main
 
 echo.
 echo ============================================
-echo   Real Deploy Complete!
+echo   Done! Production URL: https://stylelog.vercel.app
 echo ============================================
 echo.
 pause
