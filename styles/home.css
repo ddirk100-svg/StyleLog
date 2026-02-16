@@ -724,6 +724,170 @@ body:has(.container.day-view-active) {
     opacity: 0.5;
 }
 
+/* 날씨 필터 섹션 */
+.weather-filter-section {
+    margin: 0 20px 16px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+}
+
+.weather-filter-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.weather-filter-sliders {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.weather-filter-slider-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weather-filter-slider-label {
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 28px;
+}
+
+.weather-filter-min .weather-filter-slider-label,
+.weather-filter-min .weather-filter-slider-value {
+    color: var(--color-temp-low);
+}
+
+.weather-filter-max .weather-filter-slider-label,
+.weather-filter-max .weather-filter-slider-value {
+    color: var(--color-temp-high);
+}
+
+.weather-filter-slider {
+    flex: 1;
+    min-width: 0;
+    height: 6px;
+    margin: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--color-border-lighter);
+    border-radius: 3px;
+}
+
+.weather-filter-min .weather-filter-slider::-webkit-slider-thumb {
+    background: var(--color-temp-low);
+    box-shadow: 0 2px 6px rgba(74, 144, 226, 0.4);
+}
+
+.weather-filter-max .weather-filter-slider::-webkit-slider-thumb {
+    background: var(--color-temp-high);
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+}
+
+.weather-filter-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.weather-filter-min .weather-filter-slider::-moz-range-thumb {
+    background: var(--color-temp-low);
+}
+
+.weather-filter-max .weather-filter-slider::-moz-range-thumb {
+    background: var(--color-temp-high);
+}
+
+.weather-filter-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.weather-filter-slider-value {
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 50px;
+}
+
+.weather-filter-select-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.weather-filter-select-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    min-width: 80px;
+    width: 80px;
+    padding: 8px 10px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.weather-filter-select-btn:hover {
+    border-color: var(--color-accent);
+}
+
+.weather-filter-select-btn svg {
+    flex-shrink: 0;
+}
+
+.weather-filter-select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 80px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    overflow: hidden;
+}
+
+.weather-filter-select-dropdown.active {
+    display: block;
+}
+
+.weather-filter-select-item {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    transition: background 0.2s;
+}
+
+.weather-filter-select-item:hover {
+    background: var(--color-bg-secondary);
+}
+
 .weather-section {
     display: flex;
     flex-direction: row;
@@ -1002,9 +1166,9 @@ body:has(.container.day-view-active) {
     position: absolute;
     bottom: 8px;
     right: 8px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border: none;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 50%;
     width: 32px;
     height: 32px;
@@ -1012,17 +1176,26 @@ body:has(.container.day-view-active) {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     z-index: 2;
 }
 
 .favorite-toggle-btn:hover {
     transform: scale(1.1);
     background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
 }
 
 .favorite-toggle-btn.active {
-    background: rgba(255, 107, 107, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+    border: 2px solid var(--color-favorite);
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.35);
+}
+
+.favorite-toggle-btn.active:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.4);
 }
 
 /* 아이템 메뉴 버튼 */

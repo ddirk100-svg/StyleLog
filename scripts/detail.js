@@ -43,10 +43,8 @@ async function initPage() {
         // 최저/최고 기온이 없으면 날씨 API에서 가져와서 업데이트
         if ((currentLog.weather_temp_min === null || currentLog.weather_temp_min === undefined) &&
             (currentLog.weather_temp_max === null || currentLog.weather_temp_max === undefined)) {
-            console.log('⚠️ 최저/최고 기온 없음. 날씨 API 재조회...');
             const weatherData = await getWeatherByDate(currentLog.date);
-            
-            if (weatherData && weatherData.tempMin !== null && weatherData.tempMax !== null) {
+            if (weatherData?.tempMin != null && weatherData?.tempMax != null) {
                 // DB 업데이트
                 await StyleLogAPI.update(currentLog.id, {
                     weather_temp_min: weatherData.tempMin,
@@ -102,7 +100,7 @@ function renderLogDetail(log) {
             photoSection.innerHTML = `
                 <img src="${log.photos[0]}" alt="착장 사진" onerror="this.style.display='none'">
                 <button class="favorite-toggle-btn-detail ${log.is_favorite ? 'active' : ''}" id="favoriteToggle" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#fff'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -124,7 +122,7 @@ function renderLogDetail(log) {
                     `).join('')}
                 </div>
                 <button class="favorite-toggle-btn-detail ${log.is_favorite ? 'active' : ''}" id="favoriteToggle" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#fff'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -178,6 +176,8 @@ function renderLogDetail(log) {
                     <span class="temp-low">${Math.round(log.weather_temp_min)}°C</span>
                 </div>
             `;
+        } else {
+            weatherInfo.innerHTML += `<div class="temp-display temp-unavailable"><span>날씨를 알 수 없어요</span></div>`;
         }
     }
     
@@ -604,7 +604,7 @@ async function toggleFavoriteDetail() {
             const svg = button.querySelector('svg');
             if (svg) {
                 svg.setAttribute('fill', newState ? '#ff6b6b' : 'none');
-                svg.setAttribute('stroke', newState ? '#ff6b6b' : '#fff');
+                svg.setAttribute('stroke', newState ? '#ff6b6b' : '#555');
             }
         }
         

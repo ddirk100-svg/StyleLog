@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 오늘 뭐입지?</title>
+    <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
     <link rel="stylesheet" href="styles/home.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/month-detail.css">
@@ -84,6 +85,34 @@
             </div>
         </div>
 
+        <!-- 날씨 필터 (기온으로 기록 필터링) -->
+        <div class="weather-filter-section" id="weatherFilterSection">
+            <div class="weather-filter-inner">
+                <div class="weather-filter-sliders">
+                    <div class="weather-filter-slider-group weather-filter-min">
+                        <span class="weather-filter-slider-label">최저</span>
+                        <input type="range" class="weather-filter-slider" id="weatherFilterSliderLow" min="-20" max="40" value="-20">
+                        <span class="weather-filter-slider-value" id="weatherFilterValueLow">-20° 이상</span>
+                    </div>
+                    <div class="weather-filter-slider-group weather-filter-max">
+                        <span class="weather-filter-slider-label">최고</span>
+                        <input type="range" class="weather-filter-slider" id="weatherFilterSliderHigh" min="-20" max="40" value="40">
+                        <span class="weather-filter-slider-value" id="weatherFilterValueHigh">40° 이하</span>
+                    </div>
+                </div>
+                <div class="weather-filter-select-wrap">
+                    <button type="button" class="weather-filter-select-btn" id="weatherFilterSelectBtn" aria-expanded="false">
+                        <span id="weatherFilterSelectText">전체</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="weather-filter-select-dropdown" id="weatherFilterSelectDropdown">
+                        <button type="button" class="weather-filter-select-item" data-value="today">오늘</button>
+                        <button type="button" class="weather-filter-select-item" data-value="all">전체</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 월별 카드 리스트 (가로 스크롤) -->
         <div class="month-cards-container">
             <!-- JavaScript로 동적 생성됩니다 -->
@@ -143,6 +172,7 @@
         </a>
     </nav>
 
+    <script src="scripts/common.js"></script>
     <script src="scripts/home.js"></script>
     <script>
         // 페이지 로드 시 인증 체크

@@ -55,33 +55,25 @@ async function loadFavoriteData() {
         
         console.log('✅ 아이템 생성 중...');
         
-        // 최저/최고 기온이 없는 로그들을 찾아서 업데이트
-        const updatePromises = logs.map(async (log) => {
+        // 최저/최고 기온이 없는 로그들 순차 조회 (동시 요청 시 API 제한으로 실패할 수 있음)
+        for (const log of logs) {
             if ((log.weather_temp_min === null || log.weather_temp_min === undefined) &&
                 (log.weather_temp_max === null || log.weather_temp_max === undefined)) {
-                console.log(`⚠️ ${log.date} - 최저/최고 기온 없음. 날씨 API 재조회...`);
                 const weatherData = await getWeatherByDate(log.date);
-                
-                if (weatherData && weatherData.tempMin !== null && weatherData.tempMax !== null) {
-                    // DB 업데이트
+                if (weatherData?.unavailable && weatherData?.reason === 'future') continue;
+                if (weatherData?.tempMin != null && weatherData?.tempMax != null) {
                     await StyleLogAPI.update(log.id, {
                         weather_temp_min: weatherData.tempMin,
                         weather_temp_max: weatherData.tempMax,
                         weather_temp: weatherData.temp
                     });
-                    
-                    // log 객체 업데이트
                     log.weather_temp_min = weatherData.tempMin;
                     log.weather_temp_max = weatherData.tempMax;
                     log.weather_temp = weatherData.temp;
-                    
-                    console.log(`✅ ${log.date} - 날씨 데이터 업데이트 완료:`, weatherData);
                 }
+                await new Promise(r => setTimeout(r, 250));
             }
-        });
-        
-        // 모든 업데이트가 완료될 때까지 대기
-        await Promise.all(updatePromises);
+        }
         
         // 이전 연도와 월을 추적하여 연도/월이 바뀔 때 레이블 표시
         let previousYear = null;
@@ -156,7 +148,7 @@ function createDayItem(log) {
             <div class="day-content photo">
                 <img src="${log.photos[0]}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
                 <button class="favorite-toggle-btn active" title="즐겨찾기 해제">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -196,7 +188,7 @@ function createDayItem(log) {
                 </div>
                 <div class="quote-mark">"</div>
                 <button class="favorite-toggle-btn active" title="즐겨찾기 해제">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>

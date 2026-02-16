@@ -110,13 +110,13 @@ async function loadLogForEdit(logId) {
         // 헤더 타이틀 변경
         const headerTitle = document.querySelector('.write-header h1');
         if (headerTitle) {
-            headerTitle.textContent = 'EDIT LOG';
+            headerTitle.textContent = '수정하기';
         }
         
         // 저장 버튼 텍스트 변경
         const saveBtn = document.querySelector('.save-btn');
         if (saveBtn) {
-            saveBtn.textContent = '수정';
+            saveBtn.textContent = '완료';
         }
         
     } catch (error) {
@@ -161,10 +161,17 @@ async function loadWeatherForDate(date) {
         currentWeather = await getWeatherByDate(date);
         
         if (currentWeather) {
+            if (currentWeather.unavailable && currentWeather.reason === 'future') {
+                // 7일 이후 미래 날짜 → 사용자 안내 표시
+                currentWeather = {
+                    ...currentWeather,
+                    _futureHint: true
+                };
+            }
             console.log('🌤️ 날씨 정보:', currentWeather);
             updateWeatherDisplay(currentWeather);
         } else {
-            // 날씨 로드 실패 시 기본값
+            // API 오류 등 날씨 로드 실패 시 기본값
             currentWeather = {
                 weather: 'cloudy',
                 temp: null,
@@ -176,7 +183,6 @@ async function loadWeatherForDate(date) {
         }
     } catch (error) {
         console.error('날씨 로드 오류:', error);
-        // 기본값 사용
         currentWeather = {
             weather: 'cloudy',
             temp: null,
@@ -190,6 +196,7 @@ async function loadWeatherForDate(date) {
 
 // 날씨 표시 업데이트
 function updateWeatherDisplay(weather) {
+    const weatherDisplay = document.getElementById('weatherDisplay');
     const weatherIconContainer = document.getElementById('weatherIconContainer');
     const weatherName = document.getElementById('weatherName');
     const weatherTemp = document.getElementById('weatherTemp');
@@ -197,6 +204,27 @@ function updateWeatherDisplay(weather) {
     const weatherTempInput = document.getElementById('weatherTempInput');
     const weatherDescInput = document.getElementById('weatherDescInput');
     const tempRange = document.getElementById('tempRange');
+    
+    // 기존 안내 문구 제거
+    const existingHint = weatherDisplay?.querySelector('.weather-future-hint');
+    if (existingHint) existingHint.remove();
+    
+    // 7일 이후 미래 날짜인 경우: 안내 문구 표시
+    if (weather._futureHint || (weather.unavailable && weather.reason === 'future')) {
+        weatherIconContainer.innerHTML = getWeatherIconSVG('cloudy', 32);
+        weatherName.textContent = '날씨를 알 수 없어요';
+        weatherTemp.textContent = '—';
+        tempRange.style.display = 'none';
+        weatherInput.value = weather.weather || 'cloudy';
+        weatherTempInput.value = '';
+        weatherDescInput.value = '날씨를 알 수 없어요';
+        
+        const hint = document.createElement('p');
+        hint.className = 'weather-future-hint';
+        hint.textContent = '7일 이후 날짜는 아직 날씨를 볼 수 없어요. 일기는 그대로 저장돼요.';
+        weatherDisplay?.appendChild(hint);
+        return;
+    }
     
     // 아이콘
     weatherIconContainer.innerHTML = getWeatherIconSVG(weather.weather, 32);
@@ -207,6 +235,8 @@ function updateWeatherDisplay(weather) {
     // 현재 기온
     if (weather.temp !== null && weather.temp !== undefined) {
         weatherTemp.textContent = `${Math.round(weather.temp)}°C`;
+    } else {
+        weatherTemp.textContent = '—';
     }
     
     // 최고/최저 기온
@@ -216,6 +246,8 @@ function updateWeatherDisplay(weather) {
             <span class="temp-max">최고 ${Math.round(weather.tempMax)}°C</span>
             <span class="temp-min">최저 ${Math.round(weather.tempMin)}°C</span>
         `;
+    } else {
+        tempRange.style.display = 'none';
     }
     
     // hidden input 설정
@@ -374,7 +406,7 @@ async function handleSubmit() {
     
     // 버튼 비활성화
     saveBtn.disabled = true;
-    saveBtn.textContent = isEditMode ? '수정 중...' : '저장 중...';
+    saveBtn.textContent = isEditMode ? '완료 중...' : '저장 중...';
     
     try {
         // 사진 URL 배열 (실제로는 Supabase Storage에 업로드 필요)

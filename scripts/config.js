@@ -59,6 +59,8 @@ console.log('✅ Supabase 클라이언트 초기화 완료');
 // 날씨 API 설정 - Open-Meteo (완전 무료, API 키 불필요!)
 // 출처: https://open-meteo.com/
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
+// 90일 이전 과거 날씨용 Archive API (재분석 데이터, 1940년~)
+const WEATHER_ARCHIVE_API_URL = 'https://archive-api.open-meteo.com/v1/archive';
 
 // 날씨 코드 매핑 (WMO Weather codes → 우리 시스템)
 const WEATHER_MAPPING = {
@@ -148,6 +150,8 @@ function getWeatherDescription(code) {
 }
 
 // 특정 날짜의 날씨 정보 가져오기 (서울 기준)
+// - 최근 ~90일: Forecast API (실시간/근접 데이터)
+// - 90일 이전: Archive API (재분석 데이터, 1940년~)
 async function getWeatherByDateAndCoords(lat, lon, date) {
     try {
         // 날짜 유효성 체크
@@ -155,27 +159,29 @@ async function getWeatherByDateAndCoords(lat, lon, date) {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // 오늘 자정으로 설정
         
-        // 과거 90일 이전 데이터는 API가 지원하지 않음
-        const ninetyDaysAgo = new Date(today);
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-        
-        // 미래 7일 이후 데이터도 API가 지원하지 않음
+        // 미래 7일 이후 데이터는 API가 지원하지 않음 → UX용 안내 객체 반환
         const sevenDaysLater = new Date(today);
         sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-        
-        // 범위 밖의 날짜는 null 반환
-        if (requestDate < ninetyDaysAgo) {
-            console.log(`⏭️ ${date} - 90일 이전 데이터, 날씨 API 지원 안 함`);
-            return null;
-        }
-        
         if (requestDate > sevenDaysLater) {
-            console.log(`⏭️ ${date} - 7일 이후 미래 데이터, 날씨 API 지원 안 함`);
-            return null;
+            console.log(`⏭️ ${date} - 7일 이후 미래 날짜, 날씨 API 미지원`);
+            return {
+                unavailable: true,
+                reason: 'future',
+                weather: 'cloudy',
+                temp: null,
+                tempMin: null,
+                tempMax: null,
+                description: null,
+                weatherCode: null
+            };
         }
+        
+        // Forecast API는 미래 예보용 → 과거 날짜는 무조건 Archive API 사용 (Forecast는 과거 date 시 null 반환)
+        const useArchiveApi = requestDate < today;
+        const apiUrl = useArchiveApi ? WEATHER_ARCHIVE_API_URL : WEATHER_API_URL;
         
         const response = await fetch(
-            `${WEATHER_API_URL}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Seoul`
+            `${apiUrl}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Seoul`
         );
         
         if (!response.ok) {
@@ -185,18 +191,20 @@ async function getWeatherByDateAndCoords(lat, lon, date) {
         
         const data = await response.json();
         
-        if (!data.daily || !data.daily.weathercode || data.daily.weathercode.length === 0) {
+        const weatherCode = data.daily?.weathercode?.[0];
+        const tempMax = data.daily?.temperature_2m_max?.[0];
+        const tempMin = data.daily?.temperature_2m_min?.[0];
+        
+        if (weatherCode == null || tempMax == null || tempMin == null) {
             console.log(`⚠️ 날씨 데이터 없음: ${date}`);
             return null;
         }
         
-        const weatherCode = data.daily.weathercode[0];
-        
         return {
             weather: WEATHER_MAPPING[weatherCode] || 'cloudy',
-            temp: Math.round((data.daily.temperature_2m_max[0] + data.daily.temperature_2m_min[0]) / 2),
-            tempMax: data.daily.temperature_2m_max[0],
-            tempMin: data.daily.temperature_2m_min[0],
+            temp: Math.round((tempMax + tempMin) / 2),
+            tempMax,
+            tempMin,
             description: getWeatherDescription(weatherCode),
             weatherCode: weatherCode
         };

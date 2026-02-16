@@ -14,6 +14,11 @@ let isLoading = false;
 let hasMoreData = true;
 let allLoadedLogs = []; // 로드된 모든 로그 저장
 
+// 날씨 필터 상태 (최저/최고 슬라이더)
+let weatherFilterLow = -20;
+let weatherFilterHigh = 40;
+let weatherFilterMode = 'all'; // 'today' | 'all' | 'custom'
+
 // 페이지 초기화
 async function initPage() {
     // 일기가 있는 연도 목록 로드
@@ -28,8 +33,11 @@ async function initPage() {
     // 모든 연도의 데이터를 로드
     await loadAllDayList();
     
-    // 스와이프 기능 초기화
-    initSwipe();
+        // 스와이프 기능 초기화
+        initSwipe();
+        
+        // 날씨 필터 초기화
+        initWeatherFilter();
 }
 
 // 일기가 있는 연도 목록 로드
@@ -422,33 +430,28 @@ async function loadDayList(year) {
         // 날짜순으로 정렬 (최신순)
         logs.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        // 최저/최고 기온이 없는 로그들을 찾아서 업데이트
-        const updatePromises = logs.map(async (log) => {
+        // 최저/최고 기온이 없는 로그들 순차 조회 (동시 요청 시 API 제한으로 실패할 수 있음)
+        for (const log of logs) {
             if ((log.weather_temp_min === null || log.weather_temp_min === undefined) &&
                 (log.weather_temp_max === null || log.weather_temp_max === undefined)) {
-                console.log(`⚠️ ${log.date} - 최저/최고 기온 없음. 날씨 API 재조회...`);
                 const weatherData = await getWeatherByDate(log.date);
                 
-                if (weatherData && weatherData.tempMin !== null && weatherData.tempMax !== null) {
-                    // DB 업데이트
+                if (weatherData?.unavailable && weatherData?.reason === 'future') {
+                    continue; // 7일 이후 미래 날짜 → 스킵
+                }
+                if (weatherData && weatherData.tempMin != null && weatherData.tempMax != null) {
                     await StyleLogAPI.update(log.id, {
                         weather_temp_min: weatherData.tempMin,
                         weather_temp_max: weatherData.tempMax,
                         weather_temp: weatherData.temp
                     });
-                    
-                    // log 객체 업데이트
                     log.weather_temp_min = weatherData.tempMin;
                     log.weather_temp_max = weatherData.tempMax;
                     log.weather_temp = weatherData.temp;
-                    
-                    console.log(`✅ ${log.date} - 날씨 데이터 업데이트 완료:`, weatherData);
                 }
+                await new Promise(r => setTimeout(r, 250)); // API 부담 완화
             }
-        });
-        
-        // 모든 업데이트가 완료될 때까지 대기
-        await Promise.all(updatePromises);
+        }
         
         // 날짜순으로 정렬 (최신순)
         logs.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -599,8 +602,9 @@ async function loadMoreDayList() {
         // 날씨 데이터 업데이트 (비동기로 백그라운드 처리)
         updateWeatherDataInBackground(data);
         
-        // UI에 렌더링
-        await renderDayList(data);
+        // 날씨 필터 적용 후 렌더링
+        const filtered = data.filter(passesWeatherFilter);
+        await renderDayList(filtered);
         
         // 다음 페이지를 위해 offset 증가
         currentOffset += PAGE_SIZE;
@@ -698,7 +702,6 @@ function showEndMessage() {
 
 // 날씨 데이터를 백그라운드에서 업데이트 (UI 렌더링을 차단하지 않음)
 async function updateWeatherDataInBackground(logs) {
-    // 최저/최고 기온이 없는 로그들만 필터링
     const logsNeedingWeather = logs.filter(log => 
         (log.weather_temp_min === null || log.weather_temp_min === undefined) &&
         (log.weather_temp_max === null || log.weather_temp_max === undefined)
@@ -706,44 +709,29 @@ async function updateWeatherDataInBackground(logs) {
     
     if (logsNeedingWeather.length === 0) return;
     
-    console.log(`⚠️ ${logsNeedingWeather.length}개 로그의 날씨 데이터 업데이트 시작...`);
-    
-    // 백그라운드에서 비동기로 처리 (await 하지 않음)
-    Promise.all(logsNeedingWeather.map(async (log) => {
-        try {
-            // 2025년 이전 데이터는 날씨 API에서 가져올 수 없으므로 스킵
-            const logYear = new Date(log.date).getFullYear();
-            if (logYear < 2025) {
-                console.log(`⏭️ ${log.date} - 2025년 이전 데이터, 날씨 업데이트 스킵`);
-                return;
+    // 순차 처리로 API 제한 회피 (동시 요청 시 일부 실패함)
+    (async () => {
+        for (const log of logsNeedingWeather) {
+            try {
+                const weatherData = await getWeatherByDate(log.date);
+                if (weatherData?.unavailable && weatherData?.reason === 'future') continue;
+                if (weatherData?.tempMin != null && weatherData?.tempMax != null) {
+                    await StyleLogAPI.update(log.id, {
+                        weather_temp_min: weatherData.tempMin,
+                        weather_temp_max: weatherData.tempMax,
+                        weather_temp: weatherData.temp
+                    });
+                    log.weather_temp_min = weatherData.tempMin;
+                    log.weather_temp_max = weatherData.tempMax;
+                    log.weather_temp = weatherData.temp;
+                    updateDayItemWeather(log.id, weatherData);
+                }
+                await new Promise(r => setTimeout(r, 250));
+            } catch (error) {
+                console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
             }
-            
-            const weatherData = await getWeatherByDate(log.date);
-            
-            if (weatherData && weatherData.tempMin !== null && weatherData.tempMax !== null) {
-                // DB 업데이트
-                await StyleLogAPI.update(log.id, {
-                    weather_temp_min: weatherData.tempMin,
-                    weather_temp_max: weatherData.tempMax,
-                    weather_temp: weatherData.temp
-                });
-                
-                // 메모리의 log 객체도 업데이트
-                log.weather_temp_min = weatherData.tempMin;
-                log.weather_temp_max = weatherData.tempMax;
-                log.weather_temp = weatherData.temp;
-                
-                // UI 업데이트 (해당 아이템만)
-                updateDayItemWeather(log.id, weatherData);
-                
-                console.log(`✅ ${log.date} - 날씨 데이터 업데이트 완료`);
-            }
-        } catch (error) {
-            console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
         }
-    })).then(() => {
-        console.log('✅ 백그라운드 날씨 업데이트 완료');
-    });
+    })();
 }
 
 // 특정 아이템의 날씨 정보만 업데이트
@@ -873,7 +861,7 @@ function createDayItemForHome(log) {
             <div class="day-content photo">
                 <img src="${log.photos[0]}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
                 <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#666'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -913,7 +901,7 @@ function createDayItemForHome(log) {
                 </div>
                 <div class="quote-mark">"</div>
                 <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#666'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -1002,7 +990,7 @@ function attachDayListEventListeners() {
                 const svg = btn.querySelector('svg');
                 if (svg) {
                     svg.setAttribute('fill', !isFavorite ? '#ff6b6b' : 'none');
-                    svg.setAttribute('stroke', !isFavorite ? '#ff6b6b' : '#666');
+                    svg.setAttribute('stroke', !isFavorite ? '#ff6b6b' : '#555');
                 }
                 
                 console.log('✅ 즐겨찾기 토글 완료');
@@ -1095,6 +1083,185 @@ function attachDayListEventListeners() {
             }
         });
     });
+}
+
+// 날씨 필터: 해당 날의 최저 ≥ low 이고 최고 ≤ high 인 기록만
+function passesWeatherFilter(log) {
+    const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
+    if (isFullRange) return true;
+    if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
+    return log.weather_temp_min >= weatherFilterLow && log.weather_temp_max <= weatherFilterHigh;
+}
+
+// 필터 적용된 로그 목록
+function getFilteredLogs() {
+    const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
+    if (isFullRange) return allLoadedLogs;
+    return allLoadedLogs.filter(passesWeatherFilter);
+}
+
+// 전체 리스트 클리어 후 재렌더링 (필터 변경 시)
+function renderFullDayList(logs) {
+    const container = document.querySelector('.month-cards-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (logs.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 60px 20px; color: #999;">
+                <p>해당 기온의 기록이 없습니다.</p>
+            </div>
+        `;
+        attachDayListEventListeners();
+        return;
+    }
+    
+    let previousYear = null;
+    let previousMonth = null;
+    
+    logs.forEach(log => {
+        const date = new Date(log.date);
+        const currentYear = date.getFullYear();
+        const currentMonth = date.getMonth() + 1;
+        
+        if (previousYear !== currentYear) {
+            const yearLabel = document.createElement('div');
+            yearLabel.className = 'year-label-day-view';
+            yearLabel.textContent = `${currentYear}년`;
+            container.appendChild(yearLabel);
+            previousYear = currentYear;
+            previousMonth = null;
+        }
+        
+        if (previousMonth !== currentMonth) {
+            const monthLabel = document.createElement('div');
+            monthLabel.className = 'month-label-day-view';
+            monthLabel.textContent = `${currentMonth}월`;
+            container.appendChild(monthLabel);
+            previousMonth = currentMonth;
+        }
+        
+        const dayItem = createDayItemForHome(log);
+        container.appendChild(dayItem);
+    });
+    
+    attachDayListEventListeners();
+}
+
+// 날씨 필터 UI 초기화
+function initWeatherFilter() {
+    const sliderLow = document.getElementById('weatherFilterSliderLow');
+    const sliderHigh = document.getElementById('weatherFilterSliderHigh');
+    const valueLow = document.getElementById('weatherFilterValueLow');
+    const valueHigh = document.getElementById('weatherFilterValueHigh');
+    
+    if (!sliderLow || !sliderHigh) return;
+    
+    function updateValues() {
+        if (valueLow) valueLow.textContent = `${weatherFilterLow}° 이상`;
+        if (valueHigh) valueHigh.textContent = `${weatherFilterHigh}° 이하`;
+    }
+    
+    function applyFilter() {
+        renderFullDayList(getFilteredLogs());
+        if (!hasMoreData) showEndMessage();
+    }
+    
+    const selectText = document.getElementById('weatherFilterSelectText');
+    const selectBtn = document.getElementById('weatherFilterSelectBtn');
+    const selectDropdown = document.getElementById('weatherFilterSelectDropdown');
+
+    function setWeatherFilterSelectText(text) {
+        if (selectText) selectText.textContent = text;
+    }
+
+    function closeDropdown() {
+        if (selectDropdown) selectDropdown.classList.remove('active');
+        if (selectBtn) selectBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    sliderLow.addEventListener('input', () => {
+        let v = parseInt(sliderLow.value);
+        if (v > weatherFilterHigh) {
+            v = weatherFilterHigh;
+            sliderLow.value = v;
+        }
+        weatherFilterLow = v;
+        weatherFilterMode = 'custom';
+        setWeatherFilterSelectText('커스텀');
+        updateValues();
+        applyFilter();
+    });
+
+    sliderHigh.addEventListener('input', () => {
+        let v = parseInt(sliderHigh.value);
+        if (v < weatherFilterLow) {
+            v = weatherFilterLow;
+            sliderHigh.value = v;
+        }
+        weatherFilterHigh = v;
+        weatherFilterMode = 'custom';
+        setWeatherFilterSelectText('커스텀');
+        updateValues();
+        applyFilter();
+    });
+
+    if (selectBtn) {
+        selectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = selectDropdown?.classList.toggle('active');
+            selectBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+    document.addEventListener('click', closeDropdown);
+
+    const items = document.querySelectorAll('.weather-filter-select-item');
+    items.forEach(item => {
+        item.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const value = item.dataset.value;
+            if (value === 'today') {
+                const weather = await getCurrentWeather();
+                if (weather?.tempMin != null && weather?.tempMax != null) {
+                    setWeatherFilterFromToday(weather);
+                }
+                weatherFilterMode = 'today';
+                setWeatherFilterSelectText('오늘');
+            } else if (value === 'all') {
+                weatherFilterLow = -20;
+                weatherFilterHigh = 40;
+                sliderLow.value = -20;
+                sliderHigh.value = 40;
+                weatherFilterMode = 'all';
+                setWeatherFilterSelectText('전체');
+                updateValues();
+                applyFilter();
+            }
+            closeDropdown();
+        });
+    });
+}
+
+// 오늘 날씨 기반으로 필터 초기값 설정 (weather-display와 동일한 수치)
+function setWeatherFilterFromToday(weather) {
+    if (!weather || weather.tempMin == null || weather.tempMax == null) return;
+    weatherFilterLow = Math.max(-20, Math.round(weather.tempMin));
+    weatherFilterHigh = Math.min(40, Math.round(weather.tempMax));
+    if (weatherFilterLow >= weatherFilterHigh) {
+        weatherFilterLow = Math.max(-20, Math.round(weather.tempMin) - 1);
+        weatherFilterHigh = Math.min(40, Math.round(weather.tempMax) + 1);
+    }
+    const sliderLow = document.getElementById('weatherFilterSliderLow');
+    const sliderHigh = document.getElementById('weatherFilterSliderHigh');
+    const valueLow = document.getElementById('weatherFilterValueLow');
+    const valueHigh = document.getElementById('weatherFilterValueHigh');
+    if (sliderLow) sliderLow.value = weatherFilterLow;
+    if (sliderHigh) sliderHigh.value = weatherFilterHigh;
+    if (valueLow) valueLow.textContent = `${weatherFilterLow}° 이상`;
+    if (valueHigh) valueHigh.textContent = `${weatherFilterHigh}° 이하`;
+    renderFullDayList(getFilteredLogs());
+    if (!hasMoreData) showEndMessage();
 }
 
 // 스와이프 기능 초기화
@@ -1255,9 +1422,9 @@ document.querySelector('.calendar-btn')?.addEventListener('click', () => {
 });
 
 // 페이지 로드 시 초기화
-window.addEventListener('load', () => {
-    initPage();
-    updateTodayInfo(); // 오늘 날짜와 날씨 업데이트
+window.addEventListener('load', async () => {
+    await initPage();
+    await updateTodayInfo(); // 오늘 날씨 표시 + 슬라이더 초기 세팅
 });
 
 // 오늘 날짜와 날씨 정보 업데이트
