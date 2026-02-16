@@ -3,28 +3,34 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================
-echo   Deploy to Alpha
+echo   Alpha Deploy
 echo ============================================
 echo.
 
-REM Check current branch
-git branch --show-current
-
-REM Add and commit changes
-echo Adding changes...
+echo [1/5] Committing changes to main...
 git add .
 git commit -m "update: Alpha deployment"
 
-REM Push to alpha
-echo Pushing to alpha...
+echo [2/5] Switching to alpha...
+git checkout alpha
+
+echo [3/5] Pulling remote alpha (resolve conflicts)...
+git pull origin alpha
+
+echo [4/5] Merging main into alpha...
+git merge main --no-edit
+
+echo [5/5] Pushing alpha...
 git push origin alpha
 
 echo.
-echo ============================================
-echo   Alpha Deploy Complete!
-echo ============================================
+echo Switching back to main...
+git checkout main
+
 echo.
-echo Wait 1-2 minutes for Vercel to deploy
-echo Test on: https://stylelog-git-alpha-jongiks-projects.vercel.app
+echo ============================================
+echo   Done! Wait 1-2 min for Vercel.
+echo   URL: https://stylelog-git-alpha-jongiks-projects.vercel.app
+echo ============================================
 echo.
 pause
