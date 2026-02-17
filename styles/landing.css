@@ -1,588 +1,323 @@
-/* 디자인 토큰 import */
-@import url('variables.css');
+/* StyleLog 랜딩 - 최종 리팩토링 */
+/* Pretendard, 앱 UI 일치, 구어체 공감 카피 */
 
-/* 랜딩 페이지 스타일 */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* Global Typography */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-    color: #333;
-    overflow-x: hidden;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.6;
 }
 
-.landing-container {
+h1, h2, h3, .font-bold { letter-spacing: -0.03em; }
+p, .text-base, .text-sm { line-height: 1.75; }
+
+/* Hero: 스마트폰 목업 */
+.phone-mockup {
     width: 100%;
-    min-height: 100vh;
+    max-width: 340px;
+    margin: 0 auto;
+    padding: 12px;
+    background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
+    border-radius: 40px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(255,255,255,0.1);
 }
 
-/* 헤더 */
-.landing-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 40px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.phone-screen {
+    background: #f8fafc;
+    border-radius: 28px;
+    overflow: hidden;
+    padding: 16px;
+    min-height: 520px;
 }
 
-.logo {
-    font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: -0.5px;
-    color: var(--color-text-primary);
+.weather-widget {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    border: 1px solid #7dd3fc;
 }
 
-.header-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-/* 버튼 스타일 */
-.btn-primary,
-.btn-secondary,
-.btn-outline,
-.btn-large {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
+.weather-widget-q { font-size: 14px; font-weight: 600; color: #0369a1; margin-bottom: 4px; }
+.weather-widget-date { font-size: 12px; color: #0c4a6e; margin-bottom: 10px; }
+.weather-widget-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 14px;
+    font-weight: 700;
+}
+.weather-icon { font-size: 18px; }
+.weather-temp { font-size: 16px; font-weight: 700; color: #2563eb; }
+
+.weather-connect-line {
+    width: 2px;
+    height: 12px;
+    background: linear-gradient(to bottom, #93c5fd, transparent);
+    margin: 4px 0 4px 16px;
+    border-radius: 1px;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: var(--color-text-inverse);
+.hero-stack-wrap { position: relative; }
+.outfit-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.outfit-card-top { box-shadow: 0 0 0 2px #3b82f6; }
+.outfit-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
+.outfit-card-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 10px 12px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+.outfit-match { display: block; font-size: 11px; opacity: 0.95; }
+.outfit-card-2, .outfit-card-3 { opacity: 0.9; margin-left: 8px; }
+.outfit-card-3 { opacity: 0.75; margin-left: 16px; }
+
+@keyframes flow {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(calc(-50% - 8px)) translateX(4px); }
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
-.btn-secondary {
-    background: var(--color-bg-primary);
-    color: var(--color-primary);
-    border: 2px solid var(--color-primary);
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.btn-secondary:hover {
-    background: var(--color-primary-light);
+@keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
-.btn-outline {
-    background: var(--color-bg-primary);
-    color: var(--color-text-primary);
-    border: 2px solid var(--color-border-light);
+@keyframes check-pop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
-.btn-outline:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-}
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 
-.btn-large {
-    padding: 16px 32px;
-    font-size: 16px;
+/* 슬라이더 핸들 (손가락 터치 느낌) */
+.slider-thumb {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    top: 50%;
+    transform: translateY(-50%);
 }
+.slider-thumb-min { left: calc(25% - 9px); border: 2px solid #3b82f6; }
+.slider-thumb-max { left: calc(66.6% - 9px); border: 2px solid #f43f5e; }
 
-/* 히어로 섹션 */
-.hero {
+/* 업로드 버튼 (+) */
+.upload-btn-mock {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    min-height: 100vh;
-    padding: 120px 40px 80px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    gap: 80px;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+}
+.upload-plus { color: white; font-size: 28px; font-weight: 300; line-height: 1; }
+
+/* Hero: 오늘 기온 → 착장 매칭 */
+.hero-visual-flow {
     position: relative;
-    overflow: hidden;
+    min-height: 340px;
 }
 
-.hero::before {
+/* Hero 텍스트 가독성 */
+.hero-text { max-width: 520px; }
+.hero-label { font-size: 13px; font-weight: 600; color: #2563eb; letter-spacing: 0.05em; margin-bottom: 16px; }
+.hero-headline {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+}
+@media (min-width: 640px) { .hero-headline { font-size: 3rem; } }
+@media (min-width: 1024px) { .hero-headline { font-size: 3.25rem; } }
+.hero-sub {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    letter-spacing: -0.01em;
+    color: #4b5563;
+    margin-bottom: 32px;
+}
+
+.text-deep-200 { color: rgba(255, 255, 255, 0.85); }
+
+.hero-fade-in {
+    animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.hero-fade-in-delay {
+    animation: fade-in-up 0.8s ease-out 0.3s forwards;
+    opacity: 0;
+}
+
+.hero-slide-in {
+    animation: slide-in-right 0.6s ease-out 0.4s forwards;
+    opacity: 0;
+}
+
+.weather-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 16px;
+    border: 1px solid #fcd34d;
+}
+
+.hero-card-float {
+    position: absolute;
+    width: 140px;
+    height: 180px;
+    right: 0;
+    top: 50%;
+    opacity: 0;
+    box-shadow: 0 20px 50px rgba(30, 64, 175, 0.12);
+    border-radius: 20px;
+    overflow: hidden;
+    animation: flow 4s ease-in-out 0.8s infinite;
+}
+
+.hero-card-float::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-    border-radius: 50%;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(59, 130, 246, 0.08) 100%);
+    pointer-events: none;
 }
 
-.hero-content {
-    flex: 1;
-    max-width: 600px;
-    z-index: 1;
+@media (min-width: 1024px) {
+    .hero-card-float {
+        right: -24px;
+        width: 170px;
+        height: 215px;
+    }
 }
 
-.hero-badge {
-    display: inline-block;
-    padding: 8px 16px;
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 24px;
+@media (max-width: 767px) {
+    .hero-visual-flow { min-height: 300px; }
+    .hero-card-float {
+        width: 120px;
+        height: 155px;
+        right: 5px;
+    }
 }
 
-.hero-title {
-    font-size: 56px;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 24px;
-    color: #1a1a1a;
-}
-
-.gradient-text {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.hero-description {
-    font-size: var(--font-size-xl);
-    line-height: 1.8;
-    color: var(--color-text-secondary);
-    margin-bottom: var(--spacing-4xl);
-}
-
-.hero-buttons {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 48px;
-}
-
-/* 통계 */
-.hero-stats {
-    display: flex;
-    gap: 40px;
-    padding-top: 32px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.stat-item {
-    text-align: left;
-}
-
-.stat-number {
-    font-size: var(--font-size-4xl);
-    font-weight: var(--font-weight-bold);
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: var(--spacing-xs);
-}
-
-.stat-label {
-    font-size: var(--font-size-base);
-    color: var(--color-text-secondary);
-}
-
-/* 이미지 쇼케이스 */
-.hero-image {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-}
-
-.image-showcase {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 280px 280px;
-    gap: 16px;
-    width: 520px;
-    height: 576px;
-}
-
-.showcase-main,
-.showcase-secondary,
-.showcase-tertiary {
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
-}
-
-.showcase-main {
-    grid-column: 1;
-    grid-row: 1 / 3;
-}
-
-.showcase-secondary {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.showcase-tertiary {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-.showcase-main:hover,
-.showcase-secondary:hover,
-.showcase-tertiary:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-}
-
-.image-showcase img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-}
-
-.showcase-main:hover img,
-.showcase-secondary:hover img,
-.showcase-tertiary:hover img {
-    transform: scale(1.08);
-}
-
-.image-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.showcase-main:hover .image-overlay,
-.showcase-secondary:hover .image-overlay,
-.showcase-tertiary:hover .image-overlay {
-    opacity: 1;
-}
-
-.overlay-tag,
-.overlay-weather {
-    font-size: 13px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    padding: 6px 12px;
-    border-radius: 10px;
-    display: inline-block;
-    width: fit-content;
-}
-
-/* 기능 섹션 */
-.features {
-    padding: 120px 40px;
+/* Bento Card - 둥근 모서리 */
+.bento-card {
     background: white;
-}
-
-.features-header {
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto 80px;
-}
-
-.section-badge {
-    display: inline-block;
-    padding: 8px 16px;
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 16px;
-}
-
-.section-title {
-    font-size: 48px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: #1a1a1a;
-}
-
-.section-description {
-    font-size: 18px;
-    color: #666;
-    line-height: 1.6;
-}
-
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 32px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.feature-card {
-    position: relative;
-    background: #f8f9fa;
     border-radius: 24px;
+    border: 1px solid #e5e7eb;
     overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: all 0.35s ease;
 }
 
-.feature-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+.bento-card:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 16px 48px rgba(59, 130, 246, 0.08);
+    transform: translateY(-4px);
 }
 
-.feature-image {
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
+.bento-inner {
+    padding: 28px;
 }
 
-.feature-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s;
+.bento-mock {
+    transition: transform 0.35s ease;
 }
 
-.feature-card:hover .feature-image img {
-    transform: scale(1.1);
+.bento-card:hover .bento-mock {
+    transform: scale(1.02);
 }
 
-.feature-icon {
-    position: absolute;
-    top: 160px;
-    left: 24px;
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
+/* Comparison: 캐릭터 대비 */
+.compare-card {
+    border-radius: 24px;
+    padding: 32px;
+    transition: all 0.35s ease;
+}
+
+.compare-before {
+    background: white;
+    border: 2px solid #e5e7eb;
+}
+
+.compare-before:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05);
+}
+
+.compare-after {
+    background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+    border: 2px solid #93c5fd;
+}
+
+.compare-after:hover {
+    border-color: #60a5fa;
+    box-shadow: 0 16px 40px rgba(59, 130, 246, 0.12);
+}
+
+.compare-character {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.character-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-    z-index: 2;
+    font-size: 36px;
+    border-radius: 20px;
+    transition: transform 0.3s ease;
 }
 
-.feature-icon svg {
-    stroke: white;
-    stroke-width: 2;
+.character-worry {
+    background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
+    border: 2px solid #fecaca;
 }
 
-.feature-card h3 {
-    font-size: 22px;
-    font-weight: 600;
-    margin: 48px 24px 12px;
-    color: #1a1a1a;
+.character-relax {
+    background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 2px solid #a7f3d0;
 }
 
-.feature-card p {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #666;
-    margin: 0 24px 24px;
+.compare-card:hover .character-icon {
+    transform: scale(1.05);
 }
 
-/* CTA 섹션 */
-.cta {
-    padding: 100px 40px;
-    text-align: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+.compare-desc {
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.cta h2 {
-    font-size: 40px;
-    font-weight: 700;
-    margin-bottom: 16px;
+.compare-after .compare-desc {
+    border-top-color: rgba(37, 99, 235, 0.15);
 }
-
-.cta p {
-    font-size: 18px;
-    margin-bottom: 32px;
-    opacity: 0.9;
-}
-
-.cta .btn-primary {
-    background: white;
-    color: #667eea;
-}
-
-.cta .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
-}
-
-/* 푸터 */
-.landing-footer {
-    padding: 60px 40px;
-    background: #1a1a1a;
-    color: white;
-    text-align: center;
-}
-
-.footer-logo {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 16px;
-}
-
-.footer-text {
-    font-size: 16px;
-    margin-bottom: 24px;
-    opacity: 0.8;
-}
-
-.footer-copyright {
-    font-size: 14px;
-    opacity: 0.6;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-    .landing-header {
-        padding: 16px 20px;
-    }
-    
-    .logo {
-        font-size: 20px;
-    }
-    
-    .header-buttons .btn-secondary {
-        padding: 10px 16px;
-        font-size: 14px;
-    }
-    
-    .hero {
-        flex-direction: column;
-        padding: 100px 20px 60px;
-        text-align: center;
-        gap: 40px;
-    }
-    
-    .hero::before {
-        width: 600px;
-        height: 600px;
-    }
-    
-    .hero-content {
-        max-width: 100%;
-    }
-    
-    .hero-badge {
-        font-size: 13px;
-    }
-    
-    .hero-title {
-        font-size: 36px;
-    }
-    
-    .hero-description {
-        font-size: 16px;
-    }
-    
-    .hero-buttons {
-        justify-content: center;
-    }
-    
-    .btn-large {
-        padding: 14px 24px;
-        font-size: 15px;
-    }
-    
-    .hero-stats {
-        justify-content: center;
-        gap: 24px;
-    }
-    
-    .stat-number {
-        font-size: 24px;
-    }
-    
-    .stat-label {
-        font-size: 13px;
-    }
-    
-    .image-showcase {
-        width: 100%;
-        max-width: 360px;
-        height: 420px;
-        grid-template-rows: 200px 200px;
-        gap: 12px;
-    }
-    
-    .image-overlay {
-        padding: 16px;
-    }
-    
-    .overlay-tag,
-    .overlay-weather {
-        font-size: 11px;
-        padding: 5px 10px;
-    }
-    
-    .features {
-        padding: 80px 20px;
-    }
-    
-    .features-header {
-        margin-bottom: 48px;
-    }
-    
-    .section-badge {
-        font-size: 13px;
-    }
-    
-    .section-title {
-        font-size: 32px;
-    }
-    
-    .section-description {
-        font-size: 16px;
-    }
-    
-    .features-grid {
-        grid-template-columns: 1fr;
-        gap: 24px;
-    }
-    
-    .cta {
-        padding: 80px 20px;
-    }
-    
-    .cta h2 {
-        font-size: 32px;
-    }
-    
-    .cta p {
-        font-size: 16px;
-    }
-    
-    .landing-footer {
-        padding: 48px 20px;
-    }
-    
-    .footer-logo {
-        font-size: 24px;
-    }
-}
-
