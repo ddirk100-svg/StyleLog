@@ -26,7 +26,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--color-bg-secondary);
     color: var(--color-text-primary);
     overflow: hidden;
@@ -195,13 +195,13 @@ body:has(.container.day-view-active) {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-border-light);
 }
 
 .menu-header h2 {
     font-size: 20px;
     font-weight: 700;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .close-menu-btn {
@@ -209,23 +209,23 @@ body:has(.container.day-view-active) {
     border: none;
     cursor: pointer;
     padding: 8px;
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 .menu-user-info {
     padding: 20px;
-    background: #f5f5f5;
-    border-bottom: 1px solid #e0e0e0;
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-light);
 }
 
 .menu-user-info p {
     font-size: 14px;
-    color: #666;
+    color: var(--color-text-secondary);
     margin: 4px 0;
 }
 
 .menu-user-info strong {
-    color: #333;
+    color: var(--color-text-primary);
     font-weight: 600;
 }
 
@@ -245,11 +245,11 @@ body:has(.container.day-view-active) {
     cursor: pointer;
     transition: background 0.2s;
     font-size: 15px;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .menu-item:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-secondary);
 }
 
 .menu-item svg {
@@ -279,7 +279,7 @@ body:has(.container.day-view-active) {
     align-items: center;
     font-size: 18px;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .year-btn-text {
@@ -289,7 +289,7 @@ body:has(.container.day-view-active) {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #667eea;
+    color: var(--color-primary);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -308,7 +308,7 @@ body:has(.container.day-view-active) {
     height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-top: 5px solid #667eea;
+    border-top: 5px solid var(--color-primary);
     margin-left: 4px;
     transition: transform 0.3s;
 }
@@ -318,7 +318,7 @@ body:has(.container.day-view-active) {
 }
 
 .year-suffix {
-    color: #333;
+    color: var(--color-text-primary);
     margin-left: 2px;
 }
 
@@ -330,7 +330,7 @@ body:has(.container.day-view-active) {
     gap: 8px;
     font-size: 24px;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text-primary);
     cursor: pointer;
     transition: opacity 0.2s;
 }
@@ -376,7 +376,7 @@ body:has(.container.day-view-active) {
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
-    color: #666;
+    color: var(--color-text-secondary);
     transition: all 0.2s;
     border: none;
     background: none;
@@ -384,12 +384,12 @@ body:has(.container.day-view-active) {
 }
 
 .year-dropdown-item:hover {
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
 }
 
 .year-dropdown-item.selected {
-    color: #67d5f5;
+    color: var(--color-primary);
     font-weight: 600;
 }
 
@@ -406,7 +406,7 @@ body:has(.container.day-view-active) {
     display: flex;
     gap: 8px;
     padding: 4px;
-    background-color: #f5f5f5;
+    background-color: var(--color-bg-secondary);
     border-radius: 12px;
     width: fit-content;
     flex-shrink: 0;
@@ -418,7 +418,7 @@ body:has(.container.day-view-active) {
     padding: 8px 20px;
     font-size: 14px;
     font-weight: 600;
-    color: #999;
+    color: var(--color-text-tertiary);
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.3s;
@@ -426,12 +426,12 @@ body:has(.container.day-view-active) {
 }
 
 .view-btn:hover {
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 .view-btn.active {
     background-color: #fff;
-    color: #333;
+    color: var(--color-text-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -612,7 +612,7 @@ body:has(.container.day-view-active) {
 .month-card-content.with-image .month-number {
     font-size: 24px;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text-primary);
     opacity: 1;
 }
 
@@ -620,13 +620,13 @@ body:has(.container.day-view-active) {
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 1px;
-    color: #666;
+    color: var(--color-text-secondary);
     opacity: 1;
 }
 
 .month-card-content.with-image .month-count {
     font-size: 12px;
-    color: #999;
+    color: var(--color-text-tertiary);
     opacity: 1;
 }
 
@@ -762,7 +762,7 @@ body:has(.container.day-view-active) {
 .filter-row-category {
     gap: 8px;
     padding: 10px 14px;
-    background: #f5f6f8;
+    background: var(--color-bg-muted);
     position: relative;
 }
 .filter-btn {
@@ -774,7 +774,7 @@ body:has(.container.day-view-active) {
     height: 40px;
     padding: 0;
     background: #fff;
-    border: 1px solid #e0e3e8;
+    border: 1px solid var(--color-border-mid);
     border-radius: 6px;
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -817,7 +817,7 @@ body:has(.container.day-view-active) {
     z-index: 2;
     opacity: 0;
     transition: opacity 0.2s;
-    background: linear-gradient(to right, #f5f6f8, transparent);
+    background: linear-gradient(to right, var(--color-bg-muted), transparent);
 }
 .filter-row-category.fade-left::before {
     opacity: 1;
@@ -834,7 +834,7 @@ body:has(.container.day-view-active) {
     z-index: 2;
     opacity: 0;
     transition: opacity 0.2s;
-    background: linear-gradient(to left, #f5f6f8, transparent);
+    background: linear-gradient(to left, var(--color-bg-muted), transparent);
 }
 .filter-row-category.fade-right::after {
     opacity: 1;
@@ -853,7 +853,7 @@ body:has(.container.day-view-active) {
     flex-shrink: 0;
     padding: 8px 14px;
     background: #fff;
-    border: 1px solid #e0e3e8;
+    border: 1px solid var(--color-border-mid);
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
@@ -876,8 +876,8 @@ body:has(.container.day-view-active) {
     gap: 12px;
     min-height: 36px;
     padding: 8px 14px;
-    background: #eef2f7;
-    border-top: 1px solid #e0e3e8;
+    background: var(--color-bg-subtle);
+    border-top: 1px solid var(--color-border-mid);
     position: relative;
 }
 .filter-bar.has-active-filters .filter-row-active {
@@ -904,7 +904,7 @@ body:has(.container.day-view-active) {
     z-index: 2;
     opacity: 0;
     transition: opacity 0.2s;
-    background: linear-gradient(to right, #eef2f7, transparent);
+    background: linear-gradient(to right, var(--color-bg-subtle), transparent);
 }
 .filter-row-active.fade-left::before {
     opacity: 1;
@@ -921,7 +921,7 @@ body:has(.container.day-view-active) {
     z-index: 2;
     opacity: 0;
     transition: opacity 0.2s;
-    background: linear-gradient(to left, #eef2f7, transparent);
+    background: linear-gradient(to left, var(--color-bg-subtle), transparent);
 }
 .filter-row-active.fade-right::after {
     opacity: 1;
@@ -942,7 +942,7 @@ body:has(.container.day-view-active) {
     gap: 6px;
     padding: 6px 12px;
     background: #fff;
-    border: 1px solid rgba(102, 126, 234, 0.4);
+    border: 1px solid var(--color-primary-shadow);
     border-radius: 6px;
     font-size: 13px;
     color: var(--color-primary);
@@ -973,8 +973,8 @@ body:has(.container.day-view-active) {
     align-items: center;
     gap: 12px;
     padding: 10px 20px;
-    background: #eef2f7;
-    border-bottom: 1px solid #e0e3e8;
+    background: var(--color-bg-subtle);
+    border-bottom: 1px solid var(--color-border-mid);
     position: relative;
 }
 .filter-modal.has-selection .filter-modal-active-row {
@@ -992,7 +992,7 @@ body:has(.container.day-view-active) {
     z-index: 2;
     opacity: 0;
     transition: opacity 0.2s;
-    background: linear-gradient(to right, #eef2f7, transparent);
+    background: linear-gradient(to right, var(--color-bg-subtle), transparent);
 }
 .filter-modal-active-row.fade-left::before {
     opacity: 1;
@@ -1008,7 +1008,7 @@ body:has(.container.day-view-active) {
     z-index: 2;
     opacity: 0;
     transition: opacity 0.2s;
-    background: linear-gradient(to left, #eef2f7, transparent);
+    background: linear-gradient(to left, var(--color-bg-subtle), transparent);
 }
 .filter-modal-active-row.fade-right::after {
     opacity: 1;
@@ -1030,7 +1030,7 @@ body:has(.container.day-view-active) {
     background: none;
     border: none;
     font-size: 13px;
-    color: #999;
+    color: var(--color-text-tertiary);
     cursor: pointer;
     text-decoration: underline;
 }
@@ -1099,8 +1099,8 @@ body:has(.container.day-view-active) {
     display: flex;
     gap: 4px;
     padding: 12px 20px;
-    background: #f5f6f8;
-    border-bottom: 1px solid #e0e3e8;
+    background: var(--color-bg-muted);
+    border-bottom: 1px solid var(--color-border-mid);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -1158,7 +1158,7 @@ body:has(.container.day-view-active) {
     gap: 12px;
     padding: 14px 16px;
     background: #fff;
-    border: 1px solid #e0e3e8;
+    border: 1px solid var(--color-border-mid);
     border-radius: 6px;
     font-size: 15px;
     cursor: pointer;
@@ -1277,7 +1277,7 @@ body:has(.container.day-view-active) {
 .filter-apply-btn {
     width: 100%;
     padding: 16px;
-    background: #1a1a1a;
+    background: var(--color-text-primary);
     color: white;
     border: none;
     border-radius: 8px;
@@ -1286,13 +1286,13 @@ body:has(.container.day-view-active) {
     cursor: pointer;
 }
 .filter-apply-btn:hover {
-    background: #333;
+    background: var(--color-text-primary);
 }
 .filter-reset-all-btn {
     background: none;
     border: none;
     font-size: 14px;
-    color: #999;
+    color: var(--color-text-tertiary);
     cursor: pointer;
     padding: 8px;
 }
@@ -1313,7 +1313,7 @@ body:has(.container.day-view-active) {
 .weather-title {
     font-size: 15px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--color-text-primary);
     letter-spacing: -0.2px;
     margin: 0;
 }
@@ -1343,7 +1343,7 @@ body:has(.container.day-view-active) {
 .today-date {
     font-size: 13px;
     font-weight: 500;
-    color: #4a5568;
+    color: var(--color-text-secondary);
     letter-spacing: 0.3px;
 }
 
@@ -1361,7 +1361,7 @@ body:has(.container.day-view-active) {
 }
 
 .weather-icon {
-    color: #1a1a1a;
+    color: var(--color-text-primary);
     stroke-width: 2;
     width: 24px;
     height: 24px;
@@ -1371,7 +1371,7 @@ body:has(.container.day-view-active) {
 
 .weather-temp {
     font-size: 18px;
-    color: #1a1a1a;
+    color: var(--color-text-primary);
     font-weight: 700;
     letter-spacing: -0.5px;
     line-height: 1;
@@ -1383,25 +1383,25 @@ body:has(.container.day-view-active) {
 
 .weather-temp .temp-low,
 .weather-temp span.temp-low {
-    color: #4a90e2 !important;
+    color: var(--color-primary) !important;
     font-weight: 600;
 }
 
 .weather-temp .temp-high,
 .weather-temp span.temp-high {
-    color: #ff6b6b !important;
+    color: var(--color-favorite) !important;
     font-weight: 700;
 }
 
 .temp-range-inline {
     font-size: 14px;
-    color: #1a1a1a;
+    color: var(--color-text-primary);
     font-weight: 500;
     letter-spacing: 0.2px;
 }
 
 .temp-range-inline .temp-low {
-    color: #4a90e2;
+    color: var(--color-primary);
 }
 
 .temp-range-inline .temp-high {
@@ -1434,15 +1434,15 @@ body:has(.container.day-view-active) {
 }
 
 .favorite-btn {
-    background-color: #333;
+    background-color: var(--color-text-primary);
 }
 
 .write-btn {
-    background-color: #333;
+    background-color: var(--color-text-primary);
 }
 
 .calendar-btn {
-    background-color: #333;
+    background-color: var(--color-text-primary);
 }
 
 .calendar-btn.active {
@@ -1626,14 +1626,14 @@ body:has(.container.day-view-active) {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    color: #666;
+    color: var(--color-text-secondary);
     z-index: 2;
 }
 
 .item-menu-btn:hover {
     transform: scale(1.1);
     background: rgba(255, 255, 255, 1);
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 /* 반응형 */

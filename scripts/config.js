@@ -255,34 +255,8 @@ const utils = {
     showLoading() {
         const loader = document.createElement('div');
         loader.id = 'global-loader';
-        loader.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255, 255, 255, 0.9);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-            ">
-                <div style="
-                    width: 40px;
-                    height: 40px;
-                    border: 3px solid #f0f0f0;
-                    border-top-color: #67d5f5;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                "></div>
-            </div>
-            <style>
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-            </style>
-        `;
+        loader.className = 'util-spinner-wrap';
+        loader.innerHTML = '<div class="util-spinner"></div>';
         document.body.appendChild(loader);
     },
     

@@ -1,14 +1,17 @@
-/* 디자인 토큰 - CSS 변수 */
+/* 디자인 토큰 - CSS 변수 (랜딩/로그인과 동일한 deep blue 결) */
 :root {
-    /* Primary Colors */
-    --color-primary: #667eea;
-    --color-primary-dark: #764ba2;
-    --color-primary-light: #f8f9ff;
+    /* Font */
+    --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
     
-    /* Accent Colors */
-    --color-accent: #67d5f5;
-    --color-accent-dark: #4fc3f0;
-    --color-accent-light: #E3F2FD;
+    /* Primary Colors (deep blue) */
+    --color-primary: #2563eb;
+    --color-primary-dark: #1d4ed8;
+    --color-primary-light: #eff6ff;
+    
+    /* Accent Colors (primary와 동일 톤) */
+    --color-accent: #3b82f6;
+    --color-accent-dark: #2563eb;
+    --color-accent-light: #eff6ff;
     
     /* Favorite/Heart Color */
     --color-favorite: #ff6b6b;
@@ -25,12 +28,15 @@
     --color-bg-primary: #fff;
     --color-bg-secondary: #f5f5f5;
     --color-bg-tertiary: #fafafa;
-    --color-bg-hover: #f8f9ff;
+    --color-bg-subtle: #eef2f7;
+    --color-bg-muted: #f5f6f8;
+    --color-bg-hover: #eff6ff;
     
     /* Border Colors */
     --color-border-light: #e0e0e0;
+    --color-border-mid: #e0e3e8;
     --color-border-lighter: #f0f0f0;
-    --color-border-focus: var(--color-accent);
+    --color-border-focus: var(--color-primary);
     
     /* Weather Colors */
     --color-weather-sunny-start: #FFF3E0;
@@ -45,8 +51,8 @@
     --color-weather-lightning-end: #FFF59D;
     
     /* Temperature Colors */
-    --color-temp-high: #ff6b6b;
-    --color-temp-low: #4a90e2;
+    --color-temp-high: #ef4444;
+    --color-temp-low: #2563eb;
     
     /* Shadow Colors */
     --color-shadow-sm: rgba(0, 0, 0, 0.05);
@@ -62,6 +68,20 @@
     --color-success: #2e7d32;
     --color-error: #c62828;
     --color-warning: #ffc107;
+    
+    /* Weather Fit Chip (cold/good/hot) */
+    --chip-cold-bg: #dbeafe;
+    --chip-cold-color: #1e40af;
+    --chip-cold-border: #93c5fd;
+    --chip-good-bg: #dcfce7;
+    --chip-good-color: #166534;
+    --chip-good-border: #86efac;
+    --chip-hot-bg: #fee2e2;
+    --chip-hot-color: #991b1b;
+    --chip-hot-border: #fca5a5;
+    
+    /* Button / Primary 강조용 */
+    --color-primary-shadow: rgba(37, 99, 235, 0.4);
     
     /* Spacing */
     --spacing-xs: 4px;
@@ -150,6 +170,9 @@
     --button-padding-md: var(--spacing-md) var(--spacing-lg);
     --button-padding-lg: var(--spacing-lg) var(--spacing-xl);
     
+    /* Icon default (비활성) */
+    --color-icon-default: #555;
+    
     /* Action Button Colors */
     --color-action-edit: var(--color-text-primary);
     --color-action-delete: var(--color-favorite);
@@ -166,5 +189,11 @@
     --tag-bg: var(--color-bg-secondary);
     --tag-color: var(--color-text-secondary);
     --tag-radius: 16px;
+}
+
+/* 전역 타이포그래피 (랜딩/로그인과 결 맞춤) */
+body {
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
 }
 

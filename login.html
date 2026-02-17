@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- Google tag (gtag.js) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4JCJ9BQ674"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -11,128 +13,137 @@
       gtag('config', 'G-4JCJ9BQ674');
     </script>
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스타일로그 - 로그인</title>
-    <link rel="stylesheet" href="styles/auth.css">
-    <!-- Supabase 클라이언트 -->
+    <title>로그인 - StyleLog</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              deep: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' }
+            },
+            fontFamily: { sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Malgun Gothic', 'sans-serif'] }
+          }
+        }
+      }
+    </script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 설정 -->
     <script src="scripts/config.js"></script>
+    <style>
+      body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif; letter-spacing: -0.02em; }
+      .form-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    </style>
 </head>
-<body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <!-- 로고 -->
-            <div class="auth-logo">
-                <h1>StyleLog</h1>
-                <p>오늘 뭐입지?</p>
+<body class="bg-white text-gray-900 antialiased min-h-screen">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header: 랜딩과 동일 -->
+        <header class="bg-white/95 backdrop-blur-md border-b border-gray-100">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center h-16">
+                <a href="landing.html" class="flex items-center">
+                    <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-10 w-auto" width="120" height="40" loading="eager" decoding="async">
+                </a>
+                <div class="flex gap-3">
+                    <span class="px-4 py-2 text-sm font-semibold text-deep-600 bg-deep-50 rounded-lg">로그인</span>
+                    <a href="signup.html" class="px-4 py-2 text-sm font-semibold bg-deep-600 text-white rounded-lg hover:bg-deep-700 transition-colors shadow-sm">무료로 시작</a>
+                </div>
             </div>
+        </header>
 
-            <!-- 로그인 폼 -->
-            <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <label for="email">이메일</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        placeholder="example@email.com"
-                        required
-                        autocomplete="email">
+        <!-- 메인: 로그인 폼 -->
+        <main class="flex-1 flex items-center justify-center px-4 py-16 sm:py-24 bg-gradient-to-b from-white via-deep-50/20 to-white">
+            <div class="w-full max-w-md">
+                <!-- 로고/제목 -->
+                <div class="text-center mb-10">
+                    <p class="text-sm font-semibold text-deep-600 mb-2">나만의 패션 일기</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">다시 만나서 반가워요</h1>
+                    <p class="text-gray-600 mt-2">이메일과 비밀번호로 로그인하세요</p>
                 </div>
 
-                <div class="form-group">
-                    <label for="password">비밀번호</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="비밀번호를 입력하세요"
-                        required
-                        autocomplete="current-password"
-                        minlength="6">
+                <!-- 폼 카드 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 sm:p-10">
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-gray-800 mb-2">이메일</label>
+                            <input type="email" id="email" name="email" placeholder="example@email.com" required autocomplete="email"
+                                class="form-input w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-semibold text-gray-800 mb-2">비밀번호</label>
+                            <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required autocomplete="current-password" minlength="6"
+                                class="form-input w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none transition-colors">
+                        </div>
+
+                        <button type="submit" id="loginBtn" class="w-full py-3.5 bg-deep-600 text-white font-semibold rounded-xl hover:bg-deep-700 transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            로그인
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </form>
+
+                    <div class="relative my-8">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-200"></div>
+                        </div>
+                        <div class="relative flex justify-center">
+                            <span class="px-4 bg-white text-sm text-gray-500">또는</span>
+                        </div>
+                    </div>
+
+                    <a href="signup.html" class="block w-full py-3.5 text-center border-2 border-deep-600 text-deep-600 font-semibold rounded-xl hover:bg-deep-50 transition-colors">
+                        회원가입
+                    </a>
+
+                    <div id="errorMessage" class="mt-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm text-center hidden leading-relaxed"></div>
                 </div>
 
-                <button type="submit" class="auth-btn primary" id="loginBtn">
-                    로그인
-                </button>
-
-                <div class="auth-divider">
-                    <span>또는</span>
-                </div>
-
-                <button type="button" class="auth-btn secondary" onclick="location.href='signup.html'">
-                    회원가입
-                </button>
-            </form>
-
-            <!-- 에러 메시지 -->
-            <div id="errorMessage" class="error-message"></div>
-        </div>
+                <p class="text-center text-sm text-gray-500 mt-8">
+                    <a href="landing.html" class="text-deep-600 hover:underline">← 랜딩으로 돌아가기</a>
+                </p>
+            </div>
+        </main>
     </div>
 
     <script src="scripts/auth.js"></script>
     <script>
-        // 이미 로그인된 경우 홈으로 리다이렉트
         window.addEventListener('load', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                window.location.href = 'home.html';
-            }
+            if (session) window.location.href = 'home.html';
         });
 
-        // 로그인 폼 제출
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('loginBtn');
             const errorMessage = document.getElementById('errorMessage');
-            
-            // 버튼 비활성화
-            loginBtn.disabled = true;
-            loginBtn.textContent = '로그인 중...';
-            errorMessage.textContent = '';
-            
-            try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                
-                if (error) throw error;
-                
-                console.log('✅ 로그인 성공:', data);
-                if (typeof gtag === 'function') gtag('event', 'login');
 
-                // 홈으로 이동
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '로그인 중...';
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                if (typeof gtag === 'function') gtag('event', 'login');
                 window.location.href = 'home.html';
-                
             } catch (error) {
-                console.error('❌ 로그인 오류:', error);
-                
-                // 에러 메시지 표시
-                if (error.message.includes('Invalid login credentials')) {
+                const msg = error?.message || String(error);
+                if (msg.includes('Invalid login credentials') || msg.includes('invalid_grant')) {
                     errorMessage.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
-                } else if (error.message.includes('Email not confirmed')) {
-                    errorMessage.innerHTML = `
-                        <strong>이메일 인증이 필요합니다</strong><br>
-                        <br>
-                        가입 시 받은 이메일의 인증 링크를 클릭해주세요.<br>
-                        <small style="color: #999;">이메일을 받지 못하셨나요? 스팸 메일함을 확인해보세요.</small>
-                    `;
-                    errorMessage.style.lineHeight = '1.6';
+                } else if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) {
+                    errorMessage.innerHTML = '<strong>이메일 인증이 필요합니다</strong><br><br>가입 시 받은 이메일의 인증 링크를 클릭해주세요.<br><small class="text-gray-500">스팸 메일함도 확인해보세요.</small>';
+                } else if (msg.includes('Email signup is disabled')) {
+                    errorMessage.innerHTML = '<strong>이메일 로그인이 비활성화되어 있습니다</strong><br><br>Supabase 대시보드 → Authentication → Providers → Email에서 "Enable Email Signup"을 켜주세요.';
                 } else {
-                    errorMessage.textContent = '로그인에 실패했습니다. 다시 시도해주세요.';
+                    errorMessage.textContent = '로그인에 실패했습니다. ' + (msg ? `(${msg.slice(0, 80)})` : '다시 시도해주세요.');
                 }
-                
-                // 버튼 활성화
+                if (window.location.hostname === 'localhost') console.error('Supabase 로그인 오류:', error);
+                errorMessage.classList.remove('hidden');
                 loginBtn.disabled = false;
-                loginBtn.textContent = '로그인';
+                loginBtn.innerHTML = '로그인 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>';
             }
         });
     </script>
 </body>
 </html>
-

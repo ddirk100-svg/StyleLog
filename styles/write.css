@@ -9,7 +9,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--color-bg-secondary);
     color: var(--color-text-primary);
 }
@@ -204,7 +204,7 @@ input.form-input[readonly] {
 
 /* 날씨 표시 */
 .weather-display {
-    background-color: #f9f9f9;
+    background-color: var(--color-bg-secondary);
     border-radius: 12px;
     padding: 16px;
 }
@@ -230,13 +230,13 @@ input.form-input[readonly] {
 .weather-name {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text-primary);
     margin-bottom: 4px;
 }
 
 .weather-temp {
     font-size: 14px;
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 .temp-range {
@@ -244,15 +244,15 @@ input.form-input[readonly] {
     gap: 12px;
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--color-border-light);
     font-size: 13px;
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 .weather-future-hint {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--color-border-light);
     font-size: 13px;
     color: var(--color-text-tertiary);
     line-height: 1.5;
@@ -260,19 +260,19 @@ input.form-input[readonly] {
 
 .change-weather-btn {
     background-color: #fff;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border-light);
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
-    color: #666;
+    color: var(--color-text-secondary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .change-weather-btn:hover {
-    border-color: #67d5f5;
-    color: #67d5f5;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 /* 사진 업로드 */
@@ -289,18 +289,18 @@ input.form-input[readonly] {
     justify-content: center;
     gap: 8px;
     padding: 32px;
-    border: 2px dashed #e0e0e0;
+    border: 2px dashed var(--color-border-light);
     border-radius: 12px;
-    background-color: #fafafa;
-    color: #999;
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-tertiary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .upload-btn:hover {
-    border-color: #67d5f5;
-    color: #67d5f5;
-    background-color: #f0f9ff;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-light);
 }
 
 .upload-btn svg {
@@ -356,7 +356,7 @@ input.form-input[readonly] {
 
 /* 태그 입력 */
 .tags-input-wrapper {
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border-light);
     border-radius: 8px;
     padding: 8px;
     min-height: 48px;
@@ -368,7 +368,7 @@ input.form-input[readonly] {
 }
 
 .tags-input-wrapper:focus-within {
-    border-color: #67d5f5;
+    border-color: var(--color-primary);
 }
 
 .tags-display {
@@ -382,8 +382,8 @@ input.form-input[readonly] {
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background-color: #f0f9ff;
-    color: #67d5f5;
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
     border-radius: 16px;
     font-size: 13px;
     font-weight: 500;
@@ -392,7 +392,7 @@ input.form-input[readonly] {
 .tag-remove {
     background: none;
     border: none;
-    color: #67d5f5;
+    color: var(--color-primary);
     cursor: pointer;
     padding: 0;
     font-size: 16px;
@@ -430,7 +430,7 @@ input.form-input[readonly] {
     align-items: center;
     gap: 8px;
     font-size: 15px;
-    color: #666;
+    color: var(--color-text-secondary);
     user-select: none;
 }
 
@@ -440,12 +440,12 @@ input.form-input[readonly] {
 }
 
 .form-checkbox input[type="checkbox"]:checked + .checkbox-label {
-    color: #ff6b9d;
+    color: var(--color-favorite);
 }
 
 .form-checkbox input[type="checkbox"]:checked + .checkbox-label .star-icon {
-    fill: #ff6b9d;
-    stroke: #ff6b9d;
+    fill: var(--color-favorite);
+    stroke: var(--color-favorite);
 }
 
 /* 날씨 모달 */
@@ -538,7 +538,7 @@ input.form-input[readonly] {
 }
 
 .weather-option:hover {
-    background-color: #fafafa;
+    background-color: var(--color-bg-tertiary);
 }
 
 .weather-option input[type="radio"] {
@@ -549,7 +549,7 @@ input.form-input[readonly] {
     display: flex;
     align-items: center;
     gap: 16px;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 16px;
     font-weight: 500;
 }
@@ -559,11 +559,11 @@ input.form-input[readonly] {
 }
 
 .weather-option input[type="radio"]:checked ~ .option-content {
-    color: #67d5f5;
+    color: var(--color-primary);
 }
 
 .weather-option input[type="radio"]:checked ~ .option-content svg {
-    stroke: #67d5f5;
+    stroke: var(--color-primary);
 }
 
 /* 반응형 */

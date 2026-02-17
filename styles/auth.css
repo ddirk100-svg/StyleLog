@@ -9,7 +9,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-sans);
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     min-height: 100vh;
     display: flex;
@@ -130,7 +130,7 @@ body {
 
 .auth-btn.primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px var(--color-primary-shadow);
 }
 
 .auth-btn.primary:disabled {

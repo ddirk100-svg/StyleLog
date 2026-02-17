@@ -29,7 +29,7 @@
 
 .temp-low {
     font-weight: var(--font-weight-medium);
-    color: var(--color-temp-low-alt);
+    color: var(--color-temp-low);
 }
 
 /* 날씨적합도 칩 */
@@ -43,17 +43,17 @@
     margin-top: 6px;
 }
 .day-weather-fit-chip--cold {
-    background: #dbeafe;
-    color: #1e40af;
-    border-color: #93c5fd;
+    background: var(--chip-cold-bg);
+    color: var(--chip-cold-color);
+    border-color: var(--chip-cold-border);
 }
 .day-weather-fit-chip--good {
-    background: #dcfce7;
-    color: #166534;
-    border-color: #86efac;
+    background: var(--chip-good-bg);
+    color: var(--chip-good-color);
+    border-color: var(--chip-good-border);
 }
 .day-weather-fit-chip--hot {
-    background: #fee2e2;
-    color: #991b1b;
-    border-color: #fca5a5;
+    background: var(--chip-hot-bg);
+    color: var(--chip-hot-color);
+    border-color: var(--chip-hot-border);
 }

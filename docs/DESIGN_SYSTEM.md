@@ -19,7 +19,8 @@ StyleLog_1.1V/
 ├── signup.html         # 회원가입
 ├── landing.html       # 랜딩
 ├── styles/
-│   ├── variables.css   # 디자인 토큰 (색상, 간격, 폰트 등)
+│   ├── variables.css   # 디자인 토큰 (색상, 간격, 폰트 등) - 단일 규칙 소스
+│   ├── utils.css       # 공통 UI 유틸리티 (empty/error/loading/버튼/스피너)
 │   ├── bottom-nav.css  # 하단 네비게이션
 │   ├── write.css       # 작성 페이지 (헤더, 폼, 버튼)
 │   ├── home.css        # 홈 페이지
@@ -34,11 +35,29 @@ StyleLog_1.1V/
 
 ---
 
-## 2. 헤더 유형 (Page Header)
+## 2. 디자인 토큰 (Design Tokens)
+
+**규칙: 모든 스타일은 `variables.css`의 CSS 변수(`var(--...)`)를 사용합니다.** 하드코딩된 색상/간격은 금지.
+
+### 2.1 variables.css
+- **색상**: `--color-primary`, `--color-text-primary`, `--color-bg-secondary`, `--chip-cold-bg` 등
+- **간격**: `--spacing-sm`, `--spacing-md`, `--radius-sm` 등
+- **폰트**: `--font-sans`, `--font-size-base`, `--font-weight-semibold` 등
+
+### 2.2 utils.css (동적 생성 UI)
+- `util-empty`, `util-error`, `util-loading`: 빈/에러/로딩 상태
+- `util-btn-primary`: 주요 버튼
+- `util-spinner-wrap`, `util-spinner`: 전역 로더 (config.js showLoading)
+- `util-infinite-loader`, `util-end-message`: 무한스크롤용
+- home.js 등에서 인라인 `style` 대신 위 클래스를 사용
+
+---
+
+## 3. 헤더 유형 (Page Header)
 
 헤더는 용도별로 4가지 유형으로 그룹핑됩니다.
 
-### 2.1 홈 헤더 (`.header`)
+### 3.1 홈 헤더 (`.header`)
 - **용도**: 메인 페이지, 로고 + 메뉴
 - **구성**: 좌측 로고 | 우측 햄버거 메뉴
 - **적용 페이지**: `home.html`
@@ -50,7 +69,7 @@ StyleLog_1.1V/
 </header>
 ```
 
-### 2.2 작성형 헤더 (`.write-header`)
+### 3.2 작성형 헤더 (`.write-header`)
 - **용도**: 폼 작성/수정, 뒤로가기 + 제목 + 액션 버튼
 - **구성**: 좌측 뒤로가기 | 중앙 제목 | 우측 저장/완료
 - **적용 페이지**: `write.html`, `inquiry.html`, `inquiry-write.html`, `edit-profile.html`
@@ -66,7 +85,7 @@ StyleLog_1.1V/
 </header>
 ```
 
-### 2.3 상세형 헤더 (`.detail-header`)
+### 3.3 상세형 헤더 (`.detail-header`)
 - **용도**: 상세 페이지, 이미지 위 오버레이
 - **구성**: 좌측 뒤로가기 | 우측 메뉴(⋮)
 - **적용 페이지**: `detail.html`
@@ -78,7 +97,7 @@ StyleLog_1.1V/
 </header>
 ```
 
-### 2.4 마이페이지 헤더 (`.mypage-header`)
+### 3.4 마이페이지 헤더 (`.mypage-header`)
 - **용도**: 제목만 있는 단순 헤더
 - **구성**: 중앙 제목만
 - **적용 페이지**: `mypage.html`
@@ -91,7 +110,7 @@ StyleLog_1.1V/
 
 ---
 
-## 3. 하단 네비게이션 (Bottom Nav)
+## 4. 하단 네비게이션 (Bottom Nav)
 
 모든 메인 페이지에서 동일한 구조를 사용합니다.
 
@@ -118,7 +137,7 @@ StyleLog_1.1V/
 
 ---
 
-## 4. 폼 컴포넌트
+## 5. 폼 컴포넌트
 
 ### 4.1 폼 그룹
 - **`.form-section`**: 섹션 단위 (margin-bottom: 32px)
@@ -144,7 +163,7 @@ StyleLog_1.1V/
 
 ---
 
-## 5. 버튼 유형
+## 6. 버튼 유형
 
 | 클래스 | 용도 | 예시 |
 |--------|------|------|
@@ -158,7 +177,7 @@ StyleLog_1.1V/
 
 ---
 
-## 6. 팝업/모달 패턴
+## 7. 팝업/모달 패턴
 
 ### 6.1 메뉴 팝업 (`.menu-popup`)
 - 오버레이 + 하단 슬라이드 업 컨텐츠
@@ -179,7 +198,7 @@ StyleLog_1.1V/
 
 ---
 
-## 7. 마이페이지 메뉴 아이템
+## 8. 마이페이지 메뉴 아이템
 
 링크 형태의 메뉴 (아이콘 + 라벨 + 화살표):
 
@@ -193,14 +212,14 @@ StyleLog_1.1V/
 
 ---
 
-## 8. 칩/태그
+## 9. 칩/태그
 
 - **날씨적합도 칩**: `day-weather-fit-chip`
 - **필터 칩**: `filter-category-chip`, `filter-active-chip`
 
 ---
 
-## 9. CSS 로딩 순서 (권장)
+## 10. CSS 로딩 순서 (권장)
 
 1. `variables.css` — 디자인 토큰
 2. `bottom-nav.css` — 하단 네비 (has-bottom-nav 페이지)
@@ -211,7 +230,7 @@ StyleLog_1.1V/
 
 ---
 
-## 10. 네이밍 규칙
+## 11. 네이밍 규칙
 
 - **BEM 유사**: `.block`, `.block-element`, `.block--modifier`
 - **상태**: `.active`, `.disabled`, `.readonly`
@@ -219,7 +238,7 @@ StyleLog_1.1V/
 
 ---
 
-## 11. 디자인 토큰 (variables.css)
+## 12. 디자인 토큰 상세 (variables.css)
 
 | 용도 | 변수 예시 |
 |------|-----------|
@@ -231,7 +250,7 @@ StyleLog_1.1V/
 
 ---
 
-## 12. 체크리스트 (신규 페이지 추가 시)
+## 13. 체크리스트 (신규 페이지 추가 시)
 
 - [ ] 적절한 헤더 유형 선택 (write-header 권장: 폼 페이지)
 - [ ] `body.has-bottom-nav` 적용 여부

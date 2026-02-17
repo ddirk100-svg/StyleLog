@@ -205,8 +205,8 @@ async function loadMonthCards() {
         if (monthsWithData.length === 0) {
             console.log('📭 데이터 없음 - 안내 문구 표시');
             container.innerHTML = `
-                <div style="width: 100%; text-align: center; padding: 100px 20px; color: #999;">
-                    <p style="font-size: 16px; color: #999;">저장된 기록이 없습니다</p>
+                <div class="util-empty util-empty--spacious">
+                    <p>저장된 기록이 없습니다</p>
                 </div>
             `;
             return;
@@ -253,16 +253,10 @@ async function loadMonthCards() {
         const container = document.querySelector('.month-cards-container');
         if (container) {
             container.innerHTML = `
-                <div style="width: 100%; text-align: center; padding: 80px 20px; color: #999;">
-                    <h3 style="font-size: 18px; font-weight: 600; color: #666; margin-bottom: 12px;">
-                        데이터를 불러올 수 없습니다
-                    </h3>
-                    <p style="font-size: 14px; color: #999; margin-bottom: 24px;">
-                        Supabase 연결을 확인해주세요
-                    </p>
-                    <p style="font-size: 13px; color: #ccc;">
-                        콘솔(F12)에서 에러를 확인하세요
-                    </p>
+                <div class="util-error util-error--spacious">
+                    <p class="util-error-title">데이터를 불러올 수 없습니다</p>
+                    <p class="util-sub util-sub--spaced">Supabase 연결을 확인해주세요</p>
+                    <p class="util-sub util-sub--sm">콘솔(F12)에서 에러를 확인하세요</p>
                 </div>
             `;
         }
@@ -419,12 +413,9 @@ async function loadDayList(year) {
         if (logs.length === 0) {
             console.log('📭 데이터 없음');
             container.innerHTML = `
-                <div style="text-align: center; padding: 60px 20px; color: #999;">
+                <div class="util-empty">
                     <p>이 연도에는 기록이 없습니다.</p>
-                    <button onclick="window.location.href='write.html'" 
-                            style="margin-top: 20px; padding: 12px 24px; background: #67d5f5; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        첫 기록 작성하기
-                    </button>
+                    <button class="util-btn-primary" onclick="window.location.href='write.html'">첫 기록 작성하기</button>
                 </div>
             `;
             return;
@@ -489,7 +480,7 @@ async function loadDayList(year) {
         const container = document.querySelector('.month-cards-container');
         if (container) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 60px 20px; color: #ff3b30;">
+                <div class="util-error">
                     <p>데이터를 불러오는데 실패했습니다.</p>
                 </div>
             `;
@@ -530,13 +521,10 @@ async function loadAllDayList() {
         const container = document.querySelector('.month-cards-container');
         if (container) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 60px 20px; color: #ff3b30;">
-                    <p style="font-size: 16px; margin-bottom: 12px;">데이터를 불러오는데 실패했습니다.</p>
-                    <p style="font-size: 14px; color: #999;">${error.message || '알 수 없는 오류'}</p>
-                    <button onclick="location.reload()" 
-                            style="margin-top: 20px; padding: 12px 24px; background: #67d5f5; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        다시 시도
-                    </button>
+                <div class="util-error">
+                    <p class="util-error-title">데이터를 불러오는데 실패했습니다.</p>
+                    <p class="util-sub">${error.message || '알 수 없는 오류'}</p>
+                    <button class="util-btn-primary" onclick="location.reload()">다시 시도</button>
                 </div>
             `;
         }
@@ -579,12 +567,9 @@ async function loadMoreDayList() {
             if (allLoadedLogs.length === 0) {
                 const container = document.querySelector('.month-cards-container');
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 60px 20px; color: #999;">
+                    <div class="util-empty">
                         <p>저장된 기록이 없습니다.</p>
-                        <button onclick="window.location.href='write.html'" 
-                                style="margin-top: 20px; padding: 12px 24px; background: #67d5f5; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                            첫 기록 작성하기
-                        </button>
+                        <button class="util-btn-primary" onclick="window.location.href='write.html'">첫 기록 작성하기</button>
                     </div>
                 `;
             } else {
@@ -637,34 +622,10 @@ function showLoadingIndicator() {
     const loader = document.createElement('div');
     loader.id = 'infinite-scroll-loader';
     loader.innerHTML = `
-        <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            gap: 12px;
-        ">
-            <div style="
-                width: 40px;
-                height: 40px;
-                border: 3px solid #f3f3f3;
-                border-top: 3px solid #67d5f5;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            "></div>
-            <p style="
-                font-size: 14px;
-                color: #999;
-                margin: 0;
-            ">로딩 중...</p>
+        <div class="util-infinite-loader">
+            <div class="util-spinner"></div>
+            <p>로딩 중...</p>
         </div>
-        <style>
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        </style>
     `;
     
     container.appendChild(loader);
@@ -690,13 +651,8 @@ function showEndMessage() {
     const endMsg = document.createElement('div');
     endMsg.id = 'end-message';
     endMsg.innerHTML = `
-        <div style="
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-            font-size: 14px;
-        ">
-            <p style="margin: 0;">모든 기록을 불러왔습니다 ✨</p>
+        <div class="util-end-message">
+            <p>모든 기록을 불러왔습니다 ✨</p>
         </div>
     `;
     
@@ -871,7 +827,7 @@ function createDayItemForHome(log) {
             <div class="day-content photo">
                 <img src="${log.photos[0]}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
                 <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? 'var(--color-favorite)' : 'none'}" stroke="${log.is_favorite ? 'var(--color-favorite)' : 'var(--color-icon-default)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -912,7 +868,7 @@ function createDayItemForHome(log) {
                 </div>
                 <div class="quote-mark">"</div>
                 <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? 'var(--color-favorite)' : 'none'}" stroke="${log.is_favorite ? 'var(--color-favorite)' : 'var(--color-icon-default)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
@@ -974,8 +930,8 @@ function attachDayListEventListeners() {
                 favBtn.setAttribute('title', !isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가');
                 const svg = favBtn.querySelector('svg');
                 if (svg) {
-                    svg.setAttribute('fill', !isFavorite ? '#ff6b6b' : 'none');
-                    svg.setAttribute('stroke', !isFavorite ? '#ff6b6b' : '#555');
+                    svg.setAttribute('fill', !isFavorite ? 'var(--color-favorite)' : 'none');
+                    svg.setAttribute('stroke', !isFavorite ? 'var(--color-favorite)' : 'var(--color-icon-default)');
                 }
             } catch (err) {
                 alert('즐겨찾기 변경에 실패했습니다.');
@@ -1082,7 +1038,7 @@ function renderFullDayList(logs) {
     container.innerHTML = '';
     
     if (logs.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: #999;"><p>해당 조건의 기록이 없습니다.</p></div>`;
+        container.innerHTML = `<div class="util-empty"><p>해당 조건의 기록이 없습니다.</p></div>`;
         attachDayListEventListeners();
                 return;
             }
@@ -1409,7 +1365,7 @@ function initFilterModal() {
         if (!container) return;
         const loadingEl = document.createElement('div');
         loadingEl.id = 'filter-load-more-indicator';
-        loadingEl.style.cssText = 'text-align: center; padding: 16px; color: #999; font-size: 14px;';
+        loadingEl.className = 'util-filter-loading';
         loadingEl.textContent = '필터 결과를 불러오는 중...';
         container.appendChild(loadingEl);
         try {
@@ -1688,7 +1644,7 @@ async function updateMenuUserInfo() {
         if (user) {
             menuUserInfo.innerHTML = `
                 <p style="font-weight: 600; margin-bottom: 4px;">${user.email}</p>
-                <p style="font-size: 14px; color: #999;">로그인 중</p>
+                <p class="util-sub" style="margin: 0;">로그인 중</p>
             `;
         }
     } catch (error) {
