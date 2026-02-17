@@ -2,7 +2,7 @@
 @import url('variables.css');
 @import url('home.css');
 
-/* favoriteView 컨테이너 - index.html과 동일하게 설정 */
+/* favoriteView 컨테이너 - home.html과 동일하게 설정 */
 #favoriteView.container {
     max-width: var(--container-max-width);
     min-height: calc(100vh + 200px);
@@ -14,7 +14,7 @@
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 100px);
 }
 
-/* favoriteView용 헤더 - index.html과 동일하게 sticky 사용 */
+/* favoriteView용 헤더 - home.html과 동일하게 sticky 사용 */
 #favoriteView .header {
     position: sticky;
     top: 0;

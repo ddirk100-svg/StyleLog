@@ -8,7 +8,7 @@
 
 ```
 StyleLog_1.1V/
-├── index.html          # 홈 (월별/일별 카드)
+├── home.html          # 홈 (월별/일별 카드)
 ├── write.html          # 새 기록 작성
 ├── detail.html         # 기록 상세
 ├── mypage.html         # 마이페이지
@@ -41,7 +41,7 @@ StyleLog_1.1V/
 ### 2.1 홈 헤더 (`.header`)
 - **용도**: 메인 페이지, 로고 + 메뉴
 - **구성**: 좌측 로고 | 우측 햄버거 메뉴
-- **적용 페이지**: `index.html`
+- **적용 페이지**: `home.html`
 
 ```html
 <header class="header">
@@ -73,7 +73,7 @@ StyleLog_1.1V/
 
 ```html
 <header class="detail-header">
-    <a href="index.html" class="icon-btn cancel-btn">...</a>
+    <a href="home.html" class="icon-btn cancel-btn">...</a>
     <button class="icon-btn menu-btn">...</button>
 </header>
 ```
@@ -101,7 +101,7 @@ StyleLog_1.1V/
 
 ```html
 <nav class="bottom-nav">
-    <a href="index.html" class="bottom-nav-item [active]">
+    <a href="home.html" class="bottom-nav-item [active]">
         <div class="bottom-nav-icon">...</div>
         <span class="bottom-nav-label">홈</span>
     </a>

@@ -77,7 +77,7 @@
         window.addEventListener('load', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                window.location.href = 'index.html';
+                window.location.href = 'home.html';
             }
         });
 
@@ -107,7 +107,7 @@
                 if (typeof gtag === 'function') gtag('event', 'login');
 
                 // 홈으로 이동
-                window.location.href = 'index.html';
+                window.location.href = 'home.html';
                 
             } catch (error) {
                 console.error('❌ 로그인 오류:', error);

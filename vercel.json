@@ -1,15 +1,9 @@
 {
+  "redirects": [
+    {"source": "/index.html", "destination": "/home.html", "permanent": false}
+  ],
   "routes": [
-    {
-      "src": "/$",
-      "dest": "/landing.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    {"src": "/$", "dest": "/landing.html"},
+    {"src": "/(.*)", "dest": "/$1"}
   ]
 }
-
-
-

@@ -11,7 +11,7 @@
     │
     └─ 로그인 버튼
         └─→ login.html (로그인)
-              └─→ index.html (메인 서비스)
+              └─→ home.html (메인 서비스)
                     │
                     ├─→ month-detail.html (월별 상세)
                     ├─→ calendar.html (캘린더 뷰)
@@ -29,7 +29,7 @@
 - `debug.html` - 디버그 (개발용)
 
 ### **비공개 페이지 (로그인 필요)**
-- `index.html` - 메인 홈 (로그인 안됐으면 자동으로 landing.html로)
+- `home.html` - 메인 홈 (로그인 안됐으면 자동으로 landing.html로)
 - `month-detail.html` - 월별 상세
 - `calendar.html` - 캘린더
 - `write.html` - 작성/수정
@@ -44,12 +44,12 @@
    → "회원가입하기" 클릭
    → 회원가입 완료
    → 로그인
-   → index.html (메인 서비스)
+   → home.html (메인 서비스)
    ```
 
 2. **재방문자**
    ```
-   index.html 열기
+   home.html 열기
    → 로그인 상태면: 바로 메인 서비스
    → 로그인 안됐으면: 자동으로 landing.html
    ```

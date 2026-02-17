@@ -6,10 +6,10 @@
 
 ## 1. 로딩 성능
 
-### 1.1 스크립트 로딩 (index.html)
+### 1.1 스크립트 로딩 (home.html)
 - **변경**: head 내 동기 스크립트 → body 끝에 `defer` 적용
 - **효과**: HTML 파싱을 막지 않고, DOM 준비 후 스크립트 순차 실행
-- **적용 페이지**: index.html, write.html
+- **적용 페이지**: home.html, write.html
 
 ### 1.2 CSS 로딩
 - **변경**: `variables.css`를 HTML에서 먼저 `<link>` 로드
@@ -60,7 +60,7 @@
 
 | 파일 | 변경 내용 |
 |------|----------|
-| index.html | variables 선로드, 스크립트 defer, authLoading 수정 |
+| home.html | variables 선로드, 스크립트 defer, authLoading 수정 |
 | write.html | common.js 추가, 스크립트 defer |
 | home.css | variables @import 제거, .auth-loading 추가 |
 | home.js | throttle, 이벤트 위임, DocumentFragment, console 제거 |

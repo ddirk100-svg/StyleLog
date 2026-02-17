@@ -62,7 +62,7 @@ function redirectAfterLogin() {
     if (redirectUrl && redirectUrl !== '/login.html' && redirectUrl !== '/signup.html') {
         window.location.href = redirectUrl;
     } else {
-        window.location.href = 'index.html';
+        window.location.href = 'home.html';
     }
 }
 

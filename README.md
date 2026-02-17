@@ -19,7 +19,7 @@
 
 ```
 stylelog/
-├── index.html              # 홈 화면
+├── home.html              # 홈 화면
 ├── write.html              # 착장 작성/수정
 ├── detail.html             # 상세 보기
 ├── mypage.html             # 마이페이지
@@ -62,7 +62,7 @@ stylelog/
 
 ## 🎨 주요 기능
 
-### 홈 화면 (index.html)
+### 홈 화면 (home.html)
 - 연도 선택 드롭다운
 - 월별 카드 가로 스크롤 (스와이프)
 - 일별 리스트 (월 카드 선택 시)
