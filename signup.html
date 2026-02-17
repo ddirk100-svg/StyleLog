@@ -2,6 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4JCJ9BQ674"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-4JCJ9BQ674');
+    </script>
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 회원가입</title>
@@ -152,7 +160,8 @@
                 
                 console.log('✅ 회원가입 성공:', data);
                 console.log('📧 가입된 이메일:', email);
-                
+                if (typeof gtag === 'function') gtag('event', 'sign_up');
+
                 // 성공 메시지 표시 (이메일 인증 안내 포함)
                 successMessage.innerHTML = `
                     <strong>회원가입이 완료되었습니다! 🎉</strong><br>
