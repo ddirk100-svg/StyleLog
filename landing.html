@@ -2,6 +2,10 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4JCJ9BQ674"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -10,7 +14,6 @@
       gtag('config', 'G-4JCJ9BQ674');
     </script>
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StyleLog - 오늘 뭐 입지? 기록이 답해줄 거예요</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -35,7 +38,7 @@
         <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center h-16">
                 <a href="landing.html" class="flex items-center">
-                    <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-10 w-auto">
+                    <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-10 w-auto" width="120" height="40" loading="eager" decoding="async">
                 </a>
                 <div class="flex gap-3">
                     <a href="login.html" class="px-4 py-2 text-sm font-semibold text-deep-600 border-2 border-deep-600 rounded-lg hover:bg-deep-50 transition-colors">로그인</a>
@@ -82,18 +85,18 @@
                                 <div class="hero-stack-wrap">
                                     <div class="weather-connect-line"></div>
                                     <div class="outfit-card outfit-card-top">
-                                        <img src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&q=85" alt="그린 자켓 룩">
+                                        <img src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&q=85" alt="그린 자켓 룩" width="400" height="140" fetchpriority="high" decoding="async">
                                         <div class="outfit-card-overlay">
                                             <span class="outfit-temp">9°~15°</span>
                                             <span class="outfit-match">이 날씨엔 이거!</span>
                                         </div>
                                     </div>
                                     <div class="outfit-card outfit-card-2">
-                                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=85" alt="베이지 셔츠 룩">
+                                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=85" alt="베이지 셔츠 룩" width="400" height="140" loading="lazy" decoding="async">
                                         <div class="outfit-card-overlay"><span>12°~18°</span></div>
                                     </div>
                                     <div class="outfit-card outfit-card-3">
-                                        <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=85" alt="크림 니트 룩">
+                                        <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=85" alt="크림 니트 룩" width="400" height="140" loading="lazy" decoding="async">
                                         <div class="outfit-card-overlay"><span>5°~10°</span></div>
                                     </div>
                                 </div>
@@ -126,7 +129,7 @@
                                     <p class="text-xs text-gray-500">2026.02.13 금요일</p>
                                 </div>
                                 <div class="aspect-[4/3] overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=500&q=85" alt="트렌치코트" class="w-full h-full object-cover">
+                                    <img src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=500&q=85" alt="트렌치코트" class="w-full h-full object-cover" width="500" height="375" loading="lazy" decoding="async">
                                 </div>
                                 <div class="p-3 flex items-center gap-2 bg-white border-t border-gray-100">
                                     <span class="text-base">☁️</span>
@@ -201,7 +204,7 @@
                                         <span class="text-lg font-bold">기록 완료!</span>
                                     </div>
                                     <div class="flex items-center gap-2 w-full max-w-[220px] p-2.5 bg-white rounded-xl border border-gray-200 shadow-sm">
-                                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=120&q=80" alt="오늘 착장" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=120&q=80" alt="오늘 착장" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" width="48" height="48" loading="lazy" decoding="async">
                                         <div class="text-left flex-1 min-w-0">
                                             <p class="text-sm font-semibold text-gray-800 truncate">오늘 딱 좋았음!</p>
                                             <p class="text-xs text-gray-500">사진 한 장이면 끝</p>
@@ -261,7 +264,7 @@
         </section>
 
         <footer class="py-12 px-4 bg-gray-900 text-gray-400 text-center">
-            <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-8 w-auto mx-auto mb-4 opacity-80 invert">
+            <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-8 w-auto mx-auto mb-4 opacity-80 invert" width="96" height="32" loading="lazy" decoding="async">
             <p class="text-sm">© 2026 StyleLog</p>
         </footer>
     </div>

@@ -83,33 +83,10 @@ p, .text-base, .text-sm { line-height: 1.75; }
 .outfit-card-2, .outfit-card-3 { opacity: 0.9; margin-left: 8px; }
 .outfit-card-3 { opacity: 0.75; margin-left: 16px; }
 
-@keyframes flow {
-    0%, 100% { transform: translateY(-50%) translateX(0); }
-    50% { transform: translateY(calc(-50% - 8px)) translateX(4px); }
-}
-
-@keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
 @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes slide-in-right {
-    from { opacity: 0; transform: translateX(12px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes check-pop {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 
 /* 슬라이더 핸들 (손가락 터치 느낌) */
 .slider-thumb {
@@ -124,25 +101,6 @@ p, .text-base, .text-sm { line-height: 1.75; }
 }
 .slider-thumb-min { left: calc(25% - 9px); border: 2px solid #3b82f6; }
 .slider-thumb-max { left: calc(66.6% - 9px); border: 2px solid #f43f5e; }
-
-/* 업로드 버튼 (+) */
-.upload-btn-mock {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-}
-.upload-plus { color: white; font-size: 28px; font-weight: 300; line-height: 1; }
-
-/* Hero: 오늘 기온 → 착장 매칭 */
-.hero-visual-flow {
-    position: relative;
-    min-height: 340px;
-}
 
 /* Hero 텍스트 가독성 */
 .hero-text { max-width: 520px; }
@@ -168,64 +126,6 @@ p, .text-base, .text-sm { line-height: 1.75; }
 
 .hero-fade-in {
     animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.hero-fade-in-delay {
-    animation: fade-in-up 0.8s ease-out 0.3s forwards;
-    opacity: 0;
-}
-
-.hero-slide-in {
-    animation: slide-in-right 0.6s ease-out 0.4s forwards;
-    opacity: 0;
-}
-
-.weather-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border-radius: 16px;
-    border: 1px solid #fcd34d;
-}
-
-.hero-card-float {
-    position: absolute;
-    width: 140px;
-    height: 180px;
-    right: 0;
-    top: 50%;
-    opacity: 0;
-    box-shadow: 0 20px 50px rgba(30, 64, 175, 0.12);
-    border-radius: 20px;
-    overflow: hidden;
-    animation: flow 4s ease-in-out 0.8s infinite;
-}
-
-.hero-card-float::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, transparent 60%, rgba(59, 130, 246, 0.08) 100%);
-    pointer-events: none;
-}
-
-@media (min-width: 1024px) {
-    .hero-card-float {
-        right: -24px;
-        width: 170px;
-        height: 215px;
-    }
-}
-
-@media (max-width: 767px) {
-    .hero-visual-flow { min-height: 300px; }
-    .hero-card-float {
-        width: 120px;
-        height: 155px;
-        right: 5px;
-    }
 }
 
 /* Bento Card - 둥근 모서리 */
