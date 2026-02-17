@@ -27,7 +27,7 @@ git push origin main
 
 echo.
 echo ============================================
-echo   Done! Production URL: https://stylelog.vercel.app
+echo   Done! Production URL: https://www.stylelog.co.kr/
 echo ============================================
 echo.
 pause

@@ -30,7 +30,7 @@ git checkout main
 echo.
 echo ============================================
 echo   Done! Wait 1-2 min for Vercel.
-echo   URL: https://stylelog-git-alpha-jongiks-projects.vercel.app
+echo   URL: https://alpha.stylelog.co.kr/
 echo ============================================
 echo.
 pause

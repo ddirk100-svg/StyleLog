@@ -52,8 +52,8 @@ stylelog/
 
 | 환경 | URL | DB |
 |------|-----|-----|
-| **프로덕션** | https://stylelog.vercel.app | 리얼 DB |
-| **Alpha** | https://stylelog-git-alpha-jongiks-projects.vercel.app | 테스트 DB |
+| **프로덕션** | https://www.stylelog.co.kr/ | 리얼 DB |
+| **Alpha** | https://alpha.stylelog.co.kr/ | 테스트 DB |
 | **로컬** | http://localhost:8000 | 테스트 DB |
 
 ### 배포 방법

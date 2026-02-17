@@ -24,7 +24,7 @@ git push origin alpha
 git checkout main
 ```
 
-**배포 확인**: 1~2분 후 https://stylelog-git-alpha-jongiks-projects.vercel.app 접속
+**배포 확인**: 1~2분 후 https://alpha.stylelog.co.kr/ 접속
 
 **프로젝트 폴더로 이동하는 법**:
 - Windows: 프로젝트 폴더에서 `Shift + 우클릭` → "여기에 PowerShell 창 열기" 또는 "경로로 창 열기"
@@ -117,7 +117,7 @@ git push -u origin main
 1. Vercel 대시보드 → 프로젝트 선택
 2. "Settings" → "General"
 3. "Project Name"을 `stylelog`로 변경
-4. 변경 후 URL: `stylelog.vercel.app` 또는 `stylelog-[브랜치명]-[사용자명].vercel.app`
+4. 변경 후 URL: `www.stylelog.co.kr` (프로덕션), `alpha.stylelog.co.kr` (Alpha)
 
 #### 방법 2: 커스텀 도메인 설정 (가장 예쁨)
 1. Vercel 대시보드 → 프로젝트 선택
