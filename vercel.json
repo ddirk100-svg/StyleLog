@@ -1,9 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
-    {"source": "/index.html", "destination": "/home.html", "permanent": false}
+    {"source": "/index.html", "destination": "/home.html", "permanent": false},
+    {"source": "/favicon.ico", "destination": "/img/StyleLog_logo(favicon).png", "permanent": false}
   ],
   "rewrites": [
+    {"source": "/robots.txt", "destination": "/api/robots"},
     {"source": "/", "destination": "/landing.html"},
     {"source": "/(.*)", "destination": "/$1"}
   ]
