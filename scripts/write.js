@@ -358,6 +358,38 @@ function removePhoto(index) {
     renderPhotoPreviews();
 }
 
+// 리스트용 썸네일 생성 (첫 번째 사진 리사이즈, ~50KB 목표)
+function createThumbnail(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const MAX_SIZE = 300;
+            let w = img.width;
+            let h = img.height;
+            if (w > h && w > MAX_SIZE) {
+                h = (h * MAX_SIZE) / w;
+                w = MAX_SIZE;
+            } else if (h > MAX_SIZE) {
+                w = (w * MAX_SIZE) / h;
+                h = MAX_SIZE;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            try {
+                const thumb = canvas.toDataURL('image/jpeg', 0.6);
+                resolve(thumb);
+            } catch {
+                resolve(dataUrl);
+            }
+        };
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+    });
+}
+
 // 태그 추가
 function addTag(tagText) {
     if (!tagText) return;
@@ -431,6 +463,12 @@ async function handleSubmit() {
         // 지금은 data URL을 그대로 저장 (임시)
         const photoUrls = selectedPhotos.map(photo => photo.dataUrl);
         
+        // 리스트용 썸네일 생성 (첫 번째 사진만, 소형 base64)
+        let thumbUrl = null;
+        if (photoUrls.length > 0) {
+            thumbUrl = await createThumbnail(photoUrls[0]);
+        }
+        
         const weatherFitInput = document.getElementById('weatherFitInput');
         const weatherFit = weatherFitInput?.value || 'good';
 
@@ -446,6 +484,7 @@ async function handleSubmit() {
             weather_description: currentWeather?.description || null,
             weather_fit: weatherFit,
             photos: photoUrls.length > 0 ? photoUrls : null,
+            thumb_url: thumbUrl,
             tags: tags.length > 0 ? tags : null,
             is_favorite: isEditMode ? currentLog.is_favorite : false // 수정 시에는 기존 값 유지, 신규는 false
         };

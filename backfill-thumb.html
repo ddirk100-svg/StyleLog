@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>썸네일 백필 - StyleLog</title>
+    <style>
+        body { font-family: sans-serif; max-width: 400px; margin: 40px auto; padding: 20px; }
+        h1 { font-size: 1.2rem; }
+        .info { background: #f0f0f0; padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 0.9rem; }
+        button { padding: 12px 24px; font-size: 1rem; cursor: pointer; background: #333; color: #fff; border: none; border-radius: 8px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #log { margin-top: 16px; font-size: 0.85rem; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+        .done { color: green; }
+        .err { color: red; }
+    </style>
+</head>
+<body>
+    <h1>썸네일 백필</h1>
+    <p>thumb_url이 없는 기존 로그에 썸네일을 한 번에 생성합니다.</p>
+    <div class="info">
+        ※ 로그인 필요 · 본인 로그만 처리 · 완료 후 이 페이지는 삭제해도 됩니다
+    </div>
+    <button id="runBtn">백필 시작</button>
+    <div id="log"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="scripts/config.js" defer></script>
+    <script src="scripts/api.js" defer></script>
+    <script>
+        function log(msg, isErr = false) {
+            const el = document.getElementById('log');
+            const p = document.createElement('p');
+            p.textContent = msg;
+            if (isErr) p.className = 'err';
+            else if (msg.includes('완료') || msg.includes('성공')) p.className = 'done';
+            el.appendChild(p);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function createThumbnail(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const MAX = 300;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > MAX) { h = (h * MAX) / w; w = MAX; }
+                    else if (h > MAX) { w = (w * MAX) / h; h = MAX; }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    try { resolve(canvas.toDataURL('image/jpeg', 0.6)); } catch { resolve(dataUrl); }
+                };
+                img.onerror = () => resolve(null);
+                img.src = dataUrl;
+            });
+        }
+
+        document.getElementById('runBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('runBtn');
+            btn.disabled = true;
+            document.getElementById('log').innerHTML = '';
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    log('로그인이 필요합니다. landing에서 로그인 후 다시 시도하세요.', true);
+                    btn.disabled = false;
+                    return;
+                }
+
+                log('thumb_url이 없는 로그 조회 중...');
+                const { data: ids, error: err1 } = await supabaseClient
+                    .from('style_logs')
+                    .select('id')
+                    .is('thumb_url', null)
+                    .eq('user_id', session.user.id);
+
+                if (err1) throw err1;
+                if (!ids || ids.length === 0) {
+                    log('처리할 로그가 없습니다.');
+                    btn.disabled = false;
+                    return;
+                }
+
+                log(`총 ${ids.length}개 로그 처리 예정`);
+
+                let ok = 0, skip = 0, fail = 0;
+                for (let i = 0; i < ids.length; i++) {
+                    const { id } = ids[i];
+                    try {
+                        const logData = await StyleLogAPI.getById(id);
+                        if (!logData.photos || logData.photos.length === 0) {
+                            skip++;
+                            continue;
+                        }
+                        const thumb = await createThumbnail(logData.photos[0]);
+                        if (!thumb) { skip++; continue; }
+                        await supabaseClient.from('style_logs').update({ thumb_url: thumb }).eq('id', id);
+                        ok++;
+                        log(`${i + 1}/${ids.length} 완료 (${logData.date})`);
+                    } catch (e) {
+                        fail++;
+                        log(`${i + 1}/${ids.length} 오류: ${e.message}`, true);
+                    }
+                    if (i < ids.length - 1) await new Promise(r => setTimeout(r, 100));
+                }
+
+                log(`\n완료: ${ok}개 생성, ${skip}개 건너뜀(사진 없음), ${fail}개 실패`);
+                log('홈에서 새로고침해서 확인하세요.');
+            } catch (e) {
+                log('오류: ' + e.message, true);
+            }
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>

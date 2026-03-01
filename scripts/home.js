@@ -225,13 +225,11 @@ async function loadMonthCards() {
             
             console.log(`📊 ${month}월 로그:`, logs);
             
-            // 이미지가 있는 첫 번째 로그 찾기
+            // 이미지가 있는 첫 번째 로그 찾기 (thumb_url 사용 - photos 미포함)
             let representativeImage = null;
             for (const log of logs) {
-                console.log(`  - 날짜: ${log.date}, 사진:`, log.photos);
-                if (log.photos && log.photos.length > 0) {
-                    representativeImage = log.photos[0];
-                    console.log(`  ✅ 대표 이미지 선택: ${representativeImage}`);
+                if (log.thumb_url) {
+                    representativeImage = log.thumb_url;
                     break;
                 }
             }
@@ -546,10 +544,10 @@ async function loadMoreDayList() {
     try {
         console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${PAGE_SIZE}`);
         
-        // 페이지네이션으로 데이터 가져오기
+        // 페이지네이션으로 데이터 가져오기 (photos 제외, thumb_url만 - statement timeout 방지)
         const { data, error } = await supabaseClient
             .from('style_logs')
-            .select('*')
+            .select('id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at')
             .order('date', { ascending: false })
             .range(currentOffset, currentOffset + PAGE_SIZE - 1);
         
@@ -806,8 +804,8 @@ function createDayItemForHome(log) {
     const weatherFitChip = (log.weather_fit && ['cold','good','hot'].includes(log.weather_fit))
         ? `<span class="day-weather-fit-chip day-weather-fit-chip--${log.weather_fit}">${log.weather_fit}</span>` : '';
     
-    // 사진이 있는 경우
-    if (log.photos && log.photos.length > 0) {
+    // 썸네일이 있는 경우 (thumb_url - 리스트용 소형 이미지)
+    if (log.thumb_url) {
         dayItem.innerHTML = `
             <div class="day-left">
                 <div class="day-date">
@@ -825,7 +823,7 @@ function createDayItemForHome(log) {
                 </div>
             </div>
             <div class="day-content photo">
-                <img src="${log.photos[0]}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
+                <img src="${log.thumb_url}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
                 <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? 'var(--color-favorite)' : 'none'}" stroke="${log.is_favorite ? 'var(--color-favorite)' : 'var(--color-icon-default)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>

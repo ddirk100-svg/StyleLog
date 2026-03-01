@@ -1,5 +1,8 @@
 // 스타일로그 API 서비스
 
+// 리스트 조회용 컬럼 (photos 제외, thumb_url만 - statement timeout 방지)
+const LIST_SELECT = 'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at';
+
 const StyleLogAPI = {
     // 모든 로그 가져오기 (페이지네이션 지원)
     async getAll(options = {}) {
@@ -13,7 +16,7 @@ const StyleLogAPI = {
             
             let query = supabaseClient
                 .from('style_logs')
-                .select('*', { count: 'exact' })
+                .select(LIST_SELECT, { count: 'exact' })
                 .order(orderBy, { ascending });
             
             // 페이지네이션 적용
@@ -31,12 +34,12 @@ const StyleLogAPI = {
         }
     },
     
-    // 특정 연도의 로그 가져오기
+    // 특정 연도의 로그 가져오기 (리스트용 - photos 제외)
     async getByYear(year) {
         try {
             const { data, error } = await supabaseClient
                 .from('style_logs')
-                .select('*')
+                .select(LIST_SELECT)
                 .gte('date', `${year}-01-01`)
                 .lte('date', `${year}-12-31`)
                 .order('date', { ascending: false });
@@ -67,7 +70,7 @@ const StyleLogAPI = {
             
             const { data, error } = await supabaseClient
                 .from('style_logs')
-                .select('*')
+                .select(LIST_SELECT)
                 .gte('date', startDate)
                 .lte('date', endDate)
                 .order('date', { ascending: false });
@@ -250,12 +253,12 @@ const StyleLogAPI = {
         }
     },
     
-    // 태그로 검색
+    // 태그로 검색 (리스트용 - photos 제외)
     async searchByTag(tag) {
         try {
             const { data, error } = await supabaseClient
                 .from('style_logs')
-                .select('*')
+                .select(LIST_SELECT)
                 .contains('tags', [tag])
                 .order('date', { ascending: false });
             
@@ -267,12 +270,12 @@ const StyleLogAPI = {
         }
     },
     
-    // 텍스트 검색
+    // 텍스트 검색 (리스트용 - photos 제외)
     async search(query) {
         try {
             const { data, error } = await supabaseClient
                 .from('style_logs')
-                .select('*')
+                .select(LIST_SELECT)
                 .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
                 .order('date', { ascending: false });
             
