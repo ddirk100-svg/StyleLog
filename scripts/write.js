@@ -379,7 +379,7 @@ function createThumbnail(dataUrl) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
             try {
-                const thumb = canvas.toDataURL('image/jpeg', 0.6);
+                const thumb = canvas.toDataURL('image/jpeg', 0.8);
                 resolve(thumb);
             } catch {
                 resolve(dataUrl);

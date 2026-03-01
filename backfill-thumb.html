@@ -49,7 +49,7 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    try { resolve(canvas.toDataURL('image/jpeg', 0.6)); } catch { resolve(dataUrl); }
+                    try { resolve(canvas.toDataURL('image/jpeg', 0.8)); } catch { resolve(dataUrl); }
                 };
                 img.onerror = () => resolve(null);
                 img.src = dataUrl;
@@ -86,10 +86,20 @@
                 log(`총 ${ids.length}개 로그 처리 예정`);
 
                 let ok = 0, skip = 0, fail = 0;
+                const fetchWithRetry = async (id, retries = 3) => {
+                    for (let r = 0; r < retries; r++) {
+                        try {
+                            return await StyleLogAPI.getById(id);
+                        } catch (e) {
+                            if (r < retries - 1) await new Promise(r => setTimeout(r, 2000));
+                            else throw e;
+                        }
+                    }
+                };
                 for (let i = 0; i < ids.length; i++) {
                     const { id } = ids[i];
                     try {
-                        const logData = await StyleLogAPI.getById(id);
+                        const logData = await fetchWithRetry(id);
                         if (!logData.photos || logData.photos.length === 0) {
                             skip++;
                             continue;
@@ -101,9 +111,9 @@
                         log(`${i + 1}/${ids.length} 완료 (${logData.date})`);
                     } catch (e) {
                         fail++;
-                        log(`${i + 1}/${ids.length} 오류: ${e.message}`, true);
+                        log(`${i + 1}/${ids.length} 오류: ${e.message} (502/CORS는 사진 용량 과다일 수 있음)`, true);
                     }
-                    if (i < ids.length - 1) await new Promise(r => setTimeout(r, 100));
+                    if (i < ids.length - 1) await new Promise(r => setTimeout(r, 300));
                 }
 
                 log(`\n완료: ${ok}개 생성, ${skip}개 건너뜀(사진 없음), ${fail}개 실패`);
