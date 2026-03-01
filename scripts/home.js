@@ -505,15 +505,17 @@ async function loadAllDayList() {
 }
 
 // 추가 데이터 로드 (페이지네이션)
-async function loadMoreDayList(limit = PAGE_SIZE) {
+// quiet: true면 로딩 UI 없이 백그라운드 로드 (필터 개수 산출 시 사용)
+async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
     if (isLoading || !hasMoreData) {
         console.log('⏸️ 로딩 중이거나 더 이상 데이터 없음');
         return;
     }
     
     isLoading = true;
-    showLoadingIndicator();
-    
+    if (!quiet) {
+        showLoadingIndicator();
+    }
     const loadStart = Date.now();
     const MIN_LOADER_DISPLAY_MS = 400;
     
@@ -535,7 +537,7 @@ async function loadMoreDayList(limit = PAGE_SIZE) {
         if (!data || data.length === 0) {
             hasMoreData = false;
             isLoading = false;
-            hideLoadingIndicator();
+            if (!quiet) hideLoadingIndicator();
             
             // 전체 데이터가 없으면 안내 메시지
             if (allLoadedLogs.length === 0) {
@@ -581,6 +583,7 @@ async function loadMoreDayList(limit = PAGE_SIZE) {
         hasMoreData = false;
     } finally {
         isLoading = false;
+        if (quiet) return;
         const elapsed = Date.now() - loadStart;
         if (elapsed < MIN_LOADER_DISPLAY_MS) {
             setTimeout(hideLoadingIndicator, MIN_LOADER_DISPLAY_MS - elapsed);
@@ -1191,10 +1194,37 @@ function initFilterModal() {
         return allLoadedLogs.filter(log => passesFilterWithState(log, state)).length;
     }
 
-    function updateApplyButtonCount() {
+    let _applyCountLoadAbort = null;
+    let _applyCountDebounce = null;
+    async function updateApplyButtonCount() {
         if (!applyBtn) return;
-        const count = getFilteredCountFromModalUI();
-        applyBtn.textContent = `${count}개 확인하기`;
+        const state = getFilterStateFromModalUI();
+        const hasSelection = state.years.length > 0 || state.months.length > 0 || state.weatherFit.length > 0 ||
+            state.low > TEMP_FILTER_MIN || state.high < TEMP_FILTER_MAX || state.favOnly;
+
+        if (!hasSelection) {
+            clearTimeout(_applyCountDebounce);
+            applyBtn.textContent = '확인하기';
+            return;
+        }
+
+        const doUpdate = async () => {
+            if (hasMoreData && !isLoading) {
+                applyBtn.textContent = '확인 중...';
+                if (_applyCountLoadAbort) _applyCountLoadAbort.abort = true;
+                _applyCountLoadAbort = { abort: false };
+                const token = _applyCountLoadAbort;
+                try {
+                    while (hasMoreData && !token.abort) await loadMoreDayList(PAGE_SIZE, true);
+                } catch (e) { /* ignore */ }
+                if (token.abort) return;
+            }
+            const count = getFilteredCountFromModalUI();
+            applyBtn.textContent = `${count}개 확인하기`;
+        };
+
+        clearTimeout(_applyCountDebounce);
+        _applyCountDebounce = setTimeout(doUpdate, 150);
     }
 
     function getChipsFromModalUI() {
