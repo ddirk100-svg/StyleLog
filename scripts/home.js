@@ -35,7 +35,7 @@ let filterWeatherFit = [];
 let filterFavoritesOnly = false;
 
 function getDayListContainer() {
-    return getDayListContainer();
+    return document.querySelector('.month-cards-container');
 }
 
 // 페이지 초기화
