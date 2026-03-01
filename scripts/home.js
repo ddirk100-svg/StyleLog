@@ -512,13 +512,12 @@ async function loadMoreDayList(limit = PAGE_SIZE) {
     }
     
     isLoading = true;
-    
-    // 로딩 인디케이터 표시
     showLoadingIndicator();
     
+    const loadStart = Date.now();
+    const MIN_LOADER_DISPLAY_MS = 400;
+    
     try {
-        const loadStart = Date.now();
-        const MIN_LOADER_DISPLAY_MS = 400;
         console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${limit}`);
         
         // 페이지네이션으로 데이터 가져오기 (photos 제외, thumb_url만 - statement timeout 방지)
