@@ -22,6 +22,7 @@ desktop.ini
 # 임시 파일
 *.tmp
 *.temp
+scripts/_commit_msg.txt
 
 # 빌드 파일 (필요시)
 dist/
