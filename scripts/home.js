@@ -2,31 +2,44 @@
 // build: 20250302-thumb (photos 제외, thumb_url)
 console.log('StyleLog home.js build 20250302-thumb');
 
+// 상수
+const PAGE_SIZE = 10;
+const TEMP_FILTER_MIN = -20;
+const TEMP_FILTER_MAX = 40;
+const PX_PER_DAY_ITEM = 280;
+const SCROLL_RESTORE_MAX_BATCH = 50;
+const SCROLL_TOLERANCE = 10;
+const INFINITE_SCROLL_ROOT_MARGIN = 400;
+const WEATHER_API_DELAY_MS = 250;
+const CONTENT_PREVIEW_LENGTH = 100;
+
 // URL 파라미터에서 연도 가져오기
 const urlParams = new URLSearchParams(window.location.search);
 let initialYear = parseInt(urlParams.get('year')) || new Date().getFullYear();
-let currentView = 'day'; // 현재는 일별 리스트만 사용
-let monthsWithData = []; // 데이터가 있는 월 목록
-let yearsWithData = []; // 일기가 있는 연도 목록
+let currentView = 'day';
+let monthsWithData = [];
+let yearsWithData = [];
 
 // 페이지네이션 상태
 let currentOffset = 0;
-const PAGE_SIZE = 10; // 한 번에 10개씩 로드
 let isLoading = false;
 let hasMoreData = true;
-let allLoadedLogs = []; // 로드된 모든 로그 저장
+let allLoadedLogs = [];
 
 // 필터 상태
-let weatherFilterLow = -20;
-let weatherFilterHigh = 40;
+let weatherFilterLow = TEMP_FILTER_MIN;
+let weatherFilterHigh = TEMP_FILTER_MAX;
 let filterYears = [];
 let filterMonths = [];
 let filterWeatherFit = [];
 let filterFavoritesOnly = false;
 
+function getDayListContainer() {
+    return getDayListContainer();
+}
+
 // 페이지 초기화
 async function initPage() {
-    // 일기가 있는 연도 목록 로드
     await loadYearsWithData();
     
     // 일별 리스트 모드용 클래스 추가
@@ -69,10 +82,9 @@ async function restoreHomeScrollPosition() {
             while (hasMoreData && !isLoading) {
                 const { scrollHeight, clientHeight } = document.documentElement;
                 const maxScroll = scrollHeight - clientHeight;
-                if (maxScroll >= targetY - 10) break;
-                // 스크롤 복원 시 대량 로드로 API 호출 횟수 축소 (약 300px/item 기준)
+                if (maxScroll >= targetY - SCROLL_TOLERANCE) break;
                 const gap = targetY - maxScroll;
-                const batchSize = Math.min(50, Math.max(PAGE_SIZE, Math.ceil(gap / 280)));
+                const batchSize = Math.min(SCROLL_RESTORE_MAX_BATCH, Math.max(PAGE_SIZE, Math.ceil(gap / PX_PER_DAY_ITEM)));
                 await loadMoreDayList(batchSize);
                 doScroll();
             }
@@ -112,86 +124,8 @@ async function loadYearsWithData() {
     }
 }
 
-// 연도 드롭다운 초기화
-function initYearDropdown() {
-    const yearBtnText = document.getElementById('yearBtnText');
-    const yearSelector = document.querySelector('.year-selector');
-    const yearDropdown = document.getElementById('yearDropdown');
-    const currentYear = parseInt(yearBtnText ? yearBtnText.textContent : initialYear);
-    
-    // 드롭다운 메뉴 생성
-    yearDropdown.innerHTML = '';
-    yearsWithData.forEach(year => {
-        const item = document.createElement('button');
-        item.className = 'year-dropdown-item';
-        if (year === currentYear) {
-            item.classList.add('selected');
-        }
-        item.textContent = year;
-        item.addEventListener('click', () => {
-            selectYear(year);
-        });
-        yearDropdown.appendChild(item);
-    });
-    
-    // 연도 버튼 클릭 이벤트
-    if (yearBtnText) {
-        yearBtnText.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleYearDropdown();
-        });
-    }
-    
-    // 드롭다운 외부 클릭 시 닫기
-    document.addEventListener('click', (e) => {
-        if (yearSelector && !yearSelector.contains(e.target) && !yearDropdown.contains(e.target)) {
-            closeYearDropdown();
-        }
-    });
-}
-
-// 연도 드롭다운 토글
-function toggleYearDropdown() {
-    const yearBtnText = document.getElementById('yearBtnText');
-    const yearDropdown = document.getElementById('yearDropdown');
-    
-    if (yearBtnText) {
-        yearBtnText.classList.toggle('active');
-    }
-    yearDropdown.classList.toggle('active');
-}
-
-// 연도 드롭다운 닫기
-function closeYearDropdown() {
-    const yearBtnText = document.getElementById('yearBtnText');
-    const yearDropdown = document.getElementById('yearDropdown');
-    
-    if (yearBtnText) {
-        yearBtnText.classList.remove('active');
-    }
-    yearDropdown.classList.remove('active');
-}
-
-// 연도 선택
-async function selectYear(year) {
-    console.log('📅 연도 변경:', year);
-    closeYearDropdown();
-    
-    // 연도 버튼 텍스트 업데이트
-    const yearBtnText = document.getElementById('yearBtnText');
-    if (yearBtnText) {
-        yearBtnText.textContent = year;
-    }
-    
-    // initialYear 업데이트
-    initialYear = year;
-    
-    // 일별 리스트로 데이터 다시 로드
-    await loadDayList(year);
-}
-
-// LEGACY: Month 카드 뷰용 (현재 미사용 - view-btn 없음)
-async function loadMonthCards() {
+// (레거시 제거: initYearDropdown, loadMonthCards, loadDayList, view-toggle 등 - 현재 일별 리스트만 사용)
+async function _legacyLoadMonthCardsPlaceholder() {
     try {
         console.log('📊 데이터 로딩 시작...');
         console.log('📊 요청 연도:', initialYear);
@@ -231,7 +165,7 @@ async function loadMonthCards() {
         console.log('📊 데이터 있는 월:', monthsWithData);
         
         // 월 카드 생성
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         
         if (!container) {
             console.error('❌ .month-cards-container 요소를 찾을 수 없습니다');
@@ -288,7 +222,7 @@ async function loadMonthCards() {
         console.error('❌ 월 카드 로드 오류:', error);
         
         // 에러 시에도 안내 메시지 표시
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         if (container) {
             container.innerHTML = `
                 <div class="util-error util-error--spacious">
@@ -351,7 +285,7 @@ function scrollToCurrentMonthInstant() {
     const targetCard = document.querySelector(`[data-month="${currentMonth}"]`);
     
     if (targetCard) {
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         const cardLeft = targetCard.offsetLeft;
         const cardWidth = targetCard.offsetWidth;
         const containerWidth = container.offsetWidth;
@@ -367,7 +301,7 @@ function scrollToCurrentMonthInstant() {
         const lastCard = document.querySelector(`[data-month="${lastMonth}"]`);
         
         if (lastCard) {
-            const container = document.querySelector('.month-cards-container');
+            const container = getDayListContainer();
             const cardLeft = lastCard.offsetLeft;
             const cardWidth = lastCard.offsetWidth;
             const containerWidth = container.offsetWidth;
@@ -435,7 +369,7 @@ async function loadDayList(year) {
         console.log('📊 받은 데이터:', logs);
         console.log('📊 데이터 개수:', logs ? logs.length : 0);
         
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         if (!container) {
             console.error('❌ .month-cards-container 요소를 찾을 수 없습니다');
             return;
@@ -478,7 +412,7 @@ async function loadDayList(year) {
                     log.weather_temp_max = weatherData.tempMax;
                     log.weather_temp = weatherData.temp;
                 }
-                await new Promise(r => setTimeout(r, 250)); // API 부담 완화
+                await new Promise(r => setTimeout(r, WEATHER_API_DELAY_MS));
             }
         }
         
@@ -512,7 +446,7 @@ async function loadDayList(year) {
         
     } catch (error) {
         console.error('❌ 일별 리스트 데이터 로드 오류:', error);
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         if (container) {
             container.innerHTML = `
                 <div class="util-error">
@@ -533,7 +467,7 @@ async function loadAllDayList() {
         hasMoreData = true;
         allLoadedLogs = [];
         
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         if (!container) {
             console.error('❌ .month-cards-container 요소를 찾을 수 없습니다');
             return;
@@ -546,7 +480,7 @@ async function loadAllDayList() {
         // 스크롤 복원 시 초기 로드량 확대 (API 호출 1회로 커버)
         const savedY = parseInt(sessionStorage.getItem('homeScrollY') || '0', 10);
         const initialLimit = (savedY > 0)
-            ? Math.min(50, Math.max(PAGE_SIZE, Math.ceil(savedY / 280)))
+            ? Math.min(SCROLL_RESTORE_MAX_BATCH, Math.max(PAGE_SIZE, Math.ceil(savedY / PX_PER_DAY_ITEM)))
             : PAGE_SIZE;
         await loadMoreDayList(initialLimit);
         
@@ -557,7 +491,7 @@ async function loadAllDayList() {
         
     } catch (error) {
         console.error('❌ 데이터 로드 오류:', error);
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         if (container) {
             container.innerHTML = `
                 <div class="util-error">
@@ -604,7 +538,7 @@ async function loadMoreDayList(limit = PAGE_SIZE) {
             
             // 전체 데이터가 없으면 안내 메시지
             if (allLoadedLogs.length === 0) {
-                const container = document.querySelector('.month-cards-container');
+                const container = getDayListContainer();
                 container.innerHTML = `
                     <div class="util-empty">
                         <p>저장된 기록이 없습니다.</p>
@@ -655,7 +589,7 @@ function showLoadingIndicator() {
     // 이미 있으면 제거
     hideLoadingIndicator();
     
-    const container = document.querySelector('.month-cards-container');
+    const container = getDayListContainer();
     if (!container) return;
     
     const loader = document.createElement('div');
@@ -667,7 +601,9 @@ function showLoadingIndicator() {
         </div>
     `;
     
-    container.appendChild(loader);
+    const sentinel = document.getElementById('infinite-scroll-sentinel');
+    if (sentinel) container.insertBefore(loader, sentinel);
+    else container.appendChild(loader);
 }
 
 // 로딩 인디케이터 숨기기
@@ -684,7 +620,7 @@ function showEndMessage() {
     const existingMsg = document.getElementById('end-message');
     if (existingMsg) return;
     
-    const container = document.querySelector('.month-cards-container');
+    const container = getDayListContainer();
     if (!container) return;
     
     const endMsg = document.createElement('div');
@@ -695,7 +631,9 @@ function showEndMessage() {
         </div>
     `;
     
-    container.appendChild(endMsg);
+    const sentinel = document.getElementById('infinite-scroll-sentinel');
+    if (sentinel) container.insertBefore(endMsg, sentinel);
+    else container.appendChild(endMsg);
 }
 
 // 날씨 데이터를 백그라운드에서 업데이트 (UI 렌더링을 차단하지 않음)
@@ -751,7 +689,7 @@ function updateDayItemWeather(logId, weatherData) {
 
 // 데이터를 UI에 렌더링 (DocumentFragment로 배치 reflow 최소화)
 async function renderDayList(logs) {
-    const container = document.querySelector('.month-cards-container');
+    const container = getDayListContainer();
     if (!container) return;
     
     let previousYear = null;
@@ -817,22 +755,37 @@ function throttle(fn, delay) {
     };
 }
 
-// 무한 스크롤 초기화
-function initInfiniteScroll() {
-    window.removeEventListener('scroll', throttledHandleInfiniteScroll);
-    window.addEventListener('scroll', throttledHandleInfiniteScroll, { passive: true });
-}
+// 무한 스크롤 초기화 (IntersectionObserver 사용 - 빠른 스크롤 시에도 하단 감지)
+let infiniteScrollObserver = null;
 
-// 무한 스크롤 핸들러 (throttle 적용 - 150ms)
-const throttledHandleInfiniteScroll = throttle(function handleInfiniteScroll() {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollHeight = document.documentElement.scrollHeight;
-    const clientHeight = window.innerHeight;
-    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
-    if (distanceFromBottom < 500 && !isLoading && hasMoreData) {
-        loadMoreDayList();
+function initInfiniteScroll() {
+    const container = getDayListContainer();
+    if (!container) return;
+
+    // 기존 관찰 해제
+    if (infiniteScrollObserver) {
+        infiniteScrollObserver.disconnect();
+        infiniteScrollObserver = null;
     }
-}, 150);
+
+    // sentinel: 리스트 맨 아래에 두고 뷰포트에 들어오면 로드
+    let sentinel = document.getElementById('infinite-scroll-sentinel');
+    if (!sentinel) {
+        sentinel = document.createElement('div');
+        sentinel.id = 'infinite-scroll-sentinel';
+        sentinel.style.cssText = 'height:1px;width:100%;pointer-events:none;';
+        container.appendChild(sentinel);
+    }
+
+    infiniteScrollObserver = new IntersectionObserver(
+        (entries) => {
+            if (!entries[0]?.isIntersecting || isLoading || !hasMoreData) return;
+            loadMoreDayList();
+        },
+        { root: null, rootMargin: `0px 0px ${INFINITE_SCROLL_ROOT_MARGIN}px 0px`, threshold: 0 }
+    );
+    infiniteScrollObserver.observe(sentinel);
+}
 
 // 일별 아이템 생성 (home.js용)
 function createDayItemForHome(log) {
@@ -882,7 +835,7 @@ function createDayItemForHome(log) {
     }
     // 텍스트만 있는 경우
     else {
-        const contentPreview = log.content ? log.content.substring(0, 100) + (log.content.length > 100 ? '...' : '') : '';
+        const contentPreview = log.content ? log.content.substring(0, CONTENT_PREVIEW_LENGTH) + (log.content.length > CONTENT_PREVIEW_LENGTH ? '...' : '') : '';
         dayItem.innerHTML = `
             <div class="day-left">
                 <div class="day-date">
@@ -947,7 +900,7 @@ function createDayItemForHome(log) {
 let dayListDelegationAttached = false;
 
 function attachDayListEventListeners() {
-    const container = document.querySelector('.month-cards-container');
+    const container = getDayListContainer();
     if (!container || dayListDelegationAttached) return;
     dayListDelegationAttached = true;
     
@@ -1025,7 +978,7 @@ function attachDayListEventListeners() {
 
 // 날씨 필터: 해당 날의 최저 ≥ low 이고 최고 ≤ high 인 기록만
 function passesWeatherFilter(log) {
-    const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
+    const isFullRange = weatherFilterLow <= TEMP_FILTER_MIN && weatherFilterHigh >= TEMP_FILTER_MAX;
     if (!isFullRange) {
         if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
         if (log.weather_temp_min < weatherFilterLow || log.weather_temp_max > weatherFilterHigh) return false;
@@ -1066,7 +1019,7 @@ function getActiveFilterChips() {
         const labels = filterWeatherFit.map(v => WEATHER_FIT_LABELS[v]).filter(Boolean);
         chips.push({ key: 'weatherFit', label: labels.join(', '), value: 'weatherFit' });
     }
-    const isFullRange = weatherFilterLow <= -20 && weatherFilterHigh >= 40;
+    const isFullRange = weatherFilterLow <= TEMP_FILTER_MIN && weatherFilterHigh >= TEMP_FILTER_MAX;
     if (!isFullRange) chips.push({ key: 'temp', label: `${weatherFilterLow}°~${weatherFilterHigh}°`, value: 'temp' });
     if (filterFavoritesOnly) chips.push({ key: 'fav', label: '즐겨찾기만', value: 'fav' });
     return chips;
@@ -1074,7 +1027,7 @@ function getActiveFilterChips() {
 
 // 전체 리스트 클리어 후 재렌더링 (필터 변경 시, DocumentFragment 사용)
 function renderFullDayList(logs) {
-    const container = document.querySelector('.month-cards-container');
+    const container = getDayListContainer();
     if (!container) return;
     
     container.innerHTML = '';
@@ -1082,9 +1035,9 @@ function renderFullDayList(logs) {
     if (logs.length === 0) {
         container.innerHTML = `<div class="util-empty"><p>해당 조건의 기록이 없습니다.</p></div>`;
         attachDayListEventListeners();
-                return;
-            }
-            
+        return;
+    }
+    
     let previousYear = null;
     let previousMonth = null;
     const fragment = document.createDocumentFragment();
@@ -1116,6 +1069,7 @@ function renderFullDayList(logs) {
     
     container.appendChild(fragment);
     attachDayListEventListeners();
+    if (container.classList.contains('day-list-view')) initInfiniteScroll();
 }
 
 // 필터 모달 초기화
@@ -1178,8 +1132,8 @@ function initFilterModal() {
         document.querySelectorAll('#filterWeatherFitOptions input:checked').forEach(cb => {
             weatherFit.push(cb.value);
         });
-        const low = parseInt(sliderLow?.value ?? -20);
-        const high = parseInt(sliderHigh?.value ?? 40);
+        const low = parseInt(sliderLow?.value ?? TEMP_FILTER_MIN);
+        const high = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         const favOnly = favChecked?.value === 'only';
         return { years, months, weatherFit, low, high, favOnly };
@@ -1187,7 +1141,7 @@ function initFilterModal() {
 
     function passesFilterWithState(log, state) {
         const { years, months, weatherFit, low, high, favOnly } = state;
-        const isFullRange = low <= -20 && high >= 40;
+        const isFullRange = low <= TEMP_FILTER_MIN && high >= TEMP_FILTER_MAX;
         if (!isFullRange) {
             if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
             if (log.weather_temp_min < low || log.weather_temp_max > high) return false;
@@ -1236,8 +1190,8 @@ function initFilterModal() {
             const vals = Array.from(weatherFitChecked).map(cb => cb.value);
             chips.push({ key: 'weatherFit', label: vals.join(', '), value: 'weatherFit' });
         }
-        const low = parseInt(sliderLow?.value ?? -20), high = parseInt(sliderHigh?.value ?? 40);
-        if (low > -20 || high < 40) chips.push({ key: 'temp', label: `${low}°~${high}°`, value: 'temp' });
+        const low = parseInt(sliderLow?.value ?? TEMP_FILTER_MIN), high = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
+        if (low > TEMP_FILTER_MIN || high < TEMP_FILTER_MAX) chips.push({ key: 'temp', label: `${low}°~${high}°`, value: 'temp' });
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         if (favChecked?.value === 'only') chips.push({ key: 'fav', label: '즐겨찾기만', value: 'fav' });
         return chips;
@@ -1274,10 +1228,10 @@ function initFilterModal() {
         } else if (key === 'weatherFit') {
             document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => { cb.checked = false; });
         } else if (key === 'temp') {
-            if (sliderLow) sliderLow.value = -20;
-            if (sliderHigh) sliderHigh.value = 40;
-            if (valueLow) valueLow.textContent = '-20° 이상';
-            if (valueHigh) valueHigh.textContent = '40° 이하';
+            if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
+            if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
+            if (valueLow) valueLow.textContent = `${TEMP_FILTER_MIN}° 이상`;
+            if (valueHigh) valueHigh.textContent = `${TEMP_FILTER_MAX}° 이하`;
         } else if (key === 'fav') {
             const allRadio = document.querySelector('input[name="filterFavorites"][value=""]');
             if (allRadio) allRadio.checked = true;
@@ -1307,8 +1261,8 @@ function initFilterModal() {
     }
 
     function syncStateFromModal() {
-        weatherFilterLow = parseInt(sliderLow?.value ?? -20);
-        weatherFilterHigh = parseInt(sliderHigh?.value ?? 40);
+        weatherFilterLow = parseInt(sliderLow?.value ?? TEMP_FILTER_MIN);
+        weatherFilterHigh = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
         filterYears = [];
         document.querySelectorAll('#filterYearOptions input[type="checkbox"]:checked').forEach(cb => {
             if (cb.value !== '') filterYears.push(parseInt(cb.value));
@@ -1389,10 +1343,10 @@ function initFilterModal() {
         else if (key === 'months') filterMonths = [];
         else if (key === 'weatherFit') filterWeatherFit = [];
         else if (key === 'temp') {
-            weatherFilterLow = -20;
-            weatherFilterHigh = 40;
-            if (sliderLow) sliderLow.value = -20;
-            if (sliderHigh) sliderHigh.value = 40;
+            weatherFilterLow = TEMP_FILTER_MIN;
+            weatherFilterHigh = TEMP_FILTER_MAX;
+            if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
+            if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         }
         else if (key === 'fav') filterFavoritesOnly = false;
         syncModalFromState();
@@ -1403,7 +1357,7 @@ function initFilterModal() {
     async function ensureAllDataLoadedForFilter(skipLoadingUI = false) {
         const hasFilters = getActiveFilterChips().length > 0;
         if (!hasFilters || !hasMoreData) return;
-        const container = document.querySelector('.month-cards-container');
+        const container = getDayListContainer();
         if (!container) return;
         let loadingEl = null;
         if (!skipLoadingUI && !container.querySelector('.util-filter-loading')) {
@@ -1426,7 +1380,7 @@ function initFilterModal() {
         const hasFilters = getActiveFilterChips().length > 0;
         if (hasFilters && hasMoreData) {
             /* 아직 더 로드할 데이터가 있음 - "없습니다" 말고 로딩 먼저 표시 후 판단 */
-            const container = document.querySelector('.month-cards-container');
+            const container = getDayListContainer();
             if (container) {
                 container.innerHTML = '<div class="util-filter-loading">필터 결과를 불러오는 중...</div>';
             }
@@ -1453,10 +1407,10 @@ function initFilterModal() {
         document.querySelectorAll('#filterYearOptions input').forEach(cb => { cb.checked = false; });
         document.querySelectorAll('#filterMonthOptions input').forEach(cb => { cb.checked = false; });
         document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => { cb.checked = false; });
-        if (sliderLow) sliderLow.value = -20;
-        if (sliderHigh) sliderHigh.value = 40;
-        if (valueLow) valueLow.textContent = '-20° 이상';
-        if (valueHigh) valueHigh.textContent = '40° 이하';
+        if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
+        if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
+        if (valueLow) valueLow.textContent = `${TEMP_FILTER_MIN}° 이상`;
+        if (valueHigh) valueHigh.textContent = `${TEMP_FILTER_MAX}° 이하`;
         const allRadio = document.querySelector('input[name="filterFavorites"][value=""]');
         if (allRadio) allRadio.checked = true;
         updateModalChipsFromUI();
@@ -1466,11 +1420,11 @@ function initFilterModal() {
         filterYears = [];
         filterMonths = [];
         filterWeatherFit = [];
-        weatherFilterLow = -20;
-        weatherFilterHigh = 40;
+        weatherFilterLow = TEMP_FILTER_MIN;
+        weatherFilterHigh = TEMP_FILTER_MAX;
         filterFavoritesOnly = false;
-        if (sliderLow) sliderLow.value = -20;
-        if (sliderHigh) sliderHigh.value = 40;
+        if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
+        if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         syncModalFromState();
         renderActiveChips();
         applyFilterAndRender();
@@ -1508,7 +1462,7 @@ function initFilterModal() {
 
     sliderLow?.addEventListener('input', () => {
         let v = parseInt(sliderLow.value);
-        const high = parseInt(sliderHigh?.value ?? 40);
+        const high = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
         if (v > high) {
             v = high;
             sliderLow.value = v;
@@ -1519,7 +1473,7 @@ function initFilterModal() {
     });
     sliderHigh?.addEventListener('input', () => {
         let v = parseInt(sliderHigh.value);
-        const low = parseInt(sliderLow?.value ?? -20);
+        const low = parseInt(sliderLow?.value ?? TEMP_FILTER_MIN);
         if (v < low) {
             v = low;
             sliderHigh.value = v;
@@ -1577,7 +1531,7 @@ function initFilterModal() {
 
 // 스와이프 기능 초기화
 function initSwipe() {
-    const container = document.querySelector('.month-cards-container');
+    const container = getDayListContainer();
     if (!container) return;
     
     // 일별 리스트 모드에서는 스와이프 비활성화
@@ -1779,10 +1733,6 @@ async function updateMenuUserInfo() {
     }
 }
 
-window.addEventListener('load', () => {
-    updateMenuUserInfo();
-});
-
 // 작성 버튼
 document.querySelector('.write-btn')?.addEventListener('click', () => {
     const today = new Date();
@@ -1793,13 +1743,6 @@ document.querySelector('.write-btn')?.addEventListener('click', () => {
 // 즐겨찾기 버튼
 document.querySelector('.favorite-btn')?.addEventListener('click', () => {
     window.location.href = 'mypage.html';
-});
-
-// LEGACY: calendar.html 없음. calendar-btn도 HTML에 없음
-document.querySelector('.calendar-btn')?.addEventListener('click', () => {
-    const year = document.querySelector('.year-btn span').textContent;
-    const currentMonth = new Date().getMonth() + 1;
-    window.location.href = `calendar.html?year=${year}&month=${currentMonth}`;
 });
 
 // 스크롤 방향에 따른 헤더 hide/show (아래로 스크롤 → 숨김, 위로 스크롤 → 표시)
@@ -1874,8 +1817,9 @@ window.addEventListener('scroll', _handleHeaderScroll, { passive: true });
 
 // 페이지 로드 시 초기화
 window.addEventListener('load', async () => {
+    updateMenuUserInfo();
     await initPage();
-    await updateTodayInfo(); // 오늘 날씨 표시 + 슬라이더 초기 세팅
+    await updateTodayInfo();
 });
 
 // 오늘 날짜와 날씨 정보 업데이트
