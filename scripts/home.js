@@ -1215,7 +1215,8 @@ function initFilterModal() {
                 _applyCountLoadAbort = { abort: false };
                 const token = _applyCountLoadAbort;
                 try {
-                    while (hasMoreData && !token.abort) await loadMoreDayList(PAGE_SIZE, true);
+                    const BATCH_FOR_COUNT = 200;
+                    while (hasMoreData && !token.abort) await loadMoreDayList(BATCH_FOR_COUNT, true);
                 } catch (e) { /* ignore */ }
                 if (token.abort) return;
             }
