@@ -3,7 +3,7 @@
  * - alpha.stylelog.co.kr: 전체 크롤링 차단 (테스트 환경)
  * - www.stylelog.co.kr 등: 크롤링 허용 + sitemap
  */
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   const host = (req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
   const isAlpha = host.includes('alpha');
 
