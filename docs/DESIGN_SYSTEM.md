@@ -8,7 +8,7 @@
 
 ```
 StyleLog_1.1V/
-├── home.html          # 홈 (월별/일별 카드)
+├── home.html          # 홈 (일별 리스트)
 ├── write.html          # 새 기록 작성
 ├── detail.html         # 기록 상세
 ├── mypage.html         # 마이페이지
@@ -226,7 +226,8 @@ StyleLog_1.1V/
 3. 페이지별 스타일: `write.css`, `home.css`, `mypage.css` 등
 
 > **주의**: `write.css`는 variables를 @import하고, 리셋/body/container를 포함합니다.  
-> `home.css`, `auth.css` 등도 variables를 @import합니다.
+> `home.css`, `auth.css` 등도 variables를 @import합니다.  
+> `.cursor/rules/stylelog-design.mdc`, `stylelog-code.mdc` 참고.
 
 ---
 
@@ -235,6 +236,8 @@ StyleLog_1.1V/
 - **BEM 유사**: `.block`, `.block-element`, `.block--modifier`
 - **상태**: `.active`, `.disabled`, `.readonly`
 - **역할**: `-btn`, `-header`, `-form`, `-section`
+
+> **Cursor 규칙**: `.cursor/rules/stylelog-design.mdc`, `stylelog-code.mdc` 참고
 
 ---
 

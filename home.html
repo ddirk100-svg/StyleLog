@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="styles/month-detail.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
+    <link rel="stylesheet" href="styles/photo-gallery.css">
 </head>
 <body class="has-bottom-nav">
     <!-- 로딩 화면 -->
@@ -29,7 +30,7 @@
         <p>로딩 중...</p>
     </div>
     
-    <!-- 홈 화면 - 카드뷰 (가로형) -->
+    <!-- 홈 화면 - 일별 리스트 -->
     <div class="container" id="homeView">
         <!-- 헤더 -->
         <header class="header">
@@ -89,6 +90,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- 기온별 옷차림 이미지 (스와이프 캐러셀) -->
+        <section class="outfit-carousel-section" id="outfitCarouselSection">
+            <h2 class="outfit-carousel-title">기온별 옷차림</h2>
+            <div class="outfit-carousel photo-gallery" id="outfitCarouselGallery">
+                <div class="photo-slider" id="outfitCarouselSlider">
+                    <div class="photo-slide"><img src="img/weather_sample_1.jpg" alt="기온별 옷차림 1" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
+                    <div class="photo-slide"><img src="img/weather_sample_2.jpg" alt="기온별 옷차림 2" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
+                    <div class="photo-slide"><img src="img/weather_sample_3.jpg" alt="기온별 옷차림 3" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
+                    <div class="photo-slide"><img src="img/weather_sample_4.jpg" alt="기온별 옷차림 4" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
+                    <div class="photo-slide"><img src="img/weather_sample_5.jpg" alt="기온별 옷차림 5" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
+                    <div class="photo-slide"><img src="img/weather_sample_6.jpg" alt="기온별 옷차림 6" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
+                </div>
+                <div class="photo-indicators" id="outfitCarouselIndicators">
+                    <span class="indicator active" data-index="0"></span>
+                    <span class="indicator" data-index="1"></span>
+                    <span class="indicator" data-index="2"></span>
+                    <span class="indicator" data-index="3"></span>
+                    <span class="indicator" data-index="4"></span>
+                    <span class="indicator" data-index="5"></span>
+                </div>
+            </div>
+        </section>
 
         <!-- 필터 바 (무신사 스타일) -->
         <div class="filter-bar" id="filterBar">
@@ -185,13 +209,13 @@
             </div>
         </div>
 
-        <!-- 월별 카드 리스트 (가로 스크롤) -->
+        <!-- 일별 리스트 컨테이너 -->
         <div class="month-cards-container">
             <!-- JavaScript로 동적 생성됩니다 -->
         </div>
     </div>
 
-    <!-- 메뉴 팝업 (바텀시트) - Day 뷰용 -->
+    <!-- 메뉴 팝업 (바텀시트) - 일별 리스트용 -->
     <div class="menu-popup" id="itemMenuPopup">
         <div class="menu-overlay"></div>
         <div class="menu-content">

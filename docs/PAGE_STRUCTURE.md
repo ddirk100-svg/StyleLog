@@ -13,11 +13,9 @@
         └─→ login.html (로그인)
               └─→ home.html (메인 서비스)
                     │
-                    ├─→ month-detail.html (월별 상세)
-                    ├─→ calendar.html (캘린더 뷰)
                     ├─→ write.html (일기 작성/수정)
                     ├─→ detail.html (일기 상세)
-                    └─→ favorite.html (즐겨찾기)
+                    └─→ mypage.html (마이페이지, 즐겨찾기)
 ```
 
 ## 🔐 인증 로직
@@ -29,12 +27,10 @@
 - `debug.html` - 디버그 (개발용)
 
 ### **비공개 페이지 (로그인 필요)**
-- `home.html` - 메인 홈 (로그인 안됐으면 자동으로 landing.html로)
-- `month-detail.html` - 월별 상세
-- `calendar.html` - 캘린더
+- `home.html` - 메인 홈 (일별 리스트)
 - `write.html` - 작성/수정
 - `detail.html` - 상세
-- `favorite.html` - 즐겨찾기
+- `mypage.html` - 마이페이지, 즐겨찾기
 
 ## 🚀 시작하기
 

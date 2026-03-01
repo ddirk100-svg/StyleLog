@@ -5,7 +5,7 @@ console.log('StyleLog home.js build 20250302-thumb');
 // URL 파라미터에서 연도 가져오기
 const urlParams = new URLSearchParams(window.location.search);
 let initialYear = parseInt(urlParams.get('year')) || new Date().getFullYear();
-let currentView = 'day'; // year, month, day
+let currentView = 'day'; // 현재는 일별 리스트만 사용
 let monthsWithData = []; // 데이터가 있는 월 목록
 let yearsWithData = []; // 일기가 있는 연도 목록
 
@@ -29,7 +29,7 @@ async function initPage() {
     // 일기가 있는 연도 목록 로드
     await loadYearsWithData();
     
-    // Day 뷰일 때 container에 클래스 추가
+    // 일별 리스트 모드용 클래스 추가
     const container = document.getElementById('homeView');
     if (container) {
         container.classList.add('day-view-active');
@@ -40,6 +40,9 @@ async function initPage() {
     
     // 스와이프 기능 초기화
     initSwipe();
+    
+    // 기온별 옷차림 캐러셀 스와이프 초기화
+    initOutfitCarouselSwipe();
     
     // 필터 모달 초기화
     initFilterModal();
@@ -148,11 +151,11 @@ async function selectYear(year) {
     // initialYear 업데이트
     initialYear = year;
     
-    // 항상 Day 뷰로 데이터 다시 로드
+    // 일별 리스트로 데이터 다시 로드
     await loadDayList(year);
 }
 
-// 월 카드 데이터 로드 및 생성
+// LEGACY: Month 카드 뷰용 (현재 미사용 - view-btn 없음)
 async function loadMonthCards() {
     try {
         console.log('📊 데이터 로딩 시작...');
@@ -200,7 +203,7 @@ async function loadMonthCards() {
             return;
         }
         
-        // day-list-view 클래스 제거 (Month 뷰로 전환)
+        // Month 뷰용 - 현재 호출되지 않음
         container.classList.remove('day-list-view');
         container.innerHTML = '';
         
@@ -366,34 +369,31 @@ async function switchView(view) {
         }
     });
     
-    // Day 뷰일 때 container에 클래스 추가/제거
+    // LEGACY: Month/Day 뷰 전환 - view-btn이 HTML에 없어 미호출
     if (container) {
         if (view === 'day') {
             container.classList.add('day-view-active');
         } else {
             container.classList.remove('day-view-active');
+            document.body.classList.remove('header-scrolled-hidden');
+            document.body.classList.remove('year-label-reached-top');
         }
     }
     
-    // 뷰에 따라 다른 렌더링
     switch(view) {
         case 'month':
-            // 월별 카드 뷰
-            console.log('Month 뷰 활성화');
             await loadMonthCards();
             break;
         case 'day':
-            // 일별 리스트 뷰
-            console.log('Day 뷰 활성화');
             await loadDayList(year);
             break;
     }
 }
 
-// 일별 리스트 로드 (Day 뷰)
+// 일별 리스트 로드
 async function loadDayList(year) {
     try {
-        console.log('📅 Day 뷰 데이터 로딩:', year, '년');
+        console.log('📅 일별 리스트 데이터 로딩:', year, '년');
         
         // 해당 연도의 모든 로그 가져오기
         const logs = await StyleLogAPI.getByYear(year);
@@ -473,10 +473,10 @@ async function loadDayList(year) {
         
         // 이벤트 리스너 등록
         attachDayListEventListeners();
-        console.log('✅ Day 뷰 로딩 완료');
+        console.log('✅ 일별 리스트 로딩 완료');
         
     } catch (error) {
-        console.error('❌ Day 뷰 데이터 로드 오류:', error);
+        console.error('❌ 일별 리스트 데이터 로드 오류:', error);
         const container = document.querySelector('.month-cards-container');
         if (container) {
             container.innerHTML = `
@@ -904,7 +904,7 @@ function createDayItemForHome(log) {
     return dayItem;
 }
 
-// Day 뷰 이벤트 위임 (단일 리스너로 모든 day-item 처리 - 메모리/성능 최적화)
+// 일별 리스트 이벤트 위임 (단일 리스너로 모든 day-item 처리)
 let dayListDelegationAttached = false;
 
 function attachDayListEventListeners() {
@@ -1526,7 +1526,7 @@ function initSwipe() {
     const container = document.querySelector('.month-cards-container');
     if (!container) return;
     
-    // day-list-view일 때는 스와이프 비활성화
+    // 일별 리스트 모드에서는 스와이프 비활성화
     if (container.classList.contains('day-list-view')) {
         return;
     }
@@ -1607,6 +1607,78 @@ function initSwipe() {
     }, true);
 }
 
+// 기온별 옷차림 캐러셀 스와이프 (일기 상세 사진 스와이프와 동일 방식)
+function initOutfitCarouselSwipe() {
+    const slider = document.getElementById('outfitCarouselSlider');
+    const indicators = document.querySelectorAll('#outfitCarouselIndicators .indicator');
+
+    if (!slider || indicators.length === 0) return;
+
+    let currentIndex = 0;
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    function updateSlider() {
+        const offset = -currentIndex * slider.offsetWidth;
+        slider.style.transform = `translateX(${offset}px)`;
+        indicators.forEach((ind, idx) => ind.classList.toggle('active', idx === currentIndex));
+    }
+
+    const handleStart = (clientX) => {
+        startX = clientX;
+        currentX = clientX;
+        isDragging = true;
+        slider.style.transition = 'none';
+    };
+
+    const handleMove = (clientX) => {
+        if (!isDragging) return;
+        currentX = clientX;
+        const diff = currentX - startX;
+        const offset = -currentIndex * slider.offsetWidth + diff;
+        slider.style.transform = `translateX(${offset}px)`;
+    };
+
+    const handleEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const diff = currentX - startX;
+        const threshold = slider.offsetWidth / 4;
+        slider.style.transition = 'transform 0.3s ease-out';
+        if (diff > threshold && currentIndex > 0) currentIndex--;
+        else if (diff < -threshold && currentIndex < indicators.length - 1) currentIndex++;
+        updateSlider();
+    };
+
+    slider.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX), { passive: true });
+    slider.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX), { passive: true });
+    slider.addEventListener('touchend', handleEnd);
+
+    slider.addEventListener('mousedown', (e) => {
+        handleStart(e.clientX);
+        e.preventDefault();
+    });
+    slider.addEventListener('mousemove', (e) => handleMove(e.clientX));
+    slider.addEventListener('mouseup', handleEnd);
+    slider.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            slider.style.transition = 'transform 0.3s ease-out';
+            updateSlider();
+        }
+    });
+
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            currentIndex = index;
+            updateSlider();
+        });
+    });
+
+    updateSlider();
+}
+
 // 메뉴 버튼
 document.querySelector('.menu-btn')?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1669,12 +1741,82 @@ document.querySelector('.favorite-btn')?.addEventListener('click', () => {
     window.location.href = 'mypage.html';
 });
 
-// 캘린더 버튼
+// LEGACY: calendar.html 없음. calendar-btn도 HTML에 없음
 document.querySelector('.calendar-btn')?.addEventListener('click', () => {
     const year = document.querySelector('.year-btn span').textContent;
     const currentMonth = new Date().getMonth() + 1;
     window.location.href = `calendar.html?year=${year}&month=${currentMonth}`;
 });
+
+// 스크롤 방향에 따른 헤더 hide/show (아래로 스크롤 → 숨김, 위로 스크롤 → 표시)
+let _lastScrollY = 0;
+let _scrollTicking = false;
+let _toggleCooldown = 0;
+const _SCROLL_THRESHOLD_DOWN = 15;
+const _SCROLL_THRESHOLD_UP = 25;  // 히스테리시스: 올릴 때 더 많이 올려야 표시
+const _TOP_SHOW_ZONE = 100;
+
+const _YEAR_LABEL_STICK_THRESHOLD = 82; /* year-label가 상단(헤더 아래)에 붙은 것으로 보는 기준(px) */
+
+function _isYearLabelReachedTop(container) {
+    const labels = container.querySelectorAll('.year-label-day-view');
+    for (const el of labels) {
+        const top = el.getBoundingClientRect().top;
+        if (top <= _YEAR_LABEL_STICK_THRESHOLD) return true;
+    }
+    return false;
+}
+
+function _handleHeaderScroll() {
+    if (_scrollTicking) return;
+    _scrollTicking = true;
+    requestAnimationFrame(() => {
+        const container = document.querySelector('.container');
+        if (!container || !container.querySelector('.year-label-day-view')) {
+            _scrollTicking = false;
+            return;
+        }
+        const now = Date.now();
+        const currentY = window.scrollY || document.documentElement.scrollTop;
+        const isHidden = document.body.classList.contains('header-scrolled-hidden');
+        const yearLabelReachedTop = _isYearLabelReachedTop(container);
+        const cooldownActive = now < _toggleCooldown;
+
+        /* year-label-reached-top은 cooldown과 무관하게 항상 업데이트 (빠른 스크롤 시 반응 지연 방지) */
+        if (yearLabelReachedTop) {
+            document.body.classList.add('year-label-reached-top');
+        } else {
+            document.body.classList.remove('year-label-reached-top');
+        }
+
+        if (cooldownActive) {
+            _lastScrollY = currentY;
+            _scrollTicking = false;
+            return;
+        }
+
+        if (currentY < _TOP_SHOW_ZONE) {
+            if (isHidden) {
+                document.body.classList.remove('header-scrolled-hidden');
+                _toggleCooldown = now + 250;
+            }
+        } else if (currentY > _lastScrollY + _SCROLL_THRESHOLD_DOWN) {
+            if (!isHidden) {
+                document.body.classList.add('header-scrolled-hidden');
+                _toggleCooldown = now + 250;
+            }
+        } else if (currentY < _lastScrollY - _SCROLL_THRESHOLD_UP) {
+            if (isHidden) {
+                document.body.classList.remove('header-scrolled-hidden');
+                _toggleCooldown = now + 250;
+            }
+        }
+        _lastScrollY = currentY;
+        _scrollTicking = false;
+    });
+}
+
+window.addEventListener('scroll', _handleHeaderScroll, { passive: true });
 
 // 페이지 로드 시 초기화
 window.addEventListener('load', async () => {

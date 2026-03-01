@@ -20,6 +20,7 @@
     top: 0;
     background-color: var(--color-bg-primary);
     z-index: var(--z-index-sticky);
+    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -37,18 +38,36 @@
     padding-bottom: 0;
 }
 
+/* 스크롤 내릴 때 헤더 숨김 (favoriteView 일별 리스트) */
+body.header-scrolled-hidden #favoriteView .header {
+    transform: translateY(-100%);
+}
+
+/* year-label가 상단에 붙었을 때만 top: 0 적용 */
+body.header-scrolled-hidden.year-label-reached-top #favoriteView .year-label-day-view {
+    top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: 0;
+}
+
+body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-day-view {
+    top: calc(env(safe-area-inset-top, 0px) + 24px);
+    padding-top: 0;
+}
+
 /* 연도 레이블 (favoriteView용) - 헤더 아래 배치 */
 #favoriteView .year-label-day-view {
     position: sticky;
     top: 77px;
-    padding: 12px var(--spacing-xl) 8px;
+    transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 12px var(--spacing-xl) 4px;
     font-size: 22px;
     font-weight: 700;
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
     z-index: 11;
     margin-top: 0;
-    margin-bottom: 4px;
+    margin-bottom: 0;
     width: 100%;
     display: block;
 }
@@ -56,14 +75,14 @@
 /* 월 레이블 (favoriteView용) - 연도 레이블 아래 배치 */
 #favoriteView .month-label-day-view {
     position: sticky;
-    /* header(77px) + year-label(50px) = 127px */
-    top: 127px;
-    padding: 8px var(--spacing-xl) 6px;
+    top: 122px; /* Header(77) + YearLabel(~45) - 간격 최소화 */
+    transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 4px var(--spacing-xl) 6px;
     font-size: 16px;
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-secondary);
     background-color: var(--color-bg-primary);
-    margin-top: 4px;
+    margin-top: 0;
     margin-bottom: 8px;
     z-index: 11;
     width: 100%;
@@ -90,15 +109,15 @@
     #favoriteView .year-label-day-view {
         top: 72px;
         font-size: 20px;
-        padding: 10px var(--spacing-lg) 6px;
-        margin-bottom: 4px;
+        padding: 10px var(--spacing-lg) 4px;
+        margin-bottom: 0;
     }
     
     #favoriteView .month-label-day-view {
-        top: 116px; /* Header(72) + YearLabel(44) = 116px */
+        top: 110px; /* Header(72) + YearLabel(~38) - 간격 최소화 */
         font-size: 15px;
-        padding: 6px var(--spacing-lg) 4px;
-        margin-top: 4px;
+        padding: 4px var(--spacing-lg) 4px;
+        margin-top: 0;
         margin-bottom: 6px;
     }
 }

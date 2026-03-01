@@ -33,7 +33,7 @@ body {
     height: 100vh;
 }
 
-/* Day 뷰일 때 body 스크롤 허용 */
+/* 일별 리스트일 때 body 스크롤 허용 */
 body:has(.container.day-view-active) {
     overflow-y: auto;
     height: auto;
@@ -55,26 +55,26 @@ body:has(.container.day-view-active) {
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
 }
 
-/* Day 뷰일 때는 container의 overflow를 완전히 제거하여 body가 스크롤 컨테이너가 되도록 */
+/* 일별 리스트일 때 container overflow 제거 - body가 스크롤 컨테이너 */
 .container.day-view-active {
     overflow: visible !important;
     /* 최소 높이를 더 크게 설정하여 sticky가 항상 작동하도록 */
     min-height: calc(100vh + 200px);
 }
 
-/* Month 뷰일 때는 고정 높이 */
+/* LEGACY: Month 뷰용 (현재 day-view만 사용) */
 .container:not(.day-view-active) {
     height: 100vh;
     overflow: hidden;
 }
 
-/* Day 뷰일 때는 전체 스크롤 - body가 스크롤 컨테이너 */
+/* 일별 리스트 - 전체 스크롤 */
 .container.day-view-active {
     height: auto;
     /* overflow는 위에서 !important로 처리 */
 }
 
-/* Day 뷰일 때 month-cards-container의 sticky 컨텍스트 보장 */
+/* 일별 리스트 - sticky 컨텍스트 보장 */
 .container.day-view-active .month-cards-container.day-list-view {
     /* overflow를 visible로 확실히 설정 - sticky가 작동하도록 */
     overflow: visible !important;
@@ -93,6 +93,24 @@ body:has(.container.day-view-active) {
     background-color: var(--color-bg-primary);
     z-index: var(--z-index-sticky);
     flex-shrink: 0;
+    transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* 스크롤 내릴 때 헤더 숨김 (일별 리스트) */
+body.header-scrolled-hidden .container .header {
+    transform: translateY(-100%);
+}
+
+/* year-label가 상단에 붙었을 때만 top: 0 적용 (스크롤로 해당 영역이 맨 위에 도달한 뒤) */
+body.header-scrolled-hidden.year-label-reached-top .container .year-label-day-view {
+    top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: 0;
+}
+
+body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-view {
+    top: calc(env(safe-area-inset-top, 0px) + 24px); /* year 높이에 딱 맞춤 */
+    padding-top: 0;
 }
 
 .logo {
@@ -401,41 +419,7 @@ body:has(.container.day-view-active) {
     border-radius: 0 0 12px 12px;
 }
 
-/* 뷰 모드 토글 */
-.view-toggle {
-    display: flex;
-    gap: 8px;
-    padding: 4px;
-    background-color: var(--color-bg-secondary);
-    border-radius: 12px;
-    width: fit-content;
-    flex-shrink: 0;
-}
-
-.view-btn {
-    background: none;
-    border: none;
-    padding: 8px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text-tertiary);
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s;
-    position: relative;
-}
-
-.view-btn:hover {
-    color: var(--color-text-secondary);
-}
-
-.view-btn.active {
-    background-color: #fff;
-    color: var(--color-text-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 월별 카드 컨테이너 */
+/* 일별 리스트 컨테이너 */
 .month-cards-container {
     display: flex;
     gap: 16px;
@@ -453,7 +437,7 @@ body:has(.container.day-view-active) {
     align-items: center;
 }
 
-/* Day 뷰 스타일 */
+/* 일별 리스트 스타일 */
 .month-cards-container.day-list-view {
     display: block !important;
     padding: 20px;
@@ -467,7 +451,7 @@ body:has(.container.day-view-active) {
     height: auto;
 }
 
-/* Day 뷰에서 gap을 margin으로 처리 */
+/* 일별 리스트 - gap을 margin으로 처리 */
 .month-cards-container.day-list-view > * {
     margin-bottom: 16px;
 }
@@ -484,7 +468,7 @@ body:has(.container.day-view-active) {
     display: none;
 }
 
-/* 월별 카드 - 기본 (파란색) */
+/* LEGACY: Month 뷰 (현재 미사용 - view-btn 없음) */
 .month-card {
     flex: 0 0 calc(100% - 64px);
     height: 100%;
@@ -739,6 +723,55 @@ body:has(.container.day-view-active) {
     border-radius: 50%;
     pointer-events: none;
     opacity: 0.5;
+}
+
+/* 기온별 옷차림 캐러셀 (인스타 스와이프 스타일) */
+.outfit-carousel-section {
+    width: calc(100% - 40px);
+    margin: var(--spacing-2xl) 20px 12px;
+    flex-shrink: 0;
+}
+
+.outfit-carousel-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-md) 0;
+    padding: 0;
+}
+
+.outfit-carousel-section .outfit-carousel {
+    height: 240px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 이미지 원본 비율 유지 - 전부 보이게 (contain) */
+.outfit-carousel-section .photo-slide {
+    background-color: var(--color-bg-secondary);
+}
+
+.outfit-carousel-section .photo-slide img {
+    object-fit: contain;
+    width: 100%;
+    height: 100%;
+}
+
+.outfit-carousel-section .photo-indicators {
+    bottom: 12px;
+}
+
+.outfit-carousel-section .indicator {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.outfit-carousel-section .indicator.active {
+    background: var(--color-primary);
+}
+
+.outfit-carousel-section .indicator:hover {
+    background: rgba(0, 0, 0, 0.4);
 }
 
 /* 필터 바 (무신사 스타일) */
@@ -1449,32 +1482,34 @@ body:has(.container.day-view-active) {
     background-color: var(--color-accent);
 }
 
-/* 연도 레이블 (Day 뷰용) */
+/* 연도 레이블 (일별 리스트용) */
 .year-label-day-view {
     position: sticky;
     top: 77px;
-    padding: 12px var(--spacing-xl) 8px;
+    transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 12px var(--spacing-xl) 4px;
     font-size: 22px;
     font-weight: 700;
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
     z-index: 11;
     margin-top: 0;
-    margin-bottom: 4px;
+    margin-bottom: 0;
     width: 100%;
     display: block;
 }
 
-/* Day 뷰 월 레이블 */
+/* 월 레이블 (일별 리스트용) */
 .month-label-day-view {
     position: sticky;
-    top: 127px; /* Header(77) + YearLabel(50) = 127px */
-    padding: 8px var(--spacing-xl) 6px;
+    top: 122px; /* Header(77) + YearLabel(~45) - 간격 최소화 */
+    transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 4px var(--spacing-xl) 6px;
     font-size: 16px;
     font-weight: 600;
     color: var(--color-text-secondary);
     background-color: var(--color-bg-primary);
-    margin-top: 4px;
+    margin-top: 0;
     margin-bottom: 8px;
     z-index: 11;
     width: 100%;
@@ -1646,15 +1681,15 @@ body:has(.container.day-view-active) {
     .year-label-day-view {
         top: 72px;
         font-size: 20px;
-        padding: 10px var(--spacing-lg) 6px;
-        margin-bottom: 4px;
+        padding: 10px var(--spacing-lg) 4px;
+        margin-bottom: 0;
     }
     
     .month-label-day-view {
-        top: 116px; /* Header(72) + YearLabel(44) = 116px */
+        top: 110px; /* Header(72) + YearLabel(~38) - 간격 최소화 */
         font-size: 15px;
-        padding: 6px var(--spacing-lg) 4px;
-        margin-top: 4px;
+        padding: 4px var(--spacing-lg) 4px;
+        margin-top: 0;
         margin-bottom: 6px;
     }
     
@@ -1711,6 +1746,7 @@ body:has(.container.day-view-active) {
         gap: 12px;
     }
     
+    /* LEGACY: Month 뷰 */
     .month-card {
         flex: 0 0 calc(100% - 40px);
         height: 100%;

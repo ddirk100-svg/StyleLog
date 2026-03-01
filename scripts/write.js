@@ -358,12 +358,12 @@ function removePhoto(index) {
     renderPhotoPreviews();
 }
 
-// 리스트용 썸네일 생성 (첫 번째 사진 리사이즈, ~50KB 목표)
+// 리스트용 썸네일 생성 (첫 번째 사진 리사이즈, 최대 1200px, 화질 85%)
 function createThumbnail(dataUrl) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-            const MAX_SIZE = 300;
+            const MAX_SIZE = 1200;
             let w = img.width;
             let h = img.height;
             if (w > h && w > MAX_SIZE) {
@@ -379,7 +379,7 @@ function createThumbnail(dataUrl) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
             try {
-                const thumb = canvas.toDataURL('image/jpeg', 0.8);
+                const thumb = canvas.toDataURL('image/jpeg', 0.85);
                 resolve(thumb);
             } catch {
                 resolve(dataUrl);
