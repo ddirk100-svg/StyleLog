@@ -6,7 +6,6 @@
   ],
   "rewrites": [
     {"source": "/robots.txt", "destination": "/api/robots"},
-    {"source": "/", "destination": "/landing.html"},
-    {"source": "/(.*)", "destination": "/$1"}
+    {"source": "/", "destination": "/landing.html"}
   ]
 }
