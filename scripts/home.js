@@ -47,8 +47,8 @@ async function initPage() {
     // 필터 모달 초기화
     initFilterModal();
 
-    // 상세에서 뒤로 왔을 때 스크롤 위치 복원
-    restoreHomeScrollPosition();
+    // 상세에서 뒤로 왔을 때 스크롤 위치 복원 (완료될 때까지 await)
+    await restoreHomeScrollPosition();
 }
 
 async function restoreHomeScrollPosition() {
@@ -56,22 +56,31 @@ async function restoreHomeScrollPosition() {
     if (!saved) return;
     sessionStorage.removeItem('homeScrollY');
     const targetY = parseInt(saved, 10);
-    if (isNaN(targetY) || targetY <= 0) return;
+    if (isNaN(targetY) || targetY <= 0) {
+        document.body.classList.remove('scroll-restore-pending');
+        return;
+    }
 
     const doScroll = () => window.scrollTo(0, targetY);
 
-    requestAnimationFrame(() => {
+    await new Promise(resolve => {
         requestAnimationFrame(async () => {
             doScroll();
             while (hasMoreData && !isLoading) {
                 const { scrollHeight, clientHeight } = document.documentElement;
                 const maxScroll = scrollHeight - clientHeight;
                 if (maxScroll >= targetY - 10) break;
-                await loadMoreDayList();
+                // 스크롤 복원 시 대량 로드로 API 호출 횟수 축소 (약 300px/item 기준)
+                const gap = targetY - maxScroll;
+                const batchSize = Math.min(50, Math.max(PAGE_SIZE, Math.ceil(gap / 280)));
+                await loadMoreDayList(batchSize);
                 doScroll();
             }
+            resolve();
         });
     });
+
+    document.body.classList.remove('scroll-restore-pending');
 }
 
 // 일기가 있는 연도 목록 로드
@@ -534,8 +543,12 @@ async function loadAllDayList() {
         container.classList.add('day-list-view');
         container.innerHTML = '';
         
-        // 첫 페이지 로드
-        await loadMoreDayList();
+        // 스크롤 복원 시 초기 로드량 확대 (API 호출 1회로 커버)
+        const savedY = parseInt(sessionStorage.getItem('homeScrollY') || '0', 10);
+        const initialLimit = (savedY > 0)
+            ? Math.min(50, Math.max(PAGE_SIZE, Math.ceil(savedY / 280)))
+            : PAGE_SIZE;
+        await loadMoreDayList(initialLimit);
         
         // 무한 스크롤 이벤트 리스너 등록
         initInfiniteScroll();
@@ -558,7 +571,7 @@ async function loadAllDayList() {
 }
 
 // 추가 데이터 로드 (페이지네이션)
-async function loadMoreDayList() {
+async function loadMoreDayList(limit = PAGE_SIZE) {
     if (isLoading || !hasMoreData) {
         console.log('⏸️ 로딩 중이거나 더 이상 데이터 없음');
         return;
@@ -570,14 +583,14 @@ async function loadMoreDayList() {
     showLoadingIndicator();
     
     try {
-        console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${PAGE_SIZE}`);
+        console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${limit}`);
         
         // 페이지네이션으로 데이터 가져오기 (photos 제외, thumb_url만 - statement timeout 방지)
         const { data, error } = await supabaseClient
             .from('style_logs')
             .select('id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at')
             .order('date', { ascending: false })
-            .range(currentOffset, currentOffset + PAGE_SIZE - 1);
+            .range(currentOffset, currentOffset + limit - 1);
         
         if (error) throw error;
         
@@ -605,8 +618,8 @@ async function loadMoreDayList() {
             return;
         }
         
-        // 페이지 크기보다 적게 받았으면 마지막 페이지
-        if (data.length < PAGE_SIZE) {
+        // 요청량보다 적게 받았으면 마지막 페이지
+        if (data.length < limit) {
             hasMoreData = false;
         }
         
@@ -621,7 +634,7 @@ async function loadMoreDayList() {
         await renderDayList(filtered);
         
         // 다음 페이지를 위해 offset 증가
-        currentOffset += PAGE_SIZE;
+        currentOffset += data.length;
         
         // 마지막 페이지면 완료 메시지 표시 (필터 부합 항목이 있을 때만)
         if (!hasMoreData && getFilteredLogs().length > 0) {

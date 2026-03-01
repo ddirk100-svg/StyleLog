@@ -18,6 +18,12 @@
     color: var(--color-text-tertiary);
 }
 
+/* 스크롤 복원 중 메인 콘텐츠 숨김 - 복원 완료 후 한 번에 표시 */
+body.scroll-restore-pending #homeView {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* 공통 스타일 */
 * {
     margin: 0;

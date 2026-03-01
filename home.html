@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="styles/photo-gallery.css">
 </head>
 <body class="has-bottom-nav">
+    <script>if(sessionStorage.getItem('homeScrollY'))document.body.classList.add('scroll-restore-pending');</script>
     <!-- 로딩 화면 -->
     <div id="authLoading" class="auth-loading" style="display: none;">
         <p>로딩 중...</p>
