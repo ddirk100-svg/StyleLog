@@ -47,33 +47,38 @@ async function loadStats() {
             return;
         }
 
-        // count API로 정확한 개수 조회 (실패 시 select fallback - real/prod RLS 이슈 대비)
+        // real(프로덕션) DB는 count API 500 이슈 → select만 사용. alpha/localhost는 count API 시도
+        const isProd = !/alpha|localhost|127\.0\.0\.1/.test(window.location.hostname);
         let totalCount = null;
         let favCount = null;
 
-        const { count: tc, error: err1 } = await supabaseClient
-            .from('style_logs')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-        const { count: fc, error: err2 } = await supabaseClient
-            .from('style_logs')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('is_favorite', true);
-
-        if (!err1 && tc != null) totalCount = tc;
-        if (!err2 && fc != null) favCount = fc;
-
-        // count API 실패 시 select로 fallback (1001건 반환 시 1000+)
-        if (totalCount == null) {
-            const { data: td } = await supabaseClient.from('style_logs').select('id').eq('user_id', user.id).limit(1001);
-            const len = td?.length ?? 0;
-            totalCount = len >= 1001 ? 1001 : len;
+        if (!isProd) {
+            const { count: tc, error: err1 } = await supabaseClient
+                .from('style_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id);
+            const { count: fc, error: err2 } = await supabaseClient
+                .from('style_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('is_favorite', true);
+            if (!err1 && tc != null) totalCount = tc;
+            if (!err2 && fc != null) favCount = fc;
         }
-        if (favCount == null) {
-            const { data: fd } = await supabaseClient.from('style_logs').select('id').eq('user_id', user.id).eq('is_favorite', true).limit(1001);
-            const len = fd?.length ?? 0;
-            favCount = len >= 1001 ? 1001 : len;
+
+        if (totalCount == null || favCount == null) {
+            const [totalRes, favRes] = await Promise.all([
+                totalCount == null ? supabaseClient.from('style_logs').select('id').eq('user_id', user.id).limit(1001) : Promise.resolve({ data: null }),
+                favCount == null ? supabaseClient.from('style_logs').select('id').eq('user_id', user.id).eq('is_favorite', true).limit(1001) : Promise.resolve({ data: null })
+            ]);
+            if (totalCount == null) {
+                const len = totalRes.data?.length ?? 0;
+                totalCount = len >= 1001 ? 1001 : len;
+            }
+            if (favCount == null) {
+                const len = favRes.data?.length ?? 0;
+                favCount = len >= 1001 ? 1001 : len;
+            }
         }
 
         totalEl.textContent = formatStatCount(totalCount);
