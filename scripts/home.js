@@ -517,6 +517,8 @@ async function loadMoreDayList(limit = PAGE_SIZE) {
     showLoadingIndicator();
     
     try {
+        const loadStart = Date.now();
+        const MIN_LOADER_DISPLAY_MS = 400;
         console.log(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${limit}`);
         
         // 페이지네이션으로 데이터 가져오기 (photos 제외, thumb_url만 - statement timeout 방지)
@@ -580,38 +582,33 @@ async function loadMoreDayList(limit = PAGE_SIZE) {
         hasMoreData = false;
     } finally {
         isLoading = false;
-        hideLoadingIndicator();
+        const elapsed = Date.now() - loadStart;
+        if (elapsed < MIN_LOADER_DISPLAY_MS) {
+            setTimeout(hideLoadingIndicator, MIN_LOADER_DISPLAY_MS - elapsed);
+        } else {
+            hideLoadingIndicator();
+        }
     }
 }
 
-// 로딩 인디케이터 표시
+// 로딩 인디케이터 표시 (viewport 하단 고정 - 스크롤 위치와 무관하게 항상 노출)
 function showLoadingIndicator() {
-    // 이미 있으면 제거
     hideLoadingIndicator();
-    
-    const container = getDayListContainer();
-    if (!container) return;
-    
     const loader = document.createElement('div');
     loader.id = 'infinite-scroll-loader';
+    loader.className = 'infinite-scroll-loader-fixed';
     loader.innerHTML = `
         <div class="util-infinite-loader">
             <div class="util-spinner"></div>
             <p>로딩 중...</p>
         </div>
     `;
-    
-    const sentinel = document.getElementById('infinite-scroll-sentinel');
-    if (sentinel) container.insertBefore(loader, sentinel);
-    else container.appendChild(loader);
+    document.body.appendChild(loader);
 }
 
 // 로딩 인디케이터 숨기기
 function hideLoadingIndicator() {
-    const loader = document.getElementById('infinite-scroll-loader');
-    if (loader) {
-        loader.remove();
-    }
+    document.getElementById('infinite-scroll-loader')?.remove();
 }
 
 // 끝 메시지 표시
@@ -730,7 +727,9 @@ async function renderDayList(logs) {
         fragment.appendChild(createDayItemForHome(log));
     });
     
-    container.appendChild(fragment);
+    const sentinel = document.getElementById('infinite-scroll-sentinel');
+    if (sentinel) container.insertBefore(fragment, sentinel);
+    else container.appendChild(fragment);
     attachDayListEventListeners();
 }
 
