@@ -39,22 +39,19 @@ async function loadStats() {
             return;
         }
 
-        // id만 조회 후 length로 카운트 (HEAD/count API 500 이슈 회피)
-        const { data: totalData, error: err1 } = await supabaseClient
+        // count API로 정확한 개수 조회 (select+length는 1000건 제한으로 부정확)
+        const { count: totalCount, error: err1 } = await supabaseClient
             .from('style_logs')
-            .select('id')
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
-        const { data: favData, error: err2 } = await supabaseClient
+        const { count: favCount, error: err2 } = await supabaseClient
             .from('style_logs')
-            .select('id')
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
             .eq('is_favorite', true);
 
-        const totalCount = err1 ? null : (totalData?.length ?? 0);
-        const favCount = err2 ? null : (favData?.length ?? 0);
-
-        totalEl.textContent = totalCount != null ? totalCount : '-';
-        favEl.textContent = favCount != null ? favCount : '-';
+        totalEl.textContent = !err1 && totalCount != null ? totalCount : '-';
+        favEl.textContent = !err2 && favCount != null ? favCount : '-';
     } catch (error) {
         console.error('통계 로드 오류:', error);
         totalEl.textContent = '-';
