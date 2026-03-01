@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": ".",
   "redirects": [
     {"source": "/index.html", "destination": "/home.html", "permanent": false},
     {"source": "/favicon.ico", "destination": "/img/StyleLog_logo(favicon).png", "permanent": false}
