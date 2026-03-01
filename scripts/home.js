@@ -1358,34 +1358,46 @@ function initFilterModal() {
         applyFilterAndRender();
     }
 
-    async function ensureAllDataLoadedForFilter() {
+    async function ensureAllDataLoadedForFilter(skipLoadingUI = false) {
         const hasFilters = getActiveFilterChips().length > 0;
         if (!hasFilters || !hasMoreData) return;
         const container = document.querySelector('.month-cards-container');
         if (!container) return;
-        const loadingEl = document.createElement('div');
-        loadingEl.id = 'filter-load-more-indicator';
-        loadingEl.className = 'util-filter-loading';
-        loadingEl.textContent = '필터 결과를 불러오는 중...';
-        container.appendChild(loadingEl);
+        let loadingEl = null;
+        if (!skipLoadingUI && !container.querySelector('.util-filter-loading')) {
+            loadingEl = document.createElement('div');
+            loadingEl.id = 'filter-load-more-indicator';
+            loadingEl.className = 'util-filter-loading';
+            loadingEl.textContent = '필터 결과를 불러오는 중...';
+            container.appendChild(loadingEl);
+        }
         try {
             while (hasMoreData) {
                 await loadMoreDayList();
             }
         } finally {
-            loadingEl.remove();
+            loadingEl?.remove();
         }
     }
 
     function applyFilterAndRender() {
-        const filtered = getFilteredLogs();
-        renderFullDayList(filtered);
-        if (filtered.length > 0 && !hasMoreData) showEndMessage();
-        ensureAllDataLoadedForFilter().then(() => {
-            const updated = getFilteredLogs();
-            renderFullDayList(updated);
-            if (updated.length > 0 && !hasMoreData) showEndMessage();
-        });
+        const hasFilters = getActiveFilterChips().length > 0;
+        if (hasFilters && hasMoreData) {
+            /* 아직 더 로드할 데이터가 있음 - "없습니다" 말고 로딩 먼저 표시 후 판단 */
+            const container = document.querySelector('.month-cards-container');
+            if (container) {
+                container.innerHTML = '<div class="util-filter-loading">필터 결과를 불러오는 중...</div>';
+            }
+            ensureAllDataLoadedForFilter(true).then(() => {
+                const updated = getFilteredLogs();
+                renderFullDayList(updated);
+                if (updated.length > 0 && !hasMoreData) showEndMessage();
+            });
+        } else {
+            const filtered = getFilteredLogs();
+            renderFullDayList(filtered);
+            if (filtered.length > 0 && !hasMoreData) showEndMessage();
+        }
     }
 
     function doApply() {

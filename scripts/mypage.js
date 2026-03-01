@@ -28,9 +28,17 @@ async function loadUserProfile() {
     }
 }
 
+function formatStatCount(n) {
+    if (n == null) return '-';
+    if (n > 1000) return '1000+';
+    return String(n);
+}
+
 async function loadStats() {
     const totalEl = document.getElementById('statTotalCount');
     const favEl = document.getElementById('statFavoriteCount');
+    totalEl.textContent = '...';
+    favEl.textContent = '...';
     try {
         const user = await getCurrentUser();
         if (!user?.id) {
@@ -39,23 +47,41 @@ async function loadStats() {
             return;
         }
 
-        // count API로 정확한 개수 조회 (select+length는 1000건 제한으로 부정확)
-        const { count: totalCount, error: err1 } = await supabaseClient
+        // count API로 정확한 개수 조회 (실패 시 select fallback - real/prod RLS 이슈 대비)
+        let totalCount = null;
+        let favCount = null;
+
+        const { count: tc, error: err1 } = await supabaseClient
             .from('style_logs')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
-        const { count: favCount, error: err2 } = await supabaseClient
+        const { count: fc, error: err2 } = await supabaseClient
             .from('style_logs')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
             .eq('is_favorite', true);
 
-        totalEl.textContent = !err1 && totalCount != null ? totalCount : '-';
-        favEl.textContent = !err2 && favCount != null ? favCount : '-';
+        if (!err1 && tc != null) totalCount = tc;
+        if (!err2 && fc != null) favCount = fc;
+
+        // count API 실패 시 select로 fallback (1001건 반환 시 1000+)
+        if (totalCount == null) {
+            const { data: td } = await supabaseClient.from('style_logs').select('id').eq('user_id', user.id).limit(1001);
+            const len = td?.length ?? 0;
+            totalCount = len >= 1001 ? 1001 : len;
+        }
+        if (favCount == null) {
+            const { data: fd } = await supabaseClient.from('style_logs').select('id').eq('user_id', user.id).eq('is_favorite', true).limit(1001);
+            const len = fd?.length ?? 0;
+            favCount = len >= 1001 ? 1001 : len;
+        }
+
+        totalEl.textContent = formatStatCount(totalCount);
+        favEl.textContent = formatStatCount(favCount);
     } catch (error) {
         console.error('통계 로드 오류:', error);
-        totalEl.textContent = '-';
-        favEl.textContent = '-';
+        totalEl.textContent = formatStatCount(null);
+        favEl.textContent = formatStatCount(null);
     }
 }
 
