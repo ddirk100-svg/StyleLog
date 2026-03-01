@@ -46,6 +46,32 @@ async function initPage() {
     
     // 필터 모달 초기화
     initFilterModal();
+
+    // 상세에서 뒤로 왔을 때 스크롤 위치 복원
+    restoreHomeScrollPosition();
+}
+
+async function restoreHomeScrollPosition() {
+    const saved = sessionStorage.getItem('homeScrollY');
+    if (!saved) return;
+    sessionStorage.removeItem('homeScrollY');
+    const targetY = parseInt(saved, 10);
+    if (isNaN(targetY) || targetY <= 0) return;
+
+    const doScroll = () => window.scrollTo(0, targetY);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(async () => {
+            doScroll();
+            while (hasMoreData && !isLoading) {
+                const { scrollHeight, clientHeight } = document.documentElement;
+                const maxScroll = scrollHeight - clientHeight;
+                if (maxScroll >= targetY - 10) break;
+                await loadMoreDayList();
+                doScroll();
+            }
+        });
+    });
 }
 
 // 일기가 있는 연도 목록 로드
@@ -977,7 +1003,10 @@ function attachDayListEventListeners() {
         // day-item 클릭 (상세로 이동) - 메뉴/즐겨찾기 제외
         if (e.target.closest('.menu-popup')) return;
         const logId = dayItem.dataset.logId;
-        if (logId) window.location.href = `detail.html?id=${logId}`;
+        if (logId) {
+            sessionStorage.setItem('homeScrollY', String(window.scrollY || document.documentElement.scrollTop));
+            window.location.href = `detail.html?id=${logId}`;
+        }
     });
 }
 
