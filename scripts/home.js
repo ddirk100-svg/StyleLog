@@ -755,8 +755,29 @@ function throttle(fn, delay) {
     };
 }
 
-// 무한 스크롤 초기화 (IntersectionObserver 사용 - 빠른 스크롤 시에도 하단 감지)
+// 무한 스크롤 초기화 (IntersectionObserver + scroll 폴백 - 빠른 스크롤 시 즉시 감지)
 let infiniteScrollObserver = null;
+let _scrollCheckScheduled = false;
+
+function checkNearBottomAndLoad() {
+    if (isLoading || !hasMoreData) return;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    if (distanceFromBottom < INFINITE_SCROLL_ROOT_MARGIN) {
+        loadMoreDayList();
+    }
+}
+
+function _onScrollForInfinite() {
+    if (_scrollCheckScheduled) return;
+    _scrollCheckScheduled = true;
+    requestAnimationFrame(() => {
+        checkNearBottomAndLoad();
+        _scrollCheckScheduled = false;
+    });
+}
 
 function initInfiniteScroll() {
     const container = getDayListContainer();
@@ -767,6 +788,7 @@ function initInfiniteScroll() {
         infiniteScrollObserver.disconnect();
         infiniteScrollObserver = null;
     }
+    window.removeEventListener('scroll', _onScrollForInfinite, { passive: true });
 
     // sentinel: 리스트 맨 아래에 두고 뷰포트에 들어오면 로드
     let sentinel = document.getElementById('infinite-scroll-sentinel');
@@ -777,6 +799,7 @@ function initInfiniteScroll() {
         container.appendChild(sentinel);
     }
 
+    // IntersectionObserver (정상 스크롤)
     infiniteScrollObserver = new IntersectionObserver(
         (entries) => {
             if (!entries[0]?.isIntersecting || isLoading || !hasMoreData) return;
@@ -785,6 +808,9 @@ function initInfiniteScroll() {
         { root: null, rootMargin: `0px 0px ${INFINITE_SCROLL_ROOT_MARGIN}px 0px`, threshold: 0 }
     );
     infiniteScrollObserver.observe(sentinel);
+
+    // scroll 폴백: 빠른 스크롤 시 observer가 놓칠 수 있어, 스크롤 위치로도 체크
+    window.addEventListener('scroll', _onScrollForInfinite, { passive: true });
 }
 
 // 일별 아이템 생성 (home.js용)
