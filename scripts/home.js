@@ -1,4 +1,6 @@
 // 홈 화면 스크립트
+// build: 20250302-thumb (photos 제외, thumb_url)
+console.log('StyleLog home.js build 20250302-thumb');
 
 // URL 파라미터에서 연도 가져오기
 const urlParams = new URLSearchParams(window.location.search);
