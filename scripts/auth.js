@@ -50,7 +50,8 @@ async function logout() {
         window.location.href = 'landing.html';
     } catch (error) {
         console.error('❌ 로그아웃 오류:', error);
-        alert('로그아웃에 실패했습니다.');
+        if (typeof showAlert === 'function') showAlert('로그아웃에 실패했습니다.');
+        else alert('로그아웃에 실패했습니다.');
     }
 }
 

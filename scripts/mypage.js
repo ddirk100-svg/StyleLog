@@ -2,8 +2,8 @@
 
 async function initPage() {
     await loadUserProfile();
-    await loadStats();
     attachEventListeners();
+    loadStats().catch(() => {}); /* 통계는 비동기 로드 - 화면 먼저 표시 */
 }
 
 async function loadUserProfile() {
@@ -37,13 +37,13 @@ function formatStatCount(n) {
 async function loadStats() {
     const totalEl = document.getElementById('statTotalCount');
     const favEl = document.getElementById('statFavoriteCount');
-    totalEl.textContent = '...';
-    favEl.textContent = '...';
+    if (totalEl) totalEl.textContent = '-';
+    if (favEl) favEl.textContent = '-';
     try {
         const user = await getCurrentUser();
         if (!user?.id) {
-            totalEl.textContent = '0';
-            favEl.textContent = '0';
+            if (totalEl) totalEl.textContent = '0';
+            if (favEl) favEl.textContent = '0';
             return;
         }
 
@@ -92,8 +92,7 @@ async function loadStats() {
 
 function attachEventListeners() {
     document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-        if (confirm('로그아웃 하시겠습니까?')) {
-            await logout();
-        }
+        const ok = await showConfirm('로그아웃 하시겠습니까?');
+        if (ok) await logout();
     });
 }

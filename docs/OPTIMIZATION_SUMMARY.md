@@ -26,7 +26,7 @@
 - **추가**: `{ passive: true }`로 스크롤 성능 개선
 
 ### 2.2 이벤트 위임 (home.js)
-- **변경**: `.day-item`, `.favorite-toggle-btn`, `.item-menu-btn` 개별 리스너 → `.month-cards-container`(일별 리스트 컨테이너) 1개 리스너로 위임
+- **변경**: `.day-item`, `.favorite-toggle-btn`, `.item-menu-btn` 개별 리스너 → `.day-list-container`(일별 리스트 컨테이너) 1개 리스너로 위임
 - **효과**: 항목 N개당 리스너 3N개 → 1개로 축소, 메모리 절감
 
 ### 2.3 DocumentFragment (home.js)

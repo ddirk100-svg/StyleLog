@@ -10,6 +10,9 @@ let selectedPhotos = [];
 let tags = [];
 let isEditMode = false; // 수정 모드 플래그
 let currentLog = null; // 수정할 로그 데이터
+let draggingPhotoIndex = null;
+let touchDragState = null;
+let lastInsertPosition = -1; // 드롭 시 사용할 삽입 위치 (0 = 맨 앞, n = n번째 뒤)
 
 // 페이지 초기화
 async function initPage() {
@@ -28,7 +31,7 @@ async function initPage() {
             await loadLogForEdit(editLogId);
         } catch (error) {
             console.error('❌ 로그 로드 실패:', error);
-            alert('일기를 불러오는데 실패했습니다. 새로 작성하시겠습니까?');
+            await showAlert('일기를 불러오는데 실패했습니다. 새로 작성해 주세요.');
             isEditMode = false;
             await initNewLog();
         }
@@ -129,8 +132,7 @@ async function loadLogForEdit(logId) {
         
     } catch (error) {
         console.error('❌ 로그 로드 오류:', error);
-        alert('로그를 불러오는데 실패했습니다.');
-        window.history.back();
+        return showAlert('로그를 불러오는데 실패했습니다.').then(() => window.history.back());
     }
 }
 
@@ -240,9 +242,9 @@ function updateWeatherDisplay(weather) {
     // 이름
     weatherName.textContent = weather.description || '흐림';
     
-    // 현재 기온
+    // 평균 기온
     if (weather.temp !== null && weather.temp !== undefined) {
-        weatherTemp.textContent = `${Math.round(weather.temp)}°C`;
+        weatherTemp.textContent = `평균 ${Math.round(weather.temp)}°C`;
     } else {
         weatherTemp.textContent = '—';
     }
@@ -251,11 +253,22 @@ function updateWeatherDisplay(weather) {
     if (weather.tempMax !== null && weather.tempMin !== null) {
         tempRange.style.display = 'flex';
         tempRange.innerHTML = `
-            <span class="temp-max">최고 ${Math.round(weather.tempMax)}°C</span>
-            <span class="temp-min">최저 ${Math.round(weather.tempMin)}°C</span>
+            <span class="temp-high">최고 ${Math.round(weather.tempMax)}°</span>
+            <span class="temp-low">최저 ${Math.round(weather.tempMin)}°</span>
         `;
     } else {
         tempRange.style.display = 'none';
+    }
+
+    // 날씨별 카드 배경
+    const card = document.getElementById('writeWeatherCard');
+    if (card) {
+        card.classList.remove('weather-clear', 'weather-sunny', 'weather-cloudy', 'weather-rainy', 'weather-snowy', 'weather-lightning');
+        if (weather.weather && !weather._futureHint && !weather.unavailable) {
+            card.classList.add(`weather-${weather.weather}`);
+        } else {
+            card.classList.add('weather-cloudy');
+        }
     }
     
     // hidden input 설정
@@ -268,9 +281,9 @@ function updateWeatherDisplay(weather) {
 function attachEventListeners() {
     // 취소 버튼
     document.querySelector('.cancel-btn').addEventListener('click', () => {
-        if (confirm('작성을 취소하시겠습니까?')) {
-            window.history.back();
-        }
+        showConfirm('작성을 취소하시겠습니까?').then((ok) => {
+            if (ok) window.history.back();
+        });
     });
     
     // 저장 버튼
@@ -284,6 +297,59 @@ function attachEventListeners() {
     
     // 사진 선택
     document.getElementById('photoInput').addEventListener('change', handlePhotoSelect);
+
+    // 리스트 영역 드래그 오버 (갭 영역 포함) - 삽입선 위치 계산
+    document.getElementById('photoPreviewList').addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (draggingPhotoIndex === null) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (el?.closest('.photo-preview-item')) return; // 아이템 핸들러에서 처리
+        const list = document.getElementById('photoPreviewList');
+        const items = [...list.querySelectorAll('.photo-preview-item')];
+        if (items.length === 0) return;
+        const listRect = list.getBoundingClientRect();
+        const x = e.clientX - listRect.left;
+        let insertPos = 0;
+        for (let i = 0; i < items.length; i++) {
+            const r = items[i].getBoundingClientRect();
+            const left = r.left - listRect.left;
+            const right = r.right - listRect.left;
+            if (x < left) break;
+            if (x <= right) {
+                const mid = left + (right - left) / 2;
+                insertPos = x < mid ? i : i + 1;
+                break;
+            }
+            insertPos = i + 1;
+        }
+        if (insertPos !== draggingPhotoIndex && insertPos !== draggingPhotoIndex + 1) {
+            updateInsertLine(insertPos);
+        } else {
+            updateInsertLine(-1);
+        }
+    });
+    document.getElementById('photoPreviewList').addEventListener('drop', (e) => {
+        if (e.target.closest('.photo-preview-item')) return; // 아이템에서 처리
+        e.preventDefault();
+        e.stopPropagation();
+        updateInsertLine(-1);
+        const fromIndex = draggingPhotoIndex;
+        const insertPos = lastInsertPosition;
+        if (fromIndex === null || insertPos < 0 || insertPos === fromIndex || insertPos === fromIndex + 1) {
+            draggingPhotoIndex = null;
+            return;
+        }
+        const [moved] = selectedPhotos.splice(fromIndex, 1);
+        const insertIndex = fromIndex < insertPos ? insertPos - 1 : insertPos;
+        selectedPhotos.splice(insertIndex, 0, moved);
+        draggingPhotoIndex = null;
+        renderPhotoPreviews();
+    });
+
+    // 포인터 업 시 dragging 클래스 제거 (클릭만 하고 드래그 안 했을 때)
+    document.addEventListener('pointerup', clearPhotoDraggingState);
+    document.addEventListener('pointercancel', clearPhotoDraggingState);
     
     // 태그 입력
     const tagsInput = document.getElementById('tagsInput');
@@ -309,53 +375,375 @@ function attachEventListeners() {
             if (input) input.value = btn.dataset.value;
         });
     });
+
+    // 크롭 모달 초기화
+    initCropModal();
 }
 
-// 사진 선택 처리
+// 사진 선택 처리 (여러 장 선택 → FileList 순서 유지 → 드래그로 순서 변경 가능)
 function handlePhotoSelect(e) {
-    const files = Array.from(e.target.files);
-    
-    files.forEach(file => {
-        if (selectedPhotos.length >= 3) {
-            alert('사진은 최대 3장까지 등록할 수 있습니다.');
-            return;
-        }
-        
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const canAdd = Math.max(0, 3 - selectedPhotos.length);
+    if (canAdd === 0) {
+        showAlert('사진은 최대 3장까지 등록할 수 있습니다.');
+        e.target.value = '';
+        return;
+    }
+    const filesToAdd = files.slice(0, canAdd);
+    if (files.length > canAdd) {
+        showAlert(`사진은 최대 3장까지 등록할 수 있습니다. (${files.length - canAdd}장 제외)`);
+    }
+
+    const results = new Array(filesToAdd.length);
+    let loadedCount = 0;
+
+    filesToAdd.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (event) => {
-            selectedPhotos.push({
-                file: file,
-                dataUrl: event.target.result
-            });
-            renderPhotoPreviews();
+            results[index] = { file, dataUrl: event.target.result };
+            loadedCount++;
+            if (loadedCount === filesToAdd.length) {
+                selectedPhotos.push(...results);
+                renderPhotoPreviews();
+            }
         };
         reader.readAsDataURL(file);
     });
-    
-    // input 초기화
+
     e.target.value = '';
 }
 
-// 사진 미리보기 렌더링
+// 사진 미리보기 렌더링 (드래그로 순서 변경 가능)
 function renderPhotoPreviews() {
     const previewList = document.getElementById('photoPreviewList');
+    const reorderHint = document.getElementById('photoReorderHint');
     previewList.innerHTML = '';
-    
+
+    if (selectedPhotos.length > 1 && reorderHint) {
+        reorderHint.style.display = 'block';
+    } else if (reorderHint) {
+        reorderHint.style.display = 'none';
+    }
+
     selectedPhotos.forEach((photo, index) => {
         const item = document.createElement('div');
         item.className = 'photo-preview-item';
+        item.draggable = true;
+        item.dataset.index = String(index);
         item.innerHTML = `
-            <img src="${photo.dataUrl}" alt="사진 ${index + 1}">
-            <button type="button" class="photo-remove-btn" onclick="removePhoto(${index})">×</button>
+            <span class="photo-preview-num" aria-label="${index + 1}번째 사진">${index + 1}</span>
+            <img src="${photo.dataUrl}" alt="사진 ${index + 1}" draggable="false">
+            <button type="button" class="photo-remove-btn" onclick="event.stopPropagation(); removePhoto(${index})">×</button>
+            <button type="button" class="photo-edit-btn" onclick="event.stopPropagation(); openCropModal(${index})" title="자르기">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>
         `;
+        item.addEventListener('pointerdown', handlePhotoPointerDown);
+        item.addEventListener('dragstart', handlePhotoDragStart);
+        item.addEventListener('dragenter', handlePhotoDragEnter);
+        item.addEventListener('dragover', handlePhotoDragOver);
+        item.addEventListener('dragleave', handlePhotoDragLeave);
+        item.addEventListener('drop', handlePhotoDrop);
+        item.addEventListener('dragend', handlePhotoDragEnd);
+        item.addEventListener('touchstart', handlePhotoTouchStart, { passive: true });
+        item.addEventListener('touchmove', handlePhotoTouchMove, { passive: false });
+        item.addEventListener('touchend', handlePhotoTouchEnd);
+        item.addEventListener('touchcancel', handlePhotoTouchEnd);
         previewList.appendChild(item);
     });
+}
+
+// 삽입선 표시/숨김 (insertPos: 0 ~ n, n=맨 뒤)
+function updateInsertLine(insertPos) {
+    let line = document.getElementById('photoInsertLine');
+    if (!line) {
+        line = document.createElement('div');
+        line.id = 'photoInsertLine';
+        line.className = 'photo-insert-line';
+        document.getElementById('photoPreviewList').appendChild(line);
+    }
+    if (insertPos < 0) {
+        line.classList.remove('visible');
+        lastInsertPosition = -1;
+        return;
+    }
+    lastInsertPosition = insertPos;
+    const list = document.getElementById('photoPreviewList');
+    const items = [...list.querySelectorAll('.photo-preview-item')];
+    const listRect = list.getBoundingClientRect();
+    const gap = 8;
+    let left;
+    if (items.length === 0) {
+        left = 0;
+    } else if (insertPos === 0) {
+        left = items[0].getBoundingClientRect().left - listRect.left - 2;
+    } else if (insertPos >= items.length) {
+        const last = items[items.length - 1].getBoundingClientRect();
+        left = last.right - listRect.left + gap / 2 - 2;
+    } else {
+        const prev = items[insertPos - 1].getBoundingClientRect();
+        const next = items[insertPos].getBoundingClientRect();
+        left = (prev.right + next.left) / 2 - listRect.left - 2;
+    }
+    line.style.left = `${Math.max(0, left)}px`;
+    line.classList.add('visible');
+}
+
+// 아이템 위 좌표 → 삽입 위치 (0=맨앞, n=맨뒤)
+function getInsertPositionFromItem(item, clientX) {
+    const idx = parseInt(item.dataset.index, 10);
+    const rect = item.getBoundingClientRect();
+    const mid = rect.left + rect.width / 2;
+    return clientX < mid ? idx : idx + 1;
+}
+
+function clearPhotoDraggingState() {
+    document.querySelectorAll('.photo-preview-item.photo-preview-dragging').forEach(el => el.classList.remove('photo-preview-dragging'));
+}
+
+// 포인터 다운 - 즉시 시각적 피드백 (클릭/터치 직후)
+function handlePhotoPointerDown(e) {
+    if (e.target.closest('.photo-remove-btn, .photo-edit-btn')) return;
+    e.currentTarget.classList.add('photo-preview-dragging');
+}
+
+// 드래그 시작
+function handlePhotoDragStart(e) {
+    if (e.target.closest('.photo-remove-btn, .photo-edit-btn')) {
+        e.preventDefault();
+        return;
+    }
+    const item = e.currentTarget;
+    const index = parseInt(item.dataset.index, 10);
+    draggingPhotoIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    e.dataTransfer.setData('application/x-photo-index', String(index));
+    try { e.dataTransfer.setDragImage(item, 50, 50); } catch (_) {}
+    item.classList.add('photo-preview-dragging');
+}
+
+// 드래그 진입
+function handlePhotoDragEnter(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+// 드래그 오버 - 삽입선 위치 갱신
+function handlePhotoDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const item = e.currentTarget;
+    if (item.classList.contains('photo-preview-dragging')) return;
+    const pos = getInsertPositionFromItem(item, e.clientX);
+    const fromIndex = draggingPhotoIndex;
+    if (pos !== fromIndex && pos !== fromIndex + 1) {
+        updateInsertLine(pos);
+    } else {
+        updateInsertLine(-1);
+    }
+}
+
+// 드래그 영역 이탈 - 리스트 밖으로 나가면 삽입선 제거
+function handlePhotoDragLeave(e) {
+    const item = e.currentTarget;
+    const related = e.relatedTarget;
+    if (!related || !related.closest('.photo-preview-list')) {
+        updateInsertLine(-1);
+    }
+}
+
+// 드롭 - 삽입선 위치에 맞게 순서 변경
+function handlePhotoDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    updateInsertLine(-1);
+
+    const fromIndex = draggingPhotoIndex !== null
+        ? draggingPhotoIndex
+        : parseInt(e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-photo-index'), 10);
+    const insertPos = lastInsertPosition;
+
+    if (insertPos < 0 || insertPos === fromIndex || insertPos === fromIndex + 1 || isNaN(fromIndex)) {
+        draggingPhotoIndex = null;
+        return;
+    }
+
+    const [moved] = selectedPhotos.splice(fromIndex, 1);
+    const insertIndex = fromIndex < insertPos ? insertPos - 1 : insertPos;
+    selectedPhotos.splice(insertIndex, 0, moved);
+    draggingPhotoIndex = null;
+    renderPhotoPreviews();
+}
+
+// 드래그 끝
+function handlePhotoDragEnd(e) {
+    e.currentTarget.classList.remove('photo-preview-dragging');
+    updateInsertLine(-1);
+    draggingPhotoIndex = null;
+}
+
+// 터치: 드래그 시작 (HTML5 DnD는 터치 미지원) - 터치 즉시 시각적 표시
+function handlePhotoTouchStart(e) {
+    if (e.target.closest('.photo-remove-btn, .photo-edit-btn')) return;
+    const item = e.currentTarget;
+    const idx = parseInt(item.dataset.index, 10);
+    item.classList.add('photo-preview-dragging');
+    touchDragState = { fromIndex: idx, itemEl: item, startY: e.touches[0].clientY, isDragging: false, lastInsertPosition: -1 };
+}
+
+// 터치: 이동 중 - 삽입선 표시
+function handlePhotoTouchMove(e) {
+    if (!touchDragState) return;
+    const dy = Math.abs(e.touches[0].clientY - touchDragState.startY);
+    if (!touchDragState.isDragging && dy > 12) {
+        touchDragState.isDragging = true;
+    }
+    if (!touchDragState.isDragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetItem = el?.closest('.photo-preview-item');
+    if (targetItem) {
+        const insertPos = getInsertPositionFromItem(targetItem, touch.clientX);
+        if (insertPos !== touchDragState.fromIndex && insertPos !== touchDragState.fromIndex + 1) {
+            updateInsertLine(insertPos);
+            touchDragState.lastInsertPosition = insertPos;
+        } else {
+            updateInsertLine(-1);
+            touchDragState.lastInsertPosition = -1;
+        }
+    } else {
+        updateInsertLine(-1);
+        touchDragState.lastInsertPosition = -1;
+    }
+}
+
+// 터치: 손가락 뗄 때 순서 변경
+function handlePhotoTouchEnd(e) {
+    if (!touchDragState) return;
+    clearPhotoDraggingState();
+    if (touchDragState.isDragging && touchDragState.lastInsertPosition >= 0) {
+        const insertPos = touchDragState.lastInsertPosition;
+        const fromIndex = touchDragState.fromIndex;
+        updateInsertLine(-1);
+        if (insertPos !== fromIndex && insertPos !== fromIndex + 1) {
+            const [moved] = selectedPhotos.splice(fromIndex, 1);
+            const insertIndex = fromIndex < insertPos ? insertPos - 1 : insertPos;
+            selectedPhotos.splice(insertIndex, 0, moved);
+            renderPhotoPreviews();
+        }
+    } else {
+        updateInsertLine(-1);
+    }
+    touchDragState = null;
 }
 
 // 사진 제거
 function removePhoto(index) {
     selectedPhotos.splice(index, 1);
     renderPhotoPreviews();
+}
+
+// 크롭 편집 모달
+let cropModalCropper = null;
+let cropModalPhotoIndex = null;
+
+function openCropModal(index) {
+    const photo = selectedPhotos[index];
+    if (!photo?.dataUrl) return;
+    if (typeof Cropper === 'undefined') {
+        showAlert('편집 기능을 불러올 수 없습니다. 페이지를 새로고침해 주세요.');
+        return;
+    }
+
+    cropModalPhotoIndex = index;
+    const modal = document.getElementById('cropModal');
+    const img = document.getElementById('cropImage');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    img.onload = () => {
+        if (cropModalCropper) {
+            cropModalCropper.destroy();
+            cropModalCropper = null;
+        }
+        cropModalCropper = new Cropper(img, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1
+        });
+        document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.ratio === 'free');
+        });
+    };
+    img.src = photo.dataUrl;
+}
+
+function closeCropModal() {
+    const modal = document.getElementById('cropModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    if (cropModalCropper) {
+        cropModalCropper.destroy();
+        cropModalCropper = null;
+    }
+    cropModalPhotoIndex = null;
+}
+
+function applyCrop() {
+    if (!cropModalCropper || cropModalPhotoIndex == null) {
+        closeCropModal();
+        return;
+    }
+    const canvas = cropModalCropper.getCroppedCanvas({ maxWidth: 1920, maxHeight: 1920, imageSmoothingQuality: 'high' });
+    if (!canvas) {
+        closeCropModal();
+        return;
+    }
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    const photo = selectedPhotos[cropModalPhotoIndex];
+    if (photo) {
+        selectedPhotos[cropModalPhotoIndex] = {
+            ...photo,
+            dataUrl
+        };
+        if (photo.file) {
+            selectedPhotos[cropModalPhotoIndex].file = photo.file;
+        }
+        renderPhotoPreviews();
+    }
+    closeCropModal();
+}
+
+function initCropModal() {
+    const modal = document.getElementById('cropModal');
+    const closeBtn = document.getElementById('cropModalClose');
+    const cancelBtn = document.getElementById('cropCancelBtn');
+    const applyBtn = document.getElementById('cropApplyBtn');
+    const overlay = modal?.querySelector('.crop-modal-overlay');
+
+    closeBtn?.addEventListener('click', closeCropModal);
+    cancelBtn?.addEventListener('click', closeCropModal);
+    overlay?.addEventListener('click', closeCropModal);
+    applyBtn?.addEventListener('click', applyCrop);
+
+    const ratioMap = { '1': 1, '4/3': 4/3, '3/4': 3/4, '16/9': 16/9, '9/16': 9/16 };
+    document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const ratio = btn.dataset.ratio;
+            document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (!cropModalCropper) return;
+            cropModalCropper.setAspectRatio(ratio === 'free' ? NaN : ratioMap[ratio]);
+        });
+    });
 }
 
 // 리스트용 썸네일 생성 (첫 번째 사진 리사이즈, 최대 1200px, 화질 85%)
@@ -432,8 +820,7 @@ function validateForm() {
     const dateInput = document.getElementById('dateInput');
     const saveBtn = document.querySelector('.save-btn');
     
-    // 날짜는 필수
-    if (dateInput.value) {
+    if (dateInput?.value) {
         saveBtn.disabled = false;
     } else {
         saveBtn.disabled = true;
@@ -450,7 +837,7 @@ async function handleSubmit() {
     const saveBtn = document.querySelector('.save-btn');
     
     if (!dateInput.value) {
-        alert('날짜를 선택해주세요.');
+        showAlert('날짜를 선택해주세요.');
         return;
     }
     
@@ -496,12 +883,12 @@ async function handleSubmit() {
             // 수정 모드
             result = await StyleLogAPI.update(currentLog.id, logData);
             console.log('✅ 수정 성공:', result);
-            alert('수정되었습니다!');
+            showAlert('수정되었습니다!');
         } else {
             // 새 로그 작성
             result = await StyleLogAPI.create(logData);
             console.log('✅ 저장 성공:', result);
-            alert('저장되었습니다!');
+            showAlert('저장되었습니다!');
         }
         
         // 상세 페이지로 이동 (약간의 지연을 주어 DB 반영 시간 확보)
@@ -518,7 +905,7 @@ async function handleSubmit() {
         
     } catch (error) {
         console.error('❌ 저장 오류:', error);
-        alert(`${isEditMode ? '수정' : '저장'}에 실패했습니다: ${error.message}`);
+        showAlert(`${isEditMode ? '수정' : '저장'}에 실패했습니다: ${error.message}`);
         
         // 버튼 복구
         saveBtn.disabled = false;

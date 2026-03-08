@@ -15,12 +15,16 @@
     <title>스타일로그 - 작성</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/utils.css">
     <link rel="stylesheet" href="styles/write.css">
+    <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 </head>
 <body class="has-bottom-nav">
     <!-- 작성 화면 -->
     <div class="container" id="writeView">
+
         <!-- 헤더 -->
         <header class="write-header">
             <button class="icon-btn cancel-btn">
@@ -32,7 +36,7 @@
             <button class="text-btn save-btn" disabled>저장</button>
         </header>
 
-        <!-- 폼 -->
+        <!-- 본문 폼 -->
         <form class="write-form" id="writeForm">
             <!-- 날짜 선택 -->
             <div class="form-section">
@@ -44,13 +48,11 @@
                 <div class="weather-display" id="weatherDisplay">
                     <div class="weather-info-box">
                         <div class="weather-icon-container" id="weatherIconContainer">
-                            <svg width="32" height="32" viewBox="0 0 48 48" fill="none" stroke="#999">
-                                <path d="M27 18h-1.26A12 12 0 1 0 13.5 30H27a7.5 7.5 0 0 0 0-15z"></path>
-                            </svg>
+                            <svg class="weather-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
                         </div>
                         <div class="weather-details">
                             <div class="weather-name" id="weatherName">흐림</div>
-                            <div class="weather-temp" id="weatherTemp">--°C</div>
+                            <div class="weather-temp" id="weatherTemp" aria-label="평균 기온">—</div>
                         </div>
                     </div>
                     <div class="temp-range" id="tempRange" style="display: none;">
@@ -87,6 +89,7 @@
                         </svg>
                         <span>사진 추가</span>
                     </button>
+                    <p class="form-hint photo-reorder-hint" id="photoReorderHint" style="display: none;">드래그하여 순서 변경</p>
                     <div class="photo-preview-list" id="photoPreviewList"></div>
                 </div>
             </div>
@@ -146,7 +149,36 @@
         </a>
     </nav>
 
+    <!-- 크롭 편집 모달 -->
+    <div class="crop-modal" id="cropModal">
+        <div class="crop-modal-overlay"></div>
+        <div class="crop-modal-content">
+            <div class="crop-modal-header">
+                <h3>사진 자르기</h3>
+                <button type="button" class="crop-modal-close" id="cropModalClose" aria-label="닫기">×</button>
+            </div>
+            <div class="crop-modal-body">
+                <div class="crop-container">
+                    <img id="cropImage" src="" alt="크롭할 이미지">
+                </div>
+                <div class="crop-ratio-btns">
+                    <button type="button" class="crop-ratio-btn active" data-ratio="free">free</button>
+                    <button type="button" class="crop-ratio-btn" data-ratio="1">1:1</button>
+                    <button type="button" class="crop-ratio-btn" data-ratio="4/3">4:3</button>
+                    <button type="button" class="crop-ratio-btn" data-ratio="3/4">3:4</button>
+                    <button type="button" class="crop-ratio-btn" data-ratio="16/9">16:9</button>
+                    <button type="button" class="crop-ratio-btn" data-ratio="9/16">9:16</button>
+                </div>
+            </div>
+            <div class="crop-modal-footer">
+                <button type="button" class="crop-cancel-btn" id="cropCancelBtn">취소</button>
+                <button type="button" class="crop-apply-btn" id="cropApplyBtn">적용</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
     <script src="scripts/config.js" defer></script>
     <script src="scripts/api.js" defer></script>
     <script src="scripts/auth.js" defer></script>

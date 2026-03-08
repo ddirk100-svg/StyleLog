@@ -1,0 +1,163 @@
+/* 스타일로그 커스텀 다이얼로그 (alert/confirm 대체) */
+@import url('variables.css');
+
+.stylelog-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--color-overlay);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: var(--spacing-xl);
+    animation: stylelog-dialog-fadeIn 0.22s var(--transition-ease);
+}
+
+@keyframes stylelog-dialog-fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.stylelog-dialog {
+    width: 100%;
+    max-width: 340px;
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 64px var(--color-shadow-xl), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    animation: stylelog-dialog-slideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stylelog-dialog-slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 상단 포인트 라인 (브랜드 악센트) */
+.stylelog-dialog::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    border-radius: 0 0 3px 3px;
+}
+
+.stylelog-dialog-body {
+    padding: var(--spacing-3xl) var(--spacing-2xl);
+    text-align: center;
+}
+
+.stylelog-dialog-message {
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.stylelog-dialog-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: 0 var(--spacing-2xl) var(--spacing-2xl);
+}
+
+.stylelog-dialog-actions.single {
+    justify-content: center;
+}
+
+.stylelog-dialog-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.stylelog-dialog-btn:active {
+    transform: scale(0.98);
+}
+
+.stylelog-dialog-btn-cancel {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+.stylelog-dialog-btn-cancel:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-text-primary);
+}
+
+.stylelog-dialog-btn-confirm {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+.stylelog-dialog-btn-confirm:hover {
+    background: var(--color-primary-dark);
+    box-shadow: 0 4px 16px var(--color-primary-shadow);
+}
+
+.stylelog-dialog-btn-danger {
+    background: var(--color-favorite);
+    color: var(--color-text-inverse);
+}
+
+.stylelog-dialog-btn-danger:hover {
+    background: #e85555;
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+}
+
+/* 직접 입력 다이얼로그 (기온 등) */
+.stylelog-dialog-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+    margin-top: 8px;
+}
+.stylelog-dialog-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.stylelog-dialog-input-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    min-width: 56px;
+}
+.stylelog-dialog-input {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: var(--font-size-md);
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+.stylelog-dialog-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+.stylelog-dialog-input-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    margin-top: 4px;
+}

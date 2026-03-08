@@ -30,7 +30,7 @@ stylelog/
 │   ├── home.css
 │   ├── detail.css
 │   ├── write.css
-│   ├── month-detail.css
+│   ├── day-list.css
 │   ├── landing.css
 │   ├── auth.css
 │   ├── bottom-nav.css

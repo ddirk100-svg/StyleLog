@@ -123,6 +123,30 @@ body {
     transform: scale(0.95);
 }
 
+/* 인스타그램 스타일 좋아요 탭 애니메이션 */
+.favorite-toggle-btn-detail.heart-pop {
+    animation: heartPopDetail 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.favorite-toggle-btn-detail.heart-pop svg {
+    transform-origin: center;
+    animation: heartIconPopDetail 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heartPopDetail {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.2); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+@keyframes heartIconPopDetail {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.3); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+
 /* 사진 없는 경우 */
 .container.no-photo .detail-header {
     position: sticky;

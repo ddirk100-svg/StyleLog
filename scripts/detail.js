@@ -9,8 +9,7 @@ let currentLog = null;
 // 페이지 초기화
 async function initPage() {
     if (!idParam && !dateParam) {
-        alert('로그 정보가 없습니다.');
-        window.history.back();
+        showAlert('로그 정보가 없습니다.').then(() => window.history.back());
         return;
     }
     
@@ -27,11 +26,10 @@ async function initPage() {
         if (!currentLog) {
             // 데이터 없으면 작성 화면으로
             const targetDate = dateParam || new Date().toISOString().split('T')[0];
-            if (confirm('이 날짜에 기록이 없습니다. 작성하시겠습니까?')) {
-                window.location.href = `write.html?date=${targetDate}`;
-            } else {
-                window.history.back();
-            }
+            showConfirm('이 날짜에 기록이 없습니다. 작성하시겠습니까?', { confirmText: '작성하기' }).then((ok) => {
+                if (ok) window.location.href = `write.html?date=${targetDate}`;
+                else window.history.back();
+            });
             return;
         }
         
@@ -75,8 +73,7 @@ async function initPage() {
         
     } catch (error) {
         console.error('데이터 로드 오류:', error);
-        alert('데이터를 불러오는데 실패했습니다.');
-        window.history.back();
+        showAlert('데이터를 불러오는데 실패했습니다.').then(() => window.history.back());
     }
 }
 
@@ -109,6 +106,8 @@ function renderLogDetail(log) {
             // 사진 여러 개 - 스와이프 갤러리
             photoSection.classList.add('photo-gallery');
             photoSection.innerHTML = `
+                <button type="button" class="photo-nav photo-nav-prev" aria-label="이전">‹</button>
+                <button type="button" class="photo-nav photo-nav-next" aria-label="다음">›</button>
                 <div class="photo-slider">
                     ${log.photos.map((photo, index) => `
                         <div class="photo-slide">
@@ -213,9 +212,12 @@ function renderLogDetail(log) {
 
 // 사진 스와이프 초기화
 function initPhotoSwipe() {
-    const slider = document.querySelector('.photo-slider');
-    const indicators = document.querySelectorAll('.indicator');
-    
+    const gallery = document.querySelector('.photo-gallery');
+    const slider = gallery?.querySelector('.photo-slider');
+    const indicators = gallery ? gallery.querySelectorAll('.indicator') : [];
+    const prevBtn = gallery?.querySelector('.photo-nav-prev');
+    const nextBtn = gallery?.querySelector('.photo-nav-next');
+
     if (!slider || indicators.length === 0) {
         console.log('⚠️ 스와이프 초기화 실패: slider 또는 indicators 없음');
         return;
@@ -307,23 +309,36 @@ function initPhotoSwipe() {
         }
     });
     
-    // 인디케이터 클릭
     indicators.forEach((indicator, index) => {
         indicator.addEventListener('click', () => {
             currentIndex = index;
             updatePhotoSlider();
         });
     });
-    
+
+    prevBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentIndex > 0) {
+            currentIndex--;
+            slider.style.transition = 'transform 0.3s ease-out';
+            updatePhotoSlider();
+        }
+    });
+    nextBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentIndex < indicators.length - 1) {
+            currentIndex++;
+            slider.style.transition = 'transform 0.3s ease-out';
+            updatePhotoSlider();
+        }
+    });
+
     function updatePhotoSlider() {
         const offset = -currentIndex * slider.offsetWidth;
         slider.style.transform = `translateX(${offset}px)`;
-        
-        indicators.forEach((ind, idx) => {
-            ind.classList.toggle('active', idx === currentIndex);
-        });
-        
-        console.log('📸 사진 전환:', currentIndex + 1, '/', indicators.length);
+        indicators.forEach((ind, idx) => ind.classList.toggle('active', idx === currentIndex));
+        prevBtn?.classList.toggle('hidden', currentIndex === 0);
+        nextBtn?.classList.toggle('hidden', currentIndex === indicators.length - 1);
     }
     
     // 초기 상태 설정
@@ -345,11 +360,6 @@ function updateDateDisplay(dateStr) {
         dateLabel.textContent = `${year}.${month}.${day} ${dayName}`;
     }
 }
-
-// 뒤로가기 버튼
-document.querySelector('.back-btn')?.addEventListener('click', () => {
-    window.history.back();
-});
 
 // 메뉴 버튼
 document.querySelector('.menu-btn')?.addEventListener('click', (e) => {
@@ -375,12 +385,12 @@ document.querySelector('.edit-btn')?.addEventListener('click', () => {
 document.querySelector('.delete-btn')?.addEventListener('click', async () => {
     if (!currentLog) return;
     
-    if (confirm('이 기록을 삭제하시겠습니까?')) {
+    const ok = await showConfirm('이 기록을 삭제하시겠습니까?', { confirmText: '삭제', danger: true });
+    if (ok) {
         try {
             utils.showLoading();
             await StyleLogAPI.delete(currentLog.id);
-            alert('삭제되었습니다.');
-            window.history.back();
+            showAlert('삭제되었습니다.').then(() => window.history.back());
         } catch (error) {
             console.error('삭제 오류:', error);
             utils.showError('삭제에 실패했습니다.');
@@ -462,7 +472,7 @@ async function updateWeatherDisplay(weather) {
         
     } catch (error) {
         console.error('날씨 업데이트 오류:', error);
-        alert('날씨 정보 업데이트에 실패했습니다.');
+        showAlert('날씨 정보 업데이트에 실패했습니다.');
     }
 }
 
@@ -483,10 +493,17 @@ function initScrollEffect() {
 
 // 이벤트 리스너 등록
 function attachEventListeners() {
-    // 뒤로가기 버튼
+    // 뒤로가기 버튼 (home에서 온 경우 home.html로 명시적 이동)
     const backBtn = document.querySelector('.back-btn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
+            if (sessionStorage.getItem('detailFrom') === 'home') {
+                sessionStorage.removeItem('detailFrom');
+                const scrollY = sessionStorage.getItem('homeScrollY');
+                const url = scrollY != null ? `home.html#restoreScroll` : 'home.html';
+                window.location.href = url;
+                return;
+            }
             window.history.back();
         });
     }
@@ -522,7 +539,7 @@ function attachEventListeners() {
             if (currentLog && currentLog.id) {
                 window.location.href = `write.html?id=${currentLog.id}&date=${dateParam}`;
             } else {
-                alert('로그 정보를 찾을 수 없습니다.');
+                showAlert('로그 정보를 찾을 수 없습니다.');
             }
         });
     }
@@ -535,16 +552,16 @@ function attachEventListeners() {
             
             // 약간의 지연 후 삭제 확인
             setTimeout(async () => {
-                if (confirm('정말 삭제하시겠습니까?')) {
+                const ok = await showConfirm('정말 삭제하시겠습니까?', { confirmText: '삭제', danger: true });
+                if (ok) {
                     try {
                         console.log('🗑️ 삭제 시작:', currentLog.id);
                         await StyleLogAPI.delete(currentLog.id);
                         console.log('✅ 삭제 성공');
-                        alert('삭제되었습니다.');
-                        window.history.back();
+                        showAlert('삭제되었습니다.').then(() => window.history.back());
                     } catch (error) {
                         console.error('❌ 삭제 오류:', error);
-                        alert('삭제에 실패했습니다.');
+                        showAlert('삭제에 실패했습니다.');
                     }
                 }
             }, 300);
@@ -581,45 +598,48 @@ document.querySelectorAll('.photo-section img').forEach(img => {
 // 즐겨찾기 토글 (detail 페이지용)
 async function toggleFavoriteDetail() {
     if (!currentLog || !currentLog.id) {
-        alert('로그 정보를 찾을 수 없습니다.');
+        showAlert('로그 정보를 찾을 수 없습니다.');
         return;
     }
     
-    try {
-        const newState = !currentLog.is_favorite;
-        
-        console.log('⭐ 즐겨찾기 업데이트:', { logId: currentLog.id, newState });
-        
-        // DB 업데이트
-        await StyleLogAPI.update(currentLog.id, { is_favorite: newState });
-        
-        // currentLog 업데이트
-        currentLog.is_favorite = newState;
-        
-        // 버튼 UI 업데이트
-        const button = document.getElementById('favoriteToggle');
-        if (button) {
-            button.setAttribute('title', newState ? '즐겨찾기 해제' : '즐겨찾기 추가');
-            
-            if (newState) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
-            }
-            
-            // SVG fill/stroke 색상 변경
-            const svg = button.querySelector('svg');
-            if (svg) {
-                svg.setAttribute('fill', newState ? '#ff6b6b' : 'none');
-                svg.setAttribute('stroke', newState ? '#ff6b6b' : '#555');
-            }
+    const button = document.getElementById('favoriteToggle');
+    const newState = !currentLog.is_favorite;
+    const prevState = currentLog.is_favorite;
+    
+    /* 인스타그램 스타일: 탭 즉시 애니메이션 + 낙관적 UI 업데이트 */
+    if (button) {
+        button.classList.add('heart-pop');
+        button.addEventListener('animationend', function removePop() {
+            button.classList.remove('heart-pop');
+            button.removeEventListener('animationend', removePop);
+        }, { once: true });
+        button.setAttribute('title', newState ? '즐겨찾기 해제' : '즐겨찾기 추가');
+        button.classList.toggle('active', newState);
+        const svg = button.querySelector('svg');
+        if (svg) {
+            svg.setAttribute('fill', newState ? '#ff6b6b' : 'none');
+            svg.setAttribute('stroke', newState ? '#ff6b6b' : '#555');
         }
-        
+    }
+    
+    try {
+        console.log('⭐ 즐겨찾기 업데이트:', { logId: currentLog.id, newState });
+        await StyleLogAPI.update(currentLog.id, { is_favorite: newState });
+        currentLog.is_favorite = newState;
         console.log('✅ 즐겨찾기 토글 완료');
-        
     } catch (error) {
         console.error('❌ 즐겨찾기 업데이트 오류:', error);
-        alert('즐겨찾기 업데이트에 실패했습니다.');
+        currentLog.is_favorite = prevState;
+        if (button) {
+            button.setAttribute('title', prevState ? '즐겨찾기 해제' : '즐겨찾기 추가');
+            button.classList.toggle('active', prevState);
+            const svg = button.querySelector('svg');
+            if (svg) {
+                svg.setAttribute('fill', prevState ? '#ff6b6b' : 'none');
+                svg.setAttribute('stroke', prevState ? '#ff6b6b' : '#555');
+            }
+        }
+        showAlert('즐겨찾기 업데이트에 실패했습니다.');
     }
 }
 

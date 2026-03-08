@@ -44,8 +44,7 @@ scripts/
 ├── config.js      # 설정
 ├── home.js        # 홈 페이지
 ├── calendar.js    # 캘린더 페이지
-├── detail.js      # 상세 페이지
-├── month-detail.js # 월별 상세 페이지
+├── detail.js       # 상세(일별 로그) 페이지
 ├── write.js       # 작성 페이지
 └── favorite.js     # 즐겨찾기 페이지
 ```

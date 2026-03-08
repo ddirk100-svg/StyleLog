@@ -23,6 +23,6 @@ function attachEventListeners() {
     form?.addEventListener('submit', (e) => {
         e.preventDefault();
         // 추후: 문의 등록 API 연동
-        alert('문의 작성 기능은 추후 연동됩니다.');
+        showAlert('문의 작성 기능은 추후 연동됩니다.');
     });
 }

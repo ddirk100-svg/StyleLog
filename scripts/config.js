@@ -270,7 +270,8 @@ const utils = {
     
     // 에러 메시지 표시
     showError(message) {
-        alert(`오류: ${message}`);
+        console.error('오류:', message);
+        if (typeof showAlert === 'function') showAlert(`오류: ${message}`);
     }
 };
 

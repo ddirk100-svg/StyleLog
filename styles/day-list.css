@@ -7,7 +7,7 @@
     max-width: var(--container-max-width);
     min-height: calc(100vh + 200px);
     margin: 0 auto;
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-bg-page);
     overflow: visible !important;
     display: flex;
     flex-direction: column;
@@ -29,7 +29,7 @@
 }
 
 /* favoriteView의 컨텐츠 영역 */
-#favoriteView.container.day-view-active .month-cards-container.day-list-view {
+#favoriteView.container.day-view-active .day-list-container.day-list-view {
     overflow: visible !important;
     display: flex;
     flex-direction: column;
@@ -101,7 +101,7 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
         position: sticky;
     }
     
-    #favoriteView.container.day-view-active .month-cards-container.day-list-view {
+    #favoriteView.container.day-view-active .day-list-container.day-list-view {
         padding-top: 0;
         padding-bottom: 0;
     }
@@ -122,7 +122,7 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
     }
 }
 
-/* month-detail용 container 오버라이드 */
+/* 상세 페이지용 container 오버라이드 */
 #monthDetailView.container {
     overflow: visible;
     max-width: var(--container-max-width);
@@ -223,6 +223,7 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
     border-radius: 16px;
     padding: 16px;
     transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent; /* favorite/item-menu 탭 시 day-item 반짝임 방지 */
 }
 
 .day-item:hover {
@@ -275,6 +276,7 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
     overflow: hidden;
     min-height: 200px;
     background-color: #e0e0e0;
+    -webkit-tap-highlight-color: transparent; /* 버튼만 눌림 표시 */
 }
 
 .day-content.photo img {
@@ -292,6 +294,7 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
     background-color: #fff;
     border-radius: 12px;
     position: relative;
+    -webkit-tap-highlight-color: transparent; /* 버튼만 눌림 표시 */
 }
 
 .quote-mark {
@@ -436,5 +439,3 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
         min-height: 180px;
     }
 }
-
-

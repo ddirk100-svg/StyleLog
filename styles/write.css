@@ -149,59 +149,6 @@ body {
     color: white;
 }
 
-.form-textarea {
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-md);
-    color: var(--color-text-primary);
-    line-height: 1.6;
-    resize: vertical;
-    font-family: inherit;
-    transition: border-color var(--transition-fast);
-}
-
-.form-textarea:focus {
-    outline: none;
-    border-color: var(--color-border-focus);
-}
-
-.form-hint {
-    margin-top: var(--spacing-sm);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
-}
-
-.form-input[readonly],
-input.form-input[readonly] {
-    background: var(--color-bg-secondary);
-    color: var(--color-text-secondary);
-}
-
-/* 풀폭 주요 버튼 (폼 제출 등) */
-.btn-primary {
-    width: 100%;
-    padding: 14px var(--spacing-xl);
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-    background: var(--color-accent);
-    color: var(--color-text-inverse);
-    cursor: pointer;
-    transition: opacity var(--transition-fast);
-}
-
-.btn-primary:hover:not(:disabled) {
-    opacity: 0.9;
-}
-
-.btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 /* 날씨 표시 */
 .weather-display {
     background-color: var(--color-bg-secondary);
@@ -258,21 +205,67 @@ input.form-input[readonly] {
     line-height: 1.5;
 }
 
-.change-weather-btn {
-    background-color: #fff;
+.form-textarea {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
     border: 1px solid var(--color-border-light);
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition: all 0.2s;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-md);
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color var(--transition-fast);
 }
 
-.change-weather-btn:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+}
+
+.form-hint {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.form-input[readonly],
+input.form-input[readonly] {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+/* 풀폭 주요 버튼 (폼 제출 등) */
+.btn-primary {
+    width: 100%;
+    padding: 14px var(--spacing-xl);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 날씨 future 힌트 (7일 이후) */
+.weather-future-hint {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.5;
 }
 
 /* 사진 업로드 */
@@ -316,6 +309,7 @@ input.form-input[readonly] {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    position: relative;
 }
 
 .photo-preview-item {
@@ -324,12 +318,35 @@ input.form-input[readonly] {
     height: 100px;
     border-radius: 8px;
     overflow: hidden;
+    border: 2px solid transparent;
+    transition: opacity 0.05s, transform 0.05s, box-shadow 0.05s, border-color 0.05s;
+}
+
+.photo-preview-num {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 2;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .photo-preview-item img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .photo-remove-btn {
@@ -352,6 +369,233 @@ input.form-input[readonly] {
 
 .photo-remove-btn:hover {
     background-color: rgba(0, 0, 0, 0.8);
+}
+
+.photo-edit-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.photo-edit-btn:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.photo-reorder-hint {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+/* 드래그 중인 아이템 - "잡고 있다" 표시 */
+.photo-preview-item.photo-preview-dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    transform: scale(0.96);
+    z-index: 5;
+}
+.photo-preview-item.photo-preview-dragging::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(37, 99, 235, 0.08);
+    pointer-events: none;
+}
+
+/* 드래그 시 사진 사이 삽입 위치 표시선 */
+.photo-insert-line {
+    display: none;
+    position: absolute;
+    width: 4px;
+    height: 100px;
+    background: var(--color-primary);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 10;
+    animation: photoInsertPulse 0.6s ease-in-out infinite alternate;
+}
+.photo-insert-line.visible {
+    display: block;
+}
+@keyframes photoInsertPulse {
+    from { opacity: 0.7; transform: scaleY(0.95); }
+    to   { opacity: 1;   transform: scaleY(1); }
+}
+
+.photo-preview-item {
+    cursor: grab;
+}
+
+.photo-preview-item:active {
+    cursor: grabbing;
+}
+
+/* 크롭 모달 */
+.crop-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+}
+
+.crop-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crop-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.crop-modal-content {
+    position: relative;
+    width: 95%;
+    max-width: 480px;
+    max-height: 90vh;
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.crop-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.crop-modal-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.crop-modal-close {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    font-size: 24px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.crop-modal-close:hover {
+    color: var(--color-text-primary);
+}
+
+.crop-modal-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+}
+
+.crop-container {
+    width: 100%;
+    height: 280px;
+    background: #000;
+    overflow: hidden;
+}
+
+.crop-container img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+.crop-ratio-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.crop-ratio-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--color-border-mid);
+    border-radius: 8px;
+    background: var(--color-bg-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.crop-ratio-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.crop-ratio-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-bg-hover);
+    color: var(--color-primary);
+}
+
+.crop-modal-footer {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.crop-cancel-btn,
+.crop-apply-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.crop-cancel-btn {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-mid);
+    color: var(--color-text-secondary);
+}
+
+.crop-cancel-btn:hover {
+    background: var(--color-bg-muted);
+}
+
+.crop-apply-btn {
+    background: var(--color-primary);
+    border: none;
+    color: white;
+}
+
+.crop-apply-btn:hover {
+    background: var(--color-primary-dark);
 }
 
 /* 태그 입력 */

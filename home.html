@@ -17,9 +17,10 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
     <link rel="stylesheet" href="styles/utils.css">
+    <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/home.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
-    <link rel="stylesheet" href="styles/month-detail.css">
+    <link rel="stylesheet" href="styles/day-list.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
     <link rel="stylesheet" href="styles/photo-gallery.css">
@@ -76,18 +77,26 @@
             </div>
         </div>
 
-        <!-- 오늘 날씨 정보 -->
-        <div class="bottom-section">
-            <div class="weather-section">
-                <div class="weather-title-date-group">
-                    <div class="weather-title">오늘 날씨는?</div>
-                    <div class="today-date" id="todayDate">--</div>
+        <!-- 오늘 날씨 정보 (Danble 스타일) -->
+        <div class="bottom-section weather-clear" id="weatherBottomSection">
+            <div class="weather-widget">
+                <div class="weather-widget-top">
+                    <div class="weather-widget-temp-box">
+                        <div class="weather-widget-temp-main">
+                            <span class="weather-widget-current-temp" id="weatherCurrentTemp">--</span>
+                            <span class="weather-widget-avg-label" id="weatherAvgLabel" aria-label="평균 기온">평균</span>
+                        </div>
+                        <span class="weather-widget-temp-range" id="weatherTempRange">최고 --° · 최저 --°</span>
+                    </div>
+                    <span class="weather-widget-icon" id="weatherIconWrap">
+                        <svg class="weather-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                    </span>
                 </div>
-                <div class="weather-display" id="weatherDisplay">
-                    <svg class="weather-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-                    </svg>
-                    <span class="weather-temp">--°C</span>
+                <div class="weather-widget-bottom">
+                    <div class="weather-widget-summary">
+                        <span class="weather-widget-status" id="weatherStatus">--</span>
+                        <span class="weather-widget-diff" id="weatherDiff"></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -96,6 +105,8 @@
         <section class="outfit-carousel-section" id="outfitCarouselSection">
             <h2 class="outfit-carousel-title">기온별 옷차림</h2>
             <div class="outfit-carousel photo-gallery" id="outfitCarouselGallery">
+                <button type="button" class="photo-nav photo-nav-prev hidden" id="outfitCarouselPrev" aria-label="이전">‹</button>
+                <button type="button" class="photo-nav photo-nav-next" id="outfitCarouselNext" aria-label="다음">›</button>
                 <div class="photo-slider" id="outfitCarouselSlider">
                     <div class="photo-slide"><img src="img/weather_sample_1.jpg" alt="기온별 옷차림 1" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
                     <div class="photo-slide"><img src="img/weather_sample_2.jpg" alt="기온별 옷차림 2" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
@@ -117,7 +128,8 @@
             </div>
         </section>
 
-        <!-- 필터 바 (무신사 스타일) -->
+        <!-- 필터 + 일별 리스트 (하나의 세트) -->
+        <div class="filter-list-section">
         <div class="filter-bar" id="filterBar">
             <div class="filter-row filter-row-category">
                 <button type="button" class="filter-btn filter-btn-icon" id="filterOpenBtn" title="필터">
@@ -127,7 +139,7 @@
                 </button>
                 <div class="filter-category-chips-wrap">
                     <div class="filter-category-chips">
-                        <button type="button" class="filter-category-chip" data-tab="year">연</button>
+                        <button type="button" class="filter-category-chip" data-tab="year">연도</button>
                         <button type="button" class="filter-category-chip" data-tab="month">월</button>
                         <button type="button" class="filter-category-chip" data-tab="weatherFit">날씨적합도</button>
                         <button type="button" class="filter-category-chip" data-tab="temp">기온</button>
@@ -141,6 +153,12 @@
                 </div>
                 <button type="button" class="filter-reset-btn" id="filterBarResetBtn">초기화</button>
             </div>
+        </div>
+
+        <!-- 일별 리스트 컨테이너 -->
+        <div class="day-list-container" id="dayListContainer">
+            <!-- JavaScript로 동적 생성됩니다 -->
+        </div>
         </div>
 
         <!-- 필터 모달 -->
@@ -181,16 +199,22 @@
                         </div>
                     </div>
                     <div class="filter-tab-panel" id="filterPanelTemp">
-                        <div class="filter-temp-sliders">
-                            <div class="filter-temp-row">
-                                <span class="filter-temp-label">최저</span>
-                                <input type="range" id="filterSliderLow" min="-20" max="40" value="-20">
-                                <span id="filterValueLow">-20° 이상</span>
+                        <div class="filter-temp-unified">
+                            <div class="filter-temp-axis">
+                                <span class="filter-temp-axis-end">최저</span>
+                                <div class="filter-temp-track-wrap" id="filterTempTrackWrap">
+                                    <div class="filter-temp-track-bg"></div>
+                                    <input type="range" id="filterSliderLow" min="-20" max="40" value="-20" class="filter-temp-input filter-temp-input-low">
+                                    <input type="range" id="filterSliderHigh" min="-20" max="40" value="40" class="filter-temp-input filter-temp-input-high">
+                                    <div class="filter-temp-track-overlay" id="filterTempTrackOverlay"></div>
+                                    <span class="filter-temp-value-label filter-temp-value-low" id="filterValueLow">-20° 이상</span>
+                                    <span class="filter-temp-value-label filter-temp-value-high" id="filterValueHigh">40° 이하</span>
+                                </div>
+                                <span class="filter-temp-axis-end filter-temp-axis-max">최고</span>
                             </div>
-                            <div class="filter-temp-row">
-                                <span class="filter-temp-label">최고</span>
-                                <input type="range" id="filterSliderHigh" min="-20" max="40" value="40">
-                                <span id="filterValueHigh">40° 이하</span>
+                            <div class="filter-temp-actions">
+                                <button type="button" class="filter-temp-action-btn" id="filterTempTodayBtn">오늘</button>
+                                <button type="button" class="filter-temp-action-btn" id="filterTempDirectBtn">직접입력</button>
                             </div>
                         </div>
                     </div>
@@ -212,16 +236,10 @@
             </div>
         </div>
 
-        <!-- 일별 리스트 컨테이너 -->
-        <div class="month-cards-container">
-            <!-- JavaScript로 동적 생성됩니다 -->
-        </div>
-    </div>
-
-    <!-- 메뉴 팝업 (바텀시트) - 일별 리스트용 -->
-    <div class="menu-popup" id="itemMenuPopup">
-        <div class="menu-overlay"></div>
-        <div class="menu-content">
+        <!-- 메뉴 팝업 (바텀시트) - 일별 리스트용 -->
+        <div class="menu-popup" id="itemMenuPopup">
+            <div class="menu-overlay"></div>
+            <div class="menu-content">
             <button class="menu-item edit-menu-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
@@ -238,11 +256,11 @@
             <button class="menu-item cancel-menu-btn">
                 <span>취소</span>
             </button>
+            </div>
         </div>
-    </div>
 
-    <!-- 하단 네비게이션 바 -->
-    <nav class="bottom-nav">
+        <!-- 하단 네비게이션 바 -->
+        <nav class="bottom-nav">
         <a href="home.html" class="bottom-nav-item active">
             <div class="bottom-nav-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -270,7 +288,8 @@
             </div>
             <span class="bottom-nav-label">마이</span>
         </a>
-    </nav>
+        </nav>
+    </div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="scripts/config.js" defer></script>

@@ -25,11 +25,11 @@ function attachEventListeners() {
                 data: { full_name: displayName }
             });
             if (error) throw error;
-            alert('저장되었습니다.');
+            showAlert('저장되었습니다.');
             window.location.href = 'mypage.html';
         } catch (error) {
             console.error('업데이트 오류:', error);
-            alert('저장에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+            showAlert('저장에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
         }
     });
 }

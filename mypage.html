@@ -15,12 +15,14 @@
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/mypage.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="scripts/config.js"></script>
     <script src="scripts/api.js"></script>
     <script src="scripts/auth.js"></script>
+    <script src="scripts/common.js"></script>
 </head>
 <body class="has-bottom-nav">
     <main class="container" id="mypageView">
@@ -38,11 +40,11 @@
 
         <section class="mypage-stats">
             <a href="home.html" class="stat-item stat-item-link">
-                <span class="stat-value" id="statTotalCount">0</span>
+                <span class="stat-value" id="statTotalCount">-</span>
                 <span class="stat-label">총 기록</span>
             </a>
             <a href="home.html?filter=fav" class="stat-item stat-item-link">
-                <span class="stat-value" id="statFavoriteCount">0</span>
+                <span class="stat-value" id="statFavoriteCount">-</span>
                 <span class="stat-label">즐겨찾기</span>
             </a>
         </section>
@@ -65,7 +67,7 @@
         </section>
 
         <section class="mypage-footer">
-            <p class="app-version">스타일로그 v1.2</p>
+            <p class="app-version">스타일로그 1.2.2V</p>
         </section>
     </main>
 
