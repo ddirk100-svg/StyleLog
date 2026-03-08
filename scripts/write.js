@@ -12,7 +12,9 @@ let isEditMode = false; // 수정 모드 플래그
 let currentLog = null; // 수정할 로그 데이터
 let draggingPhotoIndex = null;
 let touchDragState = null;
-let lastInsertPosition = -1; // 드롭 시 사용할 삽입 위치 (0 = 맨 앞, n = n번째 뒤)
+let lastInsertPosition = -1;
+let insertLineHideTimer = null;
+let dragGhostEl = null;
 
 // 페이지 초기화
 async function initPage() {
@@ -298,42 +300,28 @@ function attachEventListeners() {
     // 사진 선택
     document.getElementById('photoInput').addEventListener('change', handlePhotoSelect);
 
-    // 리스트 영역 드래그 오버 (갭 영역 포함) - 삽입선 위치 계산
+    // 리스트 영역 드래그 오버 (플로팅 클론 + 갭 확대)
     document.getElementById('photoPreviewList').addEventListener('dragover', (e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         if (draggingPhotoIndex === null) return;
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-        if (el?.closest('.photo-preview-item')) return; // 아이템 핸들러에서 처리
-        const list = document.getElementById('photoPreviewList');
-        const items = [...list.querySelectorAll('.photo-preview-item')];
-        if (items.length === 0) return;
-        const listRect = list.getBoundingClientRect();
-        const x = e.clientX - listRect.left;
-        let insertPos = 0;
-        for (let i = 0; i < items.length; i++) {
-            const r = items[i].getBoundingClientRect();
-            const left = r.left - listRect.left;
-            const right = r.right - listRect.left;
-            if (x < left) break;
-            if (x <= right) {
-                const mid = left + (right - left) / 2;
-                insertPos = x < mid ? i : i + 1;
-                break;
-            }
-            insertPos = i + 1;
-        }
-        if (insertPos !== draggingPhotoIndex && insertPos !== draggingPhotoIndex + 1) {
+        updateDragGhost(e.clientX, e.clientY);
+        const insertPos = getInsertPositionFromCoords(e.clientX, e.clientY);
+        if (insertPos >= 0 && insertPos !== draggingPhotoIndex && insertPos !== draggingPhotoIndex + 1) {
             updateInsertLine(insertPos);
         } else {
             updateInsertLine(-1);
         }
     });
     document.getElementById('photoPreviewList').addEventListener('drop', (e) => {
-        if (e.target.closest('.photo-preview-item')) return; // 아이템에서 처리
+        if (e.target.closest('.photo-preview-item')) return;
         e.preventDefault();
         e.stopPropagation();
-        updateInsertLine(-1);
+        removeDragGhost();
+        if (insertLineHideTimer) clearTimeout(insertLineHideTimer);
+        insertLineHideTimer = null;
+        const line = document.getElementById('photoInsertLine');
+        if (line) line.classList.remove('visible');
         const fromIndex = draggingPhotoIndex;
         const insertPos = lastInsertPosition;
         if (fromIndex === null || insertPos < 0 || insertPos === fromIndex || insertPos === fromIndex + 1) {
@@ -460,6 +448,10 @@ function renderPhotoPreviews() {
 
 // 삽입선 표시/숨김 (insertPos: 0 ~ n, n=맨 뒤)
 function updateInsertLine(insertPos) {
+    if (insertLineHideTimer) {
+        clearTimeout(insertLineHideTimer);
+        insertLineHideTimer = null;
+    }
     let line = document.getElementById('photoInsertLine');
     if (!line) {
         line = document.createElement('div');
@@ -468,8 +460,11 @@ function updateInsertLine(insertPos) {
         document.getElementById('photoPreviewList').appendChild(line);
     }
     if (insertPos < 0) {
-        line.classList.remove('visible');
-        lastInsertPosition = -1;
+        insertLineHideTimer = setTimeout(() => {
+            line.classList.remove('visible');
+            lastInsertPosition = -1;
+            insertLineHideTimer = null;
+        }, 180);
         return;
     }
     lastInsertPosition = insertPos;
@@ -494,16 +489,63 @@ function updateInsertLine(insertPos) {
     line.classList.add('visible');
 }
 
-// 아이템 위 좌표 → 삽입 위치 (0=맨앞, n=맨뒤)
+// 좌표 → 삽입 위치 (갭 24px 확대, 아이템 40% 구역)
+function getInsertPositionFromCoords(clientX, clientY) {
+    const list = document.getElementById('photoPreviewList');
+    const items = [...list.querySelectorAll('.photo-preview-item')];
+    if (items.length === 0) return -1;
+    const listRect = list.getBoundingClientRect();
+    const x = clientX - listRect.left;
+    const GAP = 24;
+    for (let i = 0; i < items.length; i++) {
+        const r = items[i].getBoundingClientRect();
+        const left = r.left - listRect.left;
+        const right = r.right - listRect.left;
+        const zone = (right - left) * 0.4;
+        if (x < left - GAP) return i;
+        if (x < left + zone) return i;
+        if (x <= right - zone) return i + 1;
+        if (x <= right + GAP) return i + 1;
+    }
+    return items.length;
+}
+
+// 아이템 위 좌표 → 삽입 위치 (40% 구역)
 function getInsertPositionFromItem(item, clientX) {
     const idx = parseInt(item.dataset.index, 10);
     const rect = item.getBoundingClientRect();
-    const mid = rect.left + rect.width / 2;
-    return clientX < mid ? idx : idx + 1;
+    const zone = rect.width * 0.4;
+    return clientX < rect.left + zone ? idx : idx + 1;
 }
 
 function clearPhotoDraggingState() {
     document.querySelectorAll('.photo-preview-item.photo-preview-dragging').forEach(el => el.classList.remove('photo-preview-dragging'));
+}
+
+// 플로팅 드래그 클론 (손가락/커서 따라다님)
+function createDragGhost(sourceItem) {
+    if (dragGhostEl) return dragGhostEl;
+    const ghost = sourceItem.cloneNode(true);
+    ghost.id = 'photoDragGhost';
+    ghost.className = 'photo-preview-item photo-drag-ghost';
+    ghost.querySelectorAll('.photo-remove-btn, .photo-edit-btn').forEach(b => b.remove());
+    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9998;width:100px;height:100px;opacity:0.95;transform:scale(1.05);box-shadow:0 8px 24px rgba(0,0,0,0.2);border:2px solid var(--color-primary);border-radius:8px;overflow:hidden;';
+    document.body.appendChild(ghost);
+    dragGhostEl = ghost;
+    return ghost;
+}
+function updateDragGhost(clientX, clientY) {
+    if (!dragGhostEl) return;
+    const size = 100;
+    const offset = size / 2;
+    dragGhostEl.style.left = `${clientX - offset}px`;
+    dragGhostEl.style.top = `${clientY - offset}px`;
+}
+function removeDragGhost() {
+    if (dragGhostEl) {
+        dragGhostEl.remove();
+        dragGhostEl = null;
+    }
 }
 
 // 포인터 다운 - 즉시 시각적 피드백 (클릭/터치 직후)
@@ -512,7 +554,7 @@ function handlePhotoPointerDown(e) {
     e.currentTarget.classList.add('photo-preview-dragging');
 }
 
-// 드래그 시작
+// 드래그 시작 - 플로팅 클론 생성
 function handlePhotoDragStart(e) {
     if (e.target.closest('.photo-remove-btn, .photo-edit-btn')) {
         e.preventDefault();
@@ -524,7 +566,9 @@ function handlePhotoDragStart(e) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', String(index));
     e.dataTransfer.setData('application/x-photo-index', String(index));
-    try { e.dataTransfer.setDragImage(item, 50, 50); } catch (_) {}
+    try { e.dataTransfer.setDragImage(document.createElement('div'), 0, 0); } catch (_) {} // 기본 고스트 숨김
+    createDragGhost(item);
+    updateDragGhost(e.clientX, e.clientY);
     item.classList.add('photo-preview-dragging');
 }
 
@@ -534,10 +578,11 @@ function handlePhotoDragEnter(e) {
     e.dataTransfer.dropEffect = 'move';
 }
 
-// 드래그 오버 - 삽입선 위치 갱신
+// 드래그 오버 - 플로팅 클론 위치 + 삽입선
 function handlePhotoDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    updateDragGhost(e.clientX, e.clientY);
     const item = e.currentTarget;
     if (item.classList.contains('photo-preview-dragging')) return;
     const pos = getInsertPositionFromItem(item, e.clientX);
@@ -562,7 +607,11 @@ function handlePhotoDragLeave(e) {
 function handlePhotoDrop(e) {
     e.preventDefault();
     e.stopPropagation();
-    updateInsertLine(-1);
+    removeDragGhost();
+    if (insertLineHideTimer) clearTimeout(insertLineHideTimer);
+    insertLineHideTimer = null;
+    const line = document.getElementById('photoInsertLine');
+    if (line) line.classList.remove('visible');
 
     const fromIndex = draggingPhotoIndex !== null
         ? draggingPhotoIndex
@@ -581,43 +630,42 @@ function handlePhotoDrop(e) {
     renderPhotoPreviews();
 }
 
-// 드래그 끝
+// 드래그 끝 - 플로팅 클론·삽입선 제거
 function handlePhotoDragEnd(e) {
     e.currentTarget.classList.remove('photo-preview-dragging');
-    updateInsertLine(-1);
+    removeDragGhost();
+    if (insertLineHideTimer) clearTimeout(insertLineHideTimer);
+    insertLineHideTimer = null;
+    const line = document.getElementById('photoInsertLine');
+    if (line) line.classList.remove('visible');
+    lastInsertPosition = -1;
     draggingPhotoIndex = null;
 }
 
-// 터치: 드래그 시작 (HTML5 DnD는 터치 미지원) - 터치 즉시 시각적 표시
+// 터치: 짧게/길게 누르면 모두 이동 모드
 function handlePhotoTouchStart(e) {
     if (e.target.closest('.photo-remove-btn, .photo-edit-btn')) return;
     const item = e.currentTarget;
     const idx = parseInt(item.dataset.index, 10);
     item.classList.add('photo-preview-dragging');
-    touchDragState = { fromIndex: idx, itemEl: item, startY: e.touches[0].clientY, isDragging: false, lastInsertPosition: -1 };
+    touchDragState = { fromIndex: idx, itemEl: item, startY: e.touches[0].clientY, isDragging: true, lastInsertPosition: -1 };
 }
 
-// 터치: 이동 중 - 삽입선 표시
+// 터치: 이동 중 - 플로팅 클론 + 삽입선
 function handlePhotoTouchMove(e) {
     if (!touchDragState) return;
-    const dy = Math.abs(e.touches[0].clientY - touchDragState.startY);
-    if (!touchDragState.isDragging && dy > 12) {
-        touchDragState.isDragging = true;
-    }
-    if (!touchDragState.isDragging) return;
     e.preventDefault();
     const touch = e.touches[0];
+    createDragGhost(touchDragState.itemEl);
+    updateDragGhost(touch.clientX, touch.clientY);
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     const targetItem = el?.closest('.photo-preview-item');
-    if (targetItem) {
-        const insertPos = getInsertPositionFromItem(targetItem, touch.clientX);
-        if (insertPos !== touchDragState.fromIndex && insertPos !== touchDragState.fromIndex + 1) {
-            updateInsertLine(insertPos);
-            touchDragState.lastInsertPosition = insertPos;
-        } else {
-            updateInsertLine(-1);
-            touchDragState.lastInsertPosition = -1;
-        }
+    const insertPos = targetItem
+        ? getInsertPositionFromItem(targetItem, touch.clientX)
+        : getInsertPositionFromCoords(touch.clientX, touch.clientY);
+    if (insertPos >= 0 && insertPos !== touchDragState.fromIndex && insertPos !== touchDragState.fromIndex + 1) {
+        updateInsertLine(insertPos);
+        touchDragState.lastInsertPosition = insertPos;
     } else {
         updateInsertLine(-1);
         touchDragState.lastInsertPosition = -1;
@@ -628,19 +676,22 @@ function handlePhotoTouchMove(e) {
 function handlePhotoTouchEnd(e) {
     if (!touchDragState) return;
     clearPhotoDraggingState();
+    removeDragGhost();
+    if (insertLineHideTimer) clearTimeout(insertLineHideTimer);
+    insertLineHideTimer = null;
+    const line = document.getElementById('photoInsertLine');
+    if (line) line.classList.remove('visible');
     if (touchDragState.isDragging && touchDragState.lastInsertPosition >= 0) {
         const insertPos = touchDragState.lastInsertPosition;
         const fromIndex = touchDragState.fromIndex;
-        updateInsertLine(-1);
         if (insertPos !== fromIndex && insertPos !== fromIndex + 1) {
             const [moved] = selectedPhotos.splice(fromIndex, 1);
             const insertIndex = fromIndex < insertPos ? insertPos - 1 : insertPos;
             selectedPhotos.splice(insertIndex, 0, moved);
             renderPhotoPreviews();
         }
-    } else {
-        updateInsertLine(-1);
     }
+    lastInsertPosition = -1;
     touchDragState = null;
 }
 
