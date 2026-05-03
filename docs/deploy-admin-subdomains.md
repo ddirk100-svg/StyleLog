@@ -78,9 +78,16 @@ Vercel 이 준 비교 화면 기준으로 예시:
 
 ### 휴대폰 앱에 등록
 
-1. 시크릿 생성 예: `openssl rand -base32 20`
-2. Google Authenticator → 계정 추가 → **설정 키 입력** → 위 Base32 붙여넣기
-3. Vercel에 동일 값을 `ADMIN_TOTP_SECRET`(또는 프리뷰용 변수)로 저장 후 재배포
+**시크릿 만들기 (Windows·openssl 불필요):** 저장소 루트에서
+
+```bash
+npm run admin:secrets
+```
+
+터미널에 나온 `ADMIN_TOTP_SECRET` / `ADMIN_SESSION_SECRET` 값을 복사합니다.
+
+1. **Vercel**에 위 두 Key–Value 를 **Environment Variables** 로 저장 → **Redeploy**
+2. **Google Authenticator** → 계정 추가 → **설정 키 입력** → 키에 `ADMIN_TOTP_SECRET` 과 **동일한** 문자열 → **시간 기준**
 
 ### 로컬
 

@@ -2,6 +2,9 @@
   "name": "stylelog",
   "private": true,
   "description": "StyleLog static site + Vercel serverless (admin API)",
+  "scripts": {
+    "admin:secrets": "node scripts/generate-admin-secrets.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "otplib": "^12.0.1"
