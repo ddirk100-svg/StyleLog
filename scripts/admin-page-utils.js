@@ -32,6 +32,12 @@
     return st === 'answered' ? 'admin-pill admin-pill--ok' : 'admin-pill admin-pill--warn';
   }
 
+  /** 사용자 앱·DB status 와 무관하게, 답변 텍스트 유무로 통일 */
+  function inquiryStatusFromRow(row) {
+    const t = row && row.admin_reply != null ? String(row.admin_reply).trim() : '';
+    return t.length > 0 ? 'answered' : 'open';
+  }
+
   function categoryLabelFeedback(c) {
     if (c === 'bug') return '버그';
     if (c === 'idea') return '아이디어';
@@ -78,6 +84,7 @@
     previewText,
     statusLabelInquiry,
     statusClassInquiry,
+    inquiryStatusFromRow,
     categoryLabelFeedback,
     applyAdminFetchFailure,
     setTopbarMetaPaged

@@ -43,8 +43,10 @@ module.exports = async function handler(req, res) {
           { count: 'exact' }
         );
 
-      if (statusFilter === 'open' || statusFilter === 'answered') {
-        query = query.eq('status', statusFilter);
+      if (statusFilter === 'open') {
+        query = query.or('admin_reply.is.null,admin_reply.eq.');
+      } else if (statusFilter === 'answered') {
+        query = query.not('admin_reply', 'is', null).neq('admin_reply', '');
       }
 
       const orPart = orIlikeClauses(['title', 'body'], qRaw);
@@ -81,31 +83,21 @@ module.exports = async function handler(req, res) {
       const body = await readJsonBody(req);
       const id = body.id;
       const adminReply = body.admin_reply;
-      const status = body.status;
 
       if (!id || typeof id !== 'string') {
         sendJson(res, 400, { ok: false, error: 'invalid_id' });
         return;
       }
-
-      const patch = {};
-      // admin_reply 가 요청에 있으면 trim 후 내용 유무로 status 통일(사용자 앱은 답변 텍스트 기준).
-      if (adminReply !== undefined) {
-        const trimmed = String(adminReply).trim();
-        patch.admin_reply = trimmed;
-        patch.status = trimmed.length > 0 ? 'answered' : 'open';
-      } else if (status !== undefined) {
-        if (!['open', 'answered'].includes(status)) {
-          sendJson(res, 400, { ok: false, error: 'invalid_status' });
-          return;
-        }
-        patch.status = status;
-      }
-
-      if (Object.keys(patch).length === 0) {
-        sendJson(res, 400, { ok: false, error: 'empty_patch' });
+      if (adminReply === undefined) {
+        sendJson(res, 400, { ok: false, error: 'admin_reply_required' });
         return;
       }
+
+      const trimmed = String(adminReply).trim();
+      const patch = {
+        admin_reply: trimmed,
+        status: trimmed.length > 0 ? 'answered' : 'open'
+      };
 
       const { data, error } = await supabase
         .from('support_inquiries')

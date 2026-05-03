@@ -4,6 +4,7 @@ const {
   previewText,
   statusLabelInquiry,
   statusClassInquiry,
+  inquiryStatusFromRow,
   applyAdminFetchFailure,
   setTopbarMetaPaged
 } = globalThis.AdminPageUtils;
@@ -24,9 +25,10 @@ function renderInquiryDetail(row) {
   }
 
   const replyVal = row.admin_reply != null ? String(row.admin_reply) : '';
+  const eff = inquiryStatusFromRow(row);
   aside.innerHTML = [
     '<h2 class="admin-section-title" style="margin-top:0;">문의 상세</h2>',
-    `<p class="admin-card-hint">${escapeHtml(statusLabelInquiry(row.status))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
+    `<p class="admin-card-hint">${escapeHtml(statusLabelInquiry(eff))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
     `<p class="admin-detail-line"><strong>작성자</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
     `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
     `<p class="admin-detail-line"><strong>답변일(replied_at)</strong><br>${escapeHtml(formatDate(row.replied_at))}</p>`,
@@ -36,20 +38,15 @@ function renderInquiryDetail(row) {
     `<pre class="admin-pre">${escapeHtml(row.body || '')}</pre>`,
     '<label class="admin-field-label" for="admin-inq-reply">운영자 답변</label>',
     `<textarea id="admin-inq-reply" class="admin-textarea" rows="6">${escapeHtml(replyVal)}</textarea>`,
-    '<label class="admin-field-label" for="admin-inq-status">상태</label>',
-    `<select id="admin-inq-status" class="admin-input" style="width:100%; margin-bottom:12px;">
-      <option value="open"${row.status === 'open' ? ' selected' : ''}>미답변 (open)</option>
-      <option value="answered"${row.status === 'answered' ? ' selected' : ''}>답변완료 (answered)</option>
-    </select>`,
+    '<p class="admin-card-hint" style="margin:0 0 12px; font-size:13px;">내용을 저장하면 자동으로 답변완료·미답변이 정해집니다. (빈 칸 = 미답변)</p>',
     '<button type="button" class="admin-btn admin-btn-primary" id="admin-inq-save">저장</button>',
     '<p class="admin-gate-msg" id="admin-inq-save-msg" role="status" style="margin-top:10px;"></p>'
   ].join('');
 
   document.getElementById('admin-inq-save')?.addEventListener('click', async () => {
     const ta = document.getElementById('admin-inq-reply');
-    const st = document.getElementById('admin-inq-status');
     const msg = document.getElementById('admin-inq-save-msg');
-    if (!ta || !st || !msg) return;
+    if (!ta || !msg) return;
     msg.textContent = '저장 중…';
     const res = await fetch('/api/admin/inquiries', {
       method: 'PATCH',
@@ -57,8 +54,7 @@ function renderInquiryDetail(row) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: row.id,
-        admin_reply: ta.value,
-        status: st.value
+        admin_reply: ta.value
       })
     });
     const data = await res.json().catch(() => ({}));
@@ -87,7 +83,7 @@ function renderInquiriesTable() {
     .map(
       (row) => `
     <tr data-inq-id="${escapeHtml(row.id)}" class="${row.id === selectedInquiryId ? 'is-selected' : ''}">
-      <td><span class="${escapeHtml(statusClassInquiry(row.status))}">${escapeHtml(statusLabelInquiry(row.status))}</span></td>
+      <td><span class="${escapeHtml(statusClassInquiry(inquiryStatusFromRow(row)))}">${escapeHtml(statusLabelInquiry(inquiryStatusFromRow(row)))}</span></td>
       <td>${escapeHtml(row.title || '')}</td>
       <td>${escapeHtml(previewText(row.body, 56))}</td>
       <td>${escapeHtml(formatDate(row.created_at))}</td>

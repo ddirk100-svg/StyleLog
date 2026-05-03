@@ -61,8 +61,12 @@ async function loadSummaryLegacy(supabase) {
     recentInqRows,
     recentFbRows
   ] = await Promise.all([
-    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).eq('status', 'answered'),
+    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).or('admin_reply.is.null,admin_reply.eq.'),
+    supabase
+      .from('support_inquiries')
+      .select('*', { count: 'exact', head: true })
+      .not('admin_reply', 'is', null)
+      .neq('admin_reply', ''),
     supabase.from('support_inquiries').select('*', { count: 'exact', head: true }),
     supabase.from('user_feedback').select('*', { count: 'exact', head: true }),
     supabase.from('user_feedback').select('*', { count: 'exact', head: true }).eq('category', 'idea'),
@@ -72,7 +76,7 @@ async function loadSummaryLegacy(supabase) {
     supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     supabase
       .from('support_inquiries')
-      .select('id,title,status,user_id,created_at')
+      .select('id,title,status,user_id,created_at,admin_reply')
       .order('created_at', { ascending: false })
       .limit(8),
     supabase

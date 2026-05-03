@@ -28,8 +28,8 @@ SECURITY DEFINER
 SET search_path = public, auth
 AS $$
   SELECT json_build_object(
-    'inquiriesOpen', (SELECT count(*)::bigint FROM public.support_inquiries WHERE status = 'open'),
-    'inquiriesAnswered', (SELECT count(*)::bigint FROM public.support_inquiries WHERE status = 'answered'),
+    'inquiriesOpen', (SELECT count(*)::bigint FROM public.support_inquiries WHERE admin_reply IS NULL OR btrim(admin_reply) = ''),
+    'inquiriesAnswered', (SELECT count(*)::bigint FROM public.support_inquiries WHERE admin_reply IS NOT NULL AND btrim(admin_reply) <> ''),
     'inquiriesTotal', (SELECT count(*)::bigint FROM public.support_inquiries),
     'feedbackTotal', (SELECT count(*)::bigint FROM public.user_feedback),
     'feedbackIdea', (SELECT count(*)::bigint FROM public.user_feedback WHERE category = 'idea'),
@@ -45,6 +45,7 @@ AS $$
             si.id,
             si.title,
             si.status,
+            si.admin_reply,
             si.user_id,
             si.created_at,
             COALESCE(u.email, '—') AS user_email

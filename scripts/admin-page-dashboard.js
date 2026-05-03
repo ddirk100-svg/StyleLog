@@ -4,6 +4,7 @@ const {
   previewText,
   statusLabelInquiry,
   statusClassInquiry,
+  inquiryStatusFromRow,
   categoryLabelFeedback
 } = globalThis.AdminPageUtils;
 
@@ -19,7 +20,7 @@ function renderDashRecentInquiries(rows) {
     .map(
       (row) => `
     <tr>
-      <td><span class="${escapeHtml(statusClassInquiry(row.status))}">${escapeHtml(statusLabelInquiry(row.status))}</span></td>
+      <td><span class="${escapeHtml(statusClassInquiry(inquiryStatusFromRow(row)))}">${escapeHtml(statusLabelInquiry(inquiryStatusFromRow(row)))}</span></td>
       <td>${escapeHtml(previewText(row.title, 48))}</td>
       <td>${escapeHtml(formatDate(row.created_at))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>

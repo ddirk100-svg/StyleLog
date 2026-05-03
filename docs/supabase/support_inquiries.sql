@@ -4,7 +4,8 @@
 -- • 테이블 이름: public.support_inquiries  (의견 user_feedback 과 별도 테이블)
 -- • user_feedback.sql 과 내용이 다릅니다. 두 파일을 합치거나 덮어쓰지 마세요.
 -- • Supabase SQL Editor에서 이 파일만 실행하면 됩니다. 순서는 user_feedback 과 무관.
--- • 운영자 답변: admin_reply(및 status)만 넣으면 됨
+-- • 운영자 답변: `admin_reply` 저장 시 API가 `status` 를 같은 규칙으로 맞춤.
+-- `status` 는 호환·필터 보조용이며, 표시·집계는 `admin_reply` 텍스트(btrim/trim 기준)와 동일하게 본다.
 --   - replied_at: 첫 답변 시각(자동, 이후 유지)
 --   - admin_reply_updated_at: 답변 내용이 바뀔 때마다 갱신(자동)
 -- =============================================================================
