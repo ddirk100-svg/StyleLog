@@ -9,6 +9,7 @@ const {
   dbErrorHint
 } = require('../_lib/admin-common.js');
 const { getStyleLogCountsByUserIds } = require('../_lib/style-log-counts.js');
+const { listAuthUsersPage } = require('../_lib/admin-list-users.js');
 
 module.exports = async function handler(req, res) {
   const host = getHost(req);
@@ -36,23 +37,24 @@ module.exports = async function handler(req, res) {
   const perPage = Math.min(100, Math.max(10, parseInt(url.searchParams.get('perPage') || '40', 10) || 40));
 
   try {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page,
-      perPage
-    });
+    const listed = await listAuthUsersPage(host, page, perPage);
 
-    if (error) {
-      console.error('listUsers', error);
+    if (!listed.ok) {
+      const detail = listed.error && listed.error.message ? String(listed.error.message) : 'list_users_failed';
+      console.error('listAuthUsersPage', listed.error);
+      const errObj = { message: detail, details: '', hint: '' };
       sendJson(res, 500, {
         ok: false,
         error: 'auth_error',
-        detail: error.message,
-        hint: dbErrorHint(error) || 'SUPABASE_SERVICE_ROLE_KEY_DEV 가 테스트 프로젝트의 service_role 인지, URL(DEV)과 짝이 맞는지 확인하세요.'
+        detail,
+        hint:
+          dbErrorHint(errObj) ||
+          'SUPABASE_SERVICE_ROLE_KEY_DEV 가 테스트 프로젝트의 service_role 인지, URL(DEV)과 짝이 맞는지 확인하세요.'
       });
       return;
     }
 
-    const users = data?.users || [];
+    const users = listed.users;
     const countByUser = await getStyleLogCountsByUserIds(
       supabase,
       users.map((u) => u.id)
@@ -70,7 +72,7 @@ module.exports = async function handler(req, res) {
       style_log_count: countByUser.get(u.id) ?? 0
     }));
 
-    const total = typeof data?.total === 'number' ? data.total : null;
+    const total = typeof listed.total === 'number' ? listed.total : null;
 
     sendJson(res, 200, {
       ok: true,
