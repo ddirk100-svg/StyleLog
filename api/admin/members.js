@@ -1,5 +1,6 @@
 const {
   getHost,
+  parseRequestUrl,
   getSupabaseAdmin,
   requireSession,
   replyForRequireSessionError,
@@ -30,7 +31,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const url = new URL(req.url || '/', `http://${host}`);
+  const url = parseRequestUrl(req);
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const perPage = Math.min(100, Math.max(10, parseInt(url.searchParams.get('perPage') || '40', 10) || 40));
 
@@ -80,6 +81,12 @@ module.exports = async function handler(req, res) {
     });
   } catch (e) {
     console.error('admin/members', e);
-    sendJson(res, 500, { ok: false, error: 'internal_error' });
+    const hint = dbErrorHint(e);
+    sendJson(res, 500, {
+      ok: false,
+      error: 'internal_error',
+      detail: e && e.message ? String(e.message) : String(e),
+      ...(hint ? { hint } : {})
+    });
   }
 };

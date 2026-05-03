@@ -21,6 +21,25 @@ function getHost(req) {
   return String(h).split(',')[0].trim().toLowerCase();
 }
 
+/**
+ * req.url + Host 로 URL 파싱. Host 가 비면 Invalid URL(`http://`) 방지용 localhost 사용.
+ * @param {import('http').IncomingMessage} req
+ * @returns {URL}
+ */
+function parseRequestUrl(req) {
+  const path = typeof req.url === 'string' && req.url ? req.url : '/';
+  let authority = getHost(req);
+  if (!authority) authority = 'localhost';
+  const base = `http://${authority}`;
+  try {
+    if (path.startsWith('http://') || path.startsWith('https://')) return new URL(path);
+    return new URL(path, base);
+  } catch (e) {
+    console.warn('parseRequestUrl', path, base, e && e.message);
+    return new URL('/', 'http://localhost');
+  }
+}
+
 /** 호스트명만 (포트 제거). IPv4 루프백·localhost 판별용 */
 function hostnameOnly(host) {
   if (!host) return '';
@@ -290,7 +309,8 @@ function orIlikeClauses(columns, qRaw) {
  * @param {{ defaultPerPage?: number, minPerPage?: number, maxPerPage?: number }} [opts]
  */
 function parsePagedListQuery(url, host, opts) {
-  const u = url instanceof URL ? url : new URL(String(url || '/'), `http://${host}`);
+  const safeHost = host && String(host).trim() ? String(host).trim() : 'localhost';
+  const u = url instanceof URL ? url : new URL(String(url || '/'), `http://${safeHost}`);
   const defPer = opts?.defaultPerPage ?? 25;
   const minP = opts?.minPerPage ?? 5;
   const maxP = opts?.maxPerPage ?? 100;
@@ -417,6 +437,7 @@ function readJsonBody(req) {
 module.exports = {
   COOKIE_NAME,
   getHost,
+  parseRequestUrl,
   hostnameOnly,
   useTestDatabase,
   resolveSupabaseEnv,

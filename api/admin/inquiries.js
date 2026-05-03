@@ -1,5 +1,6 @@
 const {
   getHost,
+  parseRequestUrl,
   getSupabaseAdmin,
   requireSession,
   replyForRequireSessionError,
@@ -30,7 +31,7 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const url = new URL(req.url || '/', `http://${host}`);
+      const url = parseRequestUrl(req);
       const { page, perPage, from, to } = parsePagedListQuery(url, host);
       const statusFilter = (url.searchParams.get('status') || 'all').trim();
       const qRaw = (url.searchParams.get('q') || '').trim();
