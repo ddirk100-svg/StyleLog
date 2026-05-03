@@ -53,28 +53,35 @@ function getSupabaseAdmin(host) {
   });
 }
 
+function envStr(name) {
+  const v = process.env[name];
+  if (v == null || typeof v !== 'string') return '';
+  const t = v.trim();
+  return t;
+}
+
 function totpSecretForHost(host) {
   const test = useTestDatabase(host);
   if (test) {
-    return (
-      process.env.ADMIN_TOTP_SECRET_PREVIEW ||
-      process.env.ADMIN_TOTP_SECRET ||
-      ''
-    );
+    return envStr('ADMIN_TOTP_SECRET_PREVIEW') || envStr('ADMIN_TOTP_SECRET');
   }
-  return process.env.ADMIN_TOTP_SECRET || '';
+  return envStr('ADMIN_TOTP_SECRET');
 }
 
 function sessionSecretForHost(host) {
   const test = useTestDatabase(host);
   if (test) {
-    return (
-      process.env.ADMIN_SESSION_SECRET_PREVIEW ||
-      process.env.ADMIN_SESSION_SECRET ||
-      ''
-    );
+    return envStr('ADMIN_SESSION_SECRET_PREVIEW') || envStr('ADMIN_SESSION_SECRET');
   }
-  return process.env.ADMIN_SESSION_SECRET || '';
+  return envStr('ADMIN_SESSION_SECRET');
+}
+
+/** OTP 게이트용: 서버가 읽지 못한 변수 이름 (값 노출 없음) */
+function listMissingAdminAuthEnv(host) {
+  const missing = [];
+  if (!totpSecretForHost(host)) missing.push('ADMIN_TOTP_SECRET');
+  if (!sessionSecretForHost(host)) missing.push('ADMIN_SESSION_SECRET');
+  return missing;
 }
 
 function timingSafeEqual(a, b) {
@@ -227,6 +234,7 @@ module.exports = {
   getSupabaseAdmin,
   totpSecretForHost,
   sessionSecretForHost,
+  listMissingAdminAuthEnv,
   createSignedSessionValue,
   getSessionFromRequest,
   requireSession,

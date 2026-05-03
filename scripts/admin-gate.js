@@ -62,7 +62,14 @@
       const r = await fetch('/api/admin/session', { credentials: 'same-origin' });
       const data = await r.json().catch(() => ({}));
       if (r.status === 503) {
-        return { type: 'misconfigured', message: data.message || '' };
+        const extra =
+          Array.isArray(data.missing) && data.missing.length
+            ? ' 서버가 읽지 못한 이름: ' + data.missing.join(', ') + '.'
+            : '';
+        return {
+          type: 'misconfigured',
+          message: (data.message || '') + extra
+        };
       }
       if (r.ok && data.ok) return { type: 'ok' };
       return { type: 'need_otp' };

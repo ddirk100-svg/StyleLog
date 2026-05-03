@@ -2,6 +2,7 @@ const {
   getHost,
   sessionSecretForHost,
   totpSecretForHost,
+  listMissingAdminAuthEnv,
   createSignedSessionValue,
   getSessionFromRequest,
   setSessionCookie,
@@ -23,10 +24,16 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (!sessionSecretForHost(host) || !totpSecretForHost(host)) {
+        const missing = listMissingAdminAuthEnv(host);
         sendJson(res, 503, {
           ok: false,
           error: 'server_misconfigured',
-          message: 'ADMIN_TOTP_SECRET / ADMIN_SESSION_SECRET / Supabase 서비스 롤 키를 Vercel 환경 변수에 설정하세요.'
+          missing,
+          vercelEnv: process.env.VERCEL_ENV || '',
+          message:
+            '이 배포에서 다음 환경 변수를 읽지 못했습니다: ' +
+            missing.join(', ') +
+            '. Vercel 이름·값·적용 환경(Production/Preview)을 확인한 뒤 Redeploy 하세요. (OTP 단계는 Supabase 불필요)'
         });
         return;
       }
@@ -43,7 +50,8 @@ module.exports = async function handler(req, res) {
       if (!sessionSecretForHost(host) || !totpSecretForHost(host)) {
         sendJson(res, 503, {
           ok: false,
-          error: 'server_misconfigured'
+          error: 'server_misconfigured',
+          missing: listMissingAdminAuthEnv(host)
         });
         return;
       }
