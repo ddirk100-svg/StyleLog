@@ -62,6 +62,23 @@ async function fetchInquiryCountsByReply(supabase) {
   };
 }
 
+/** RPC/구 스냅샷에 admin_reply 가 없을 때 대시보드·문의 페이지 상태 불일치 방지 */
+async function enrichRecentInquiriesAdminReply(supabase, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+  const ids = [...new Set(rows.map((r) => r && r.id).filter(Boolean))];
+  if (!ids.length) return rows;
+  const { data, error } = await supabase.from('support_inquiries').select('id,admin_reply').in('id', ids);
+  if (error || !data) {
+    if (error) console.warn('enrichRecentInquiriesAdminReply', error.message || error.code || '');
+    return rows;
+  }
+  const map = new Map(data.map((r) => [r.id, r.admin_reply]));
+  return rows.map((r) => {
+    if (!r || !r.id) return r;
+    return { ...r, admin_reply: map.has(r.id) ? map.get(r.id) : r.admin_reply };
+  });
+}
+
 async function loadSummaryLegacy(supabase, inqCountsPre) {
   const inqCounts = inqCountsPre ?? (await fetchInquiryCountsByReply(supabase));
   const [
@@ -168,10 +185,12 @@ module.exports = async function handler(req, res) {
     if (snap) {
       snap.inquiriesOpen = inqCounts.inquiriesOpen;
       snap.inquiriesAnswered = inqCounts.inquiriesAnswered;
+      snap.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, snap.recentInquiries);
       sendJson(res, 200, snap);
       return;
     }
     const legacy = await loadSummaryLegacy(supabase, inqCounts);
+    legacy.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, legacy.recentInquiries);
     sendJson(res, 200, legacy);
   } catch (e) {
     console.error('admin/summary', e);
