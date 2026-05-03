@@ -9,6 +9,8 @@
 
 어드민 HTML 은 `/styles`, `/scripts`, `/img` 를 **사이트 루트 절대경로**로 불러오므로, 메인 앱과 같은 배포에서 정적 파일이 그대로 제공됩니다.
 
+**관리자 호스트 전용:** `admin.*` 으로 접속했을 때 `/home.html`, `/write.html` 등 **앱 페이지**로 직접 들어가면, 메인 도메인으로 **302 리다이렉트**됩니다 (`admin.alpha` → `alpha.stylelog.co.kr`, `admin` → `stylelog.co.kr`). 관리 화면은 `/`(대시보드), `/admin/*.html`, 또는 리라이트된 `/members.html` 등만 쓰면 됩니다.
+
 ---
 
 ## 1. Vercel
@@ -52,6 +54,8 @@ Vercel 이 준 비교 화면 기준으로 예시:
 ```
 
 또 나중에 Edge Middleware 로 일반화할 수 있습니다.
+
+**루트에 새 앱 HTML**(`foo.html` 등)을 추가하면, `admin.*` 에서 열리지 않게 `vercel.json` 의 `redirects` 에도 동일 경로로 `alpha.stylelog.co.kr` / `stylelog.co.kr` 행을 두 줄 추가하세요.
 
 ---
 

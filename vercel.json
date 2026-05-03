@@ -22,24 +22,52 @@
     }
   ],
   "redirects": [
-    {"source": "/index.html", "destination": "/home.html", "permanent": false},
-    {"source": "/favicon.ico", "destination": "/img/StyleLog_logo%28favicon%29.png", "permanent": false}
+    { "source": "/index.html", "has": [{ "type": "host", "value": "alpha.stylelog.co.kr" }], "destination": "/home.html", "permanent": false },
+    { "source": "/index.html", "has": [{ "type": "host", "value": "stylelog.co.kr" }], "destination": "/home.html", "permanent": false },
+    { "source": "/index.html", "has": [{ "type": "host", "value": "www.stylelog.co.kr" }], "destination": "/home.html", "permanent": false },
+    { "source": "/favicon.ico", "destination": "/img/StyleLog_logo%28favicon%29.png", "permanent": false },
+
+    { "source": "/backfill-thumb.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/backfill-thumb.html", "permanent": false },
+    { "source": "/debug.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/debug.html", "permanent": false },
+    { "source": "/detail.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/detail.html", "permanent": false },
+    { "source": "/edit-profile.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/edit-profile.html", "permanent": false },
+    { "source": "/home.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/home.html", "permanent": false },
+    { "source": "/inquiry.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/inquiry.html", "permanent": false },
+    { "source": "/inquiry-write.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/inquiry-write.html", "permanent": false },
+    { "source": "/landing.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/landing.html", "permanent": false },
+    { "source": "/login.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/login.html", "permanent": false },
+    { "source": "/mypage.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/mypage.html", "permanent": false },
+    { "source": "/signup.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/signup.html", "permanent": false },
+    { "source": "/write.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/write.html", "permanent": false },
+
+    { "source": "/backfill-thumb.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/backfill-thumb.html", "permanent": false },
+    { "source": "/debug.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/debug.html", "permanent": false },
+    { "source": "/detail.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/detail.html", "permanent": false },
+    { "source": "/edit-profile.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/edit-profile.html", "permanent": false },
+    { "source": "/home.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/home.html", "permanent": false },
+    { "source": "/inquiry.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/inquiry.html", "permanent": false },
+    { "source": "/inquiry-write.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/inquiry-write.html", "permanent": false },
+    { "source": "/landing.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/landing.html", "permanent": false },
+    { "source": "/login.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/login.html", "permanent": false },
+    { "source": "/mypage.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/mypage.html", "permanent": false },
+    { "source": "/signup.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/signup.html", "permanent": false },
+    { "source": "/write.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/write.html", "permanent": false }
   ],
   "rewrites": [
-    {"source": "/robots.txt", "destination": "/api/robots"},
+    { "source": "/robots.txt", "destination": "/api/robots" },
 
-    {"source": "/", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/index.html"},
-    {"source": "/index.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/index.html"},
-    {"source": "/members.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/members.html"},
-    {"source": "/inquiries.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/inquiries.html"},
-    {"source": "/feedback.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/feedback.html"},
+    { "source": "/", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "/admin/index.html" },
+    { "source": "/index.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "/admin/index.html" },
+    { "source": "/members.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "/admin/members.html" },
+    { "source": "/inquiries.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "/admin/inquiries.html" },
+    { "source": "/feedback.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "/admin/feedback.html" },
 
-    {"source": "/", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/index.html"},
-    {"source": "/index.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/index.html"},
-    {"source": "/members.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/members.html"},
-    {"source": "/inquiries.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/inquiries.html"},
-    {"source": "/feedback.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/feedback.html"},
+    { "source": "/", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "/admin/index.html" },
+    { "source": "/index.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "/admin/index.html" },
+    { "source": "/members.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "/admin/members.html" },
+    { "source": "/inquiries.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "/admin/inquiries.html" },
+    { "source": "/feedback.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "/admin/feedback.html" },
 
-    {"source": "/", "destination": "/landing.html"}
+    { "source": "/", "destination": "/landing.html" }
   ]
 }
