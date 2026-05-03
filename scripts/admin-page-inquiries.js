@@ -148,6 +148,8 @@ async function loadInquiries() {
     const meta = document.querySelector('.admin-topbar-meta');
     if (j.error === 'supabase_not_configured') {
       globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(meta, null, j);
+    } else if (j.error === 'server_misconfigured') {
+      globalThis.AdminEnvHint?.applyServerMisconfigured?.(meta, null, j);
     } else {
       const H = globalThis.AdminEnvHint;
       if (H) H.applyMetaForApiFailure(meta, r.status);

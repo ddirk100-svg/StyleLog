@@ -207,6 +207,29 @@ function requireSession(req, host) {
   return payload;
 }
 
+/** requireSession catch 블록용 — 401 / 503 본문 통일 */
+function replyForRequireSessionError(res, host, err) {
+  if (err && err.code === 'UNAUTHORIZED') {
+    sendJson(res, 401, { ok: false, error: 'unauthorized' });
+    return;
+  }
+  if (err.code === 'NO_SESSION_SECRET') {
+    const missing = listMissingAdminAuthEnv(host);
+    sendJson(res, 503, {
+      ok: false,
+      error: 'server_misconfigured',
+      missing,
+      vercelEnv: process.env.VERCEL_ENV || '',
+      message:
+        '세션·OTP용 환경 변수가 없습니다: ' +
+        missing.join(', ') +
+        '. Vercel 이름·적용 환경(Production/Preview)을 확인한 뒤 Redeploy 하세요.'
+    });
+    return;
+  }
+  sendJson(res, 503, { ok: false, error: 'server_misconfigured' });
+}
+
 function setSessionCookie(res, host, value) {
   const secure = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
   const parts = [
@@ -293,6 +316,7 @@ module.exports = {
   createSignedSessionValue,
   getSessionFromRequest,
   requireSession,
+  replyForRequireSessionError,
   setSessionCookie,
   clearSessionCookie,
   verifyTotpCode,

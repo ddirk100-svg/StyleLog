@@ -96,6 +96,14 @@ async function loadAdminDashboard() {
         );
         return;
       }
+      if (j.error === 'server_misconfigured') {
+        globalThis.AdminEnvHint?.applyServerMisconfigured?.(
+          meta,
+          document.getElementById('admin-dash-banner'),
+          j
+        );
+        return;
+      }
       const H = globalThis.AdminEnvHint;
       if (H) {
         H.applyMetaForApiFailure(meta, r.status);

@@ -2,6 +2,7 @@ const {
   getHost,
   getSupabaseAdmin,
   requireSession,
+  replyForRequireSessionError,
   sendJson,
   buildSupabaseNotConfiguredBody
 } = require('../_lib/admin-common.js');
@@ -34,11 +35,7 @@ module.exports = async function handler(req, res) {
   try {
     requireSession(req, host);
   } catch (e) {
-    if (e.code === 'UNAUTHORIZED') {
-      sendJson(res, 401, { ok: false, error: 'unauthorized' });
-      return;
-    }
-    sendJson(res, 503, { ok: false, error: 'server_misconfigured' });
+    replyForRequireSessionError(res, host, e);
     return;
   }
 

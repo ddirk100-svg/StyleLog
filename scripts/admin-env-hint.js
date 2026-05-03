@@ -53,10 +53,29 @@
     }
   }
 
+  function applyServerMisconfigured(metaEl, bannerEl, payload) {
+    if (!payload || payload.error !== 'server_misconfigured') return;
+    const missing = Array.isArray(payload.missing) ? payload.missing.join(', ') : '';
+    const base =
+      payload.message ||
+      'Vercel에 ADMIN_TOTP_SECRET·ADMIN_SESSION_SECRET 등이 없거나 이 배포(Preview)에 적용되지 않았습니다.';
+    if (metaEl) metaEl.textContent = missing ? base + ' (' + missing + ')' : base;
+    if (bannerEl) {
+      bannerEl.classList.add('admin-banner--warn');
+      bannerEl.replaceChildren();
+      const strong = document.createElement('strong');
+      strong.textContent = '관리자 서버 설정(503)';
+      bannerEl.appendChild(strong);
+      bannerEl.appendChild(document.createTextNode(' ' + base + ' '));
+      if (missing) bannerEl.appendChild(document.createTextNode('누락 표시: ' + missing + '. '));
+    }
+  }
+
   globalThis.AdminEnvHint = {
     likelyStaticNoApi,
     applyMetaForApiFailure,
     upgradeDashboardBanner,
-    applySupabaseNotConfigured
+    applySupabaseNotConfigured,
+    applyServerMisconfigured
   };
 })();
