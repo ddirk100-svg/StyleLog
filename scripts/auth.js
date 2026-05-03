@@ -29,7 +29,7 @@ async function requireAuth() {
     const session = await checkSession();
     
     if (!session) {
-        console.log('⚠️ 로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+        debugLog('⚠️ 로그인이 필요합니다. 로그인 페이지로 이동합니다.');
         // 현재 페이지 URL을 저장하여 로그인 후 돌아올 수 있도록
         const currentPage = window.location.pathname + window.location.search;
         sessionStorage.setItem('redirectAfterLogin', currentPage);
@@ -46,7 +46,7 @@ async function logout() {
         const { error } = await supabaseClient.auth.signOut();
         if (error) throw error;
         
-        console.log('✅ 로그아웃 성공');
+        debugLog('✅ 로그아웃 성공');
         window.location.href = 'landing.html';
     } catch (error) {
         console.error('❌ 로그아웃 오류:', error);
@@ -69,14 +69,14 @@ function redirectAfterLogin() {
 
 // 인증 상태 변경 감지
 supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log('🔐 인증 상태 변경:', event, session);
+    debugLog('🔐 인증 상태 변경:', event, session);
     
     if (event === 'SIGNED_IN') {
-        console.log('✅ 로그인됨');
+        debugLog('✅ 로그인됨');
     } else if (event === 'SIGNED_OUT') {
-        console.log('🚪 로그아웃됨');
+        debugLog('🚪 로그아웃됨');
     } else if (event === 'TOKEN_REFRESHED') {
-        console.log('🔄 토큰 갱신됨');
+        debugLog('🔄 토큰 갱신됨');
     }
 });
 

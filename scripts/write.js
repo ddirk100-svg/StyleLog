@@ -18,7 +18,7 @@ let dragGhostEl = null;
 
 // 페이지 초기화
 async function initPage() {
-    console.log('📝 write.html 초기화:', { 
+    debugLog('📝 write.html 초기화:', { 
         editLogId, 
         initialDate,
         urlParams: window.location.search,
@@ -27,7 +27,7 @@ async function initPage() {
     
     // 수정 모드 확인 (id가 null, 빈 문자열, 'null' 문자열이 아닌 경우만)
     if (editLogId && editLogId !== 'null' && editLogId !== 'undefined' && editLogId.trim() !== '') {
-        console.log('✏️ 수정 모드로 진입:', editLogId);
+        debugLog('✏️ 수정 모드로 진입:', editLogId);
         isEditMode = true;
         try {
             await loadLogForEdit(editLogId);
@@ -38,7 +38,7 @@ async function initPage() {
             await initNewLog();
         }
     } else {
-        console.log('📝 새 로그 작성 모드 (editLogId가 없거나 유효하지 않음)');
+        debugLog('📝 새 로그 작성 모드 (editLogId가 없거나 유효하지 않음)');
         // 새 로그 작성 모드
         await initNewLog();
     }
@@ -53,7 +53,7 @@ async function initPage() {
 // 수정할 로그 데이터 로드
 async function loadLogForEdit(logId) {
     try {
-        console.log('📝 수정 모드: 로그 로딩 중...', logId);
+        debugLog('📝 수정 모드: 로그 로딩 중...', logId);
         
         if (!logId || logId === 'null' || logId === 'undefined') {
             throw new Error('유효하지 않은 로그 ID입니다.');
@@ -76,7 +76,7 @@ async function loadLogForEdit(logId) {
         }
         
         currentLog = data;
-        console.log('✅ 로그 로드 완료:', currentLog);
+        debugLog('✅ 로그 로드 완료:', currentLog);
         
         // 폼에 데이터 채우기
         const dateInput = document.getElementById('dateInput');
@@ -168,7 +168,7 @@ async function initNewLog() {
 // 특정 날짜의 날씨 정보 로드
 async function loadWeatherForDate(date) {
     try {
-        console.log('🌤️ 날씨 로딩 중...', date);
+        debugLog('🌤️ 날씨 로딩 중...', date);
         
         currentWeather = await getWeatherByDate(date);
         
@@ -180,7 +180,7 @@ async function loadWeatherForDate(date) {
                     _futureHint: true
                 };
             }
-            console.log('🌤️ 날씨 정보:', currentWeather);
+            debugLog('🌤️ 날씨 정보:', currentWeather);
             updateWeatherDisplay(currentWeather);
         } else {
             // API 오류 등 날씨 로드 실패 시 기본값
@@ -293,7 +293,7 @@ function attachEventListeners() {
     saveBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('💾 저장 버튼 클릭됨');
+        debugLog('💾 저장 버튼 클릭됨');
         await handleSubmit();
     });
     
@@ -880,7 +880,7 @@ function validateForm() {
 
 // 폼 제출
 async function handleSubmit() {
-    console.log('💾 저장 시작');
+    debugLog('💾 저장 시작');
     
     const dateInput = document.getElementById('dateInput');
     const titleInput = document.getElementById('titleInput');
@@ -927,18 +927,18 @@ async function handleSubmit() {
             is_favorite: isEditMode ? currentLog.is_favorite : false // 수정 시에는 기존 값 유지, 신규는 false
         };
         
-        console.log('📝 저장할 데이터:', logData);
+        debugLog('📝 저장할 데이터:', logData);
         
         let result;
         if (isEditMode) {
             // 수정 모드
             result = await StyleLogAPI.update(currentLog.id, logData);
-            console.log('✅ 수정 성공:', result);
+            debugLog('✅ 수정 성공:', result);
             showAlert('수정되었습니다!');
         } else {
             // 새 로그 작성
             result = await StyleLogAPI.create(logData);
-            console.log('✅ 저장 성공:', result);
+            debugLog('✅ 저장 성공:', result);
             showAlert('저장되었습니다!');
         }
         

@@ -83,6 +83,45 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+/** support_inquiries 테이블 없음·스키마 캐시 오류 등 (다른 DB 오류와 구분) */
+function isSupportInquiriesTableMissingError(err) {
+    const code = String(err?.code || '');
+    const msg = String(err?.message || '');
+    const lower = msg.toLowerCase();
+    if (code === '42P01' && lower.includes('support_inquiries')) return true;
+    if (lower.includes('relation') && lower.includes('support_inquiries') && lower.includes('does not exist')) return true;
+    if (code === 'PGRST204' && (lower.includes('support_inquiries') || lower.includes('could not find'))) return true;
+    if (lower.includes('support_inquiries') && (lower.includes('schema cache') || lower.includes('not found in the schema cache'))) return true;
+    return false;
+}
+
+function getInquiryListErrorMessage(err) {
+    if (isSupportInquiriesTableMissingError(err)) {
+        return '문의 테이블이 이 프로젝트에 없거나 캐시 미갱신일 수 있습니다. support_inquiries.sql 실행·Table Editor 확인·잠시 후 재시도.';
+    }
+    const c = err?.code ? ` [${err.code}]` : '';
+    return `${err?.message || '알 수 없는 오류'}${c}`;
+}
+
+function getInquiryWriteErrorMessage(err) {
+    if (isSupportInquiriesTableMissingError(err)) {
+        return [
+            '문의를 저장하는 DB 테이블이 연결된 프로젝트에 아직 없거나, 방금 만든 직후 캐시가 갱신되지 않았을 수 있어요.',
+            '1) 앱이 쓰는 Supabase(테스트/리얼)에 support_inquiries.sql 을 실행했는지 확인',
+            '2) Table Editor에 public.support_inquiries 가 보이는지 확인',
+            '3) 1~2분 뒤 다시 시도 (여전하면 Dashboard에서 API 재시작 등)'
+        ].join('\n');
+    }
+    const code = err?.code ? ` [${err.code}]` : '';
+    const details = err?.details ? `\n${err.details}` : '';
+    const hint = err?.hint ? `\n힌트: ${err.hint}` : '';
+    const body = err?.message || '알 수 없는 오류';
+    if (String(err?.code) === '42501' || /row-level security|rls/i.test(body)) {
+        return `저장이 거부되었습니다(권한·RLS).${code}\n\n${body}${details}${hint}`;
+    }
+    return `전송에 실패했습니다.${code}\n\n${body}${details}${hint}`;
+}
+
 /** 기온 직접 입력 다이얼로그 - { low, high } 또는 null 반환 */
 function showTempInputDialog(currentLow, currentHigh, options = {}) {
     const { minVal = -20, maxVal = 40 } = options;
@@ -158,7 +197,7 @@ function showTempInputDialog(currentLow, currentHigh, options = {}) {
 
 // 아이템 메뉴 표시
 function showItemMenu(logId, date, onEdit, onDelete) {
-    console.log('📋 showItemMenu 호출:', { logId, date });
+    debugLog('📋 showItemMenu 호출:', { logId, date });
     
     const menuPopup = document.getElementById('itemMenuPopup');
     if (!menuPopup) {
@@ -186,7 +225,7 @@ function showItemMenu(logId, date, onEdit, onDelete) {
         editBtn.parentNode.replaceChild(newEditBtn, editBtn);
         
         newEditBtn.addEventListener('click', () => {
-            console.log('✏️ 수정 버튼 클릭:', { logId, date });
+            debugLog('✏️ 수정 버튼 클릭:', { logId, date });
             closeItemMenu();
             if (onEdit) onEdit(logId, date);
         });
@@ -197,7 +236,7 @@ function showItemMenu(logId, date, onEdit, onDelete) {
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
         
         newDeleteBtn.addEventListener('click', () => {
-            console.log('🗑️ 삭제 버튼 클릭:', logId);
+            debugLog('🗑️ 삭제 버튼 클릭:', logId);
             closeItemMenu();
             if (onDelete) onDelete(logId);
         });
@@ -208,7 +247,7 @@ function showItemMenu(logId, date, onEdit, onDelete) {
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
         
         newCancelBtn.addEventListener('click', () => {
-            console.log('❌ 취소 버튼 클릭');
+            debugLog('❌ 취소 버튼 클릭');
             closeItemMenu();
         });
     }
@@ -219,7 +258,7 @@ function showItemMenu(logId, date, onEdit, onDelete) {
         
         newOverlay.addEventListener('click', () => {
             if (Date.now() - openTime < CLOSE_GUARD_MS) return; /* 빠른 탭 시 무시 */
-            console.log('📱 오버레이 클릭 - 메뉴 닫기');
+            debugLog('📱 오버레이 클릭 - 메뉴 닫기');
             closeItemMenu();
         });
     }
@@ -289,7 +328,7 @@ if (typeof utils !== 'undefined') {
     };
     
     utils.showSuccess = utils.showSuccess || function(message) {
-        console.log('✅', message);
+        debugLog('✅', message);
     };
 }
 

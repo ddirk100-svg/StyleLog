@@ -66,7 +66,7 @@ const StyleLogAPI = {
             const lastDay = new Date(yearNum, monthNum, 0).getDate();
             const endDate = `${yearNum}-${monthStr}-${lastDay}`;
             
-            console.log('📅 월별 조회:', { year: yearNum, month: monthNum, startDate, endDate });
+            debugLog('📅 월별 조회:', { year: yearNum, month: monthNum, startDate, endDate });
             
             const { data, error } = await supabaseClient
                 .from('style_logs')
@@ -80,7 +80,7 @@ const StyleLogAPI = {
                 throw error;
             }
             
-            console.log('✅ 조회 성공:', data ? data.length : 0, '개');
+            debugLog('✅ 조회 성공:', data ? data.length : 0, '개');
             return data || [];
         } catch (error) {
             console.error('월별 조회 오류:', error);
@@ -101,7 +101,7 @@ const StyleLogAPI = {
                 throw error;
             }
             
-            console.log(`✅ ID ${id} 데이터 조회 성공:`, data);
+            debugLog(`✅ ID ${id} 데이터 조회 성공:`, data);
             return data;
         } catch (error) {
             console.error('ID 조회 오류:', error);
@@ -125,12 +125,12 @@ const StyleLogAPI = {
             
             // 데이터가 없으면 null 반환
             if (!data || data.length === 0) {
-                console.log(`📭 ${date} 날짜에 데이터 없음`);
+                debugLog(`📭 ${date} 날짜에 데이터 없음`);
                 return null;
             }
             
             // 첫 번째 데이터 반환 (가장 최근 생성된 것)
-            console.log(`✅ ${date} 데이터 조회 성공:`, data[0]);
+            debugLog(`✅ ${date} 데이터 조회 성공:`, data[0]);
             return data[0];
         } catch (error) {
             console.error('날짜별 조회 오류:', error);
@@ -163,7 +163,7 @@ const StyleLogAPI = {
                 user_id: user.id
             };
 
-            console.log('📝 로그 생성 (user_id 포함):', dataWithUserId);
+            debugLog('📝 로그 생성 (user_id 포함):', dataWithUserId);
             
             const { data, error } = await supabaseClient
                 .from('style_logs')
@@ -172,7 +172,7 @@ const StyleLogAPI = {
                 .single();
             
             if (error) throw error;
-            console.log('✅ 로그 생성 완료:', data);
+            debugLog('✅ 로그 생성 완료:', data);
             return data;
         } catch (error) {
             console.error('❌ 로그 생성 오류:', error);

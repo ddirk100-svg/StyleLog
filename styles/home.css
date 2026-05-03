@@ -109,6 +109,13 @@ body:has(.container.day-view-active) {
     overflow-y: visible !important;
 }
 
+/* 일별 리스트 스티키: 헤더(77) → 연도 밴드 → 월 밴드 (PC 기본) */
+:root {
+    --home-day-header-height: 77px;
+    /* 연도 한 줄 + 최소 세로 패딩 (sticky 시 월의 top과 일치해야 빈틈 없음) */
+    --home-day-year-band-height: 30px;
+}
+
 /* 헤더 */
 .header {
     display: flex;
@@ -122,6 +129,8 @@ body:has(.container.day-view-active) {
     flex-shrink: 0;
     transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1);
     box-shadow: 0 1px 0 var(--color-border-lighter);
+    box-sizing: border-box;
+    min-height: var(--home-day-header-height);
 }
 
 /* 스크롤 내릴 때 헤더 숨김 (일별 리스트) */
@@ -137,7 +146,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .year-label-day-vi
 }
 
 body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-view {
-    top: calc(env(safe-area-inset-top, 0px) + 24px); /* year 높이에 딱 맞춤 */
+    top: calc(env(safe-area-inset-top, 0px) + var(--home-day-year-band-height));
     padding-top: 0;
 }
 
@@ -757,6 +766,66 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     opacity: 0.5;
 }
 
+/* 날씨 카드 — 맞춤 코디 토글 */
+.weather-widget-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.weather-recommend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.weather-recommend-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+    letter-spacing: -0.02em;
+}
+
+.home-recommend-switch {
+    width: 48px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.home-recommend-switch::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #fff;
+    top: 3px;
+    left: 3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.home-recommend-switch.is-on {
+    background: var(--color-primary);
+}
+
+.home-recommend-switch.is-on::after {
+    transform: translateX(20px);
+}
+
 /* 기온별 옷차림 캐러셀 */
 .outfit-carousel-section {
     width: 100%;
@@ -777,54 +846,166 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     letter-spacing: -0.02em;
 }
 
-.outfit-carousel-section .outfit-carousel {
+/* 코디 모음 — 필터 블록 바로 위 섹션 제목 (기온별 옷차림과 동일 타이포) */
+.coordi-collection-heading {
+    width: 100%;
+    padding: 0 16px;
+    margin: 0 0 12px;
+    flex-shrink: 0;
+    background: var(--color-bg-primary);
+}
+.coordi-collection-heading .outfit-carousel-title {
+    margin-bottom: 0;
+}
+
+/* 기온 구간 칩 (필터 바 카테고리 칩과 동일: 한 줄 가로 스크롤) */
+.outfit-range-row {
+    display: flex;
+    align-items: center;
+    margin: 0 -16px var(--spacing-md);
+    padding: 0;
+    position: relative;
+}
+.outfit-range-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: linear-gradient(to right, var(--color-bg-primary), transparent);
+}
+.outfit-range-row.fade-left::before {
+    opacity: 1;
+}
+.outfit-range-row::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: linear-gradient(to left, var(--color-bg-primary), transparent);
+}
+.outfit-range-row.fade-right::after {
+    opacity: 1;
+}
+.outfit-range-chips-wrap {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 16px;
+    position: relative;
+}
+.outfit-range-chips-wrap::-webkit-scrollbar {
+    display: none;
+}
+.outfit-range-chips {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 0;
+    min-width: min-content;
+}
+.outfit-range-btn {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border-mid);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+@media (hover: hover) {
+    .outfit-range-btn:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+    }
+}
+.outfit-range-btn.is-active {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-bg-hover);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+    font-weight: 600;
+}
+.outfit-range-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* 정적 샘플 이미지 1장 (슬라이더 없음) */
+.outfit-sample-frame {
     height: 240px;
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    background: var(--color-bg-secondary);
 }
-
-/* 이미지 원본 비율 유지 - 전부 보이게 (contain) */
-.outfit-carousel-section .photo-slide {
-    background-color: var(--color-bg-secondary);
-}
-
-.outfit-carousel-section .photo-slide img {
-    object-fit: contain;
+.outfit-sample-frame img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
-.outfit-carousel-section .photo-indicators {
-    bottom: 12px;
+.outfit-carousel-section[hidden] {
+    display: none !important;
 }
 
-.outfit-carousel-section .indicator {
-    background: rgba(0, 0, 0, 0.25);
+.outfit-carousel-slide {
+    position: relative;
+    cursor: pointer;
 }
 
-.outfit-carousel-section .indicator.active {
-    background: var(--color-primary);
-}
-
-.outfit-carousel-section .indicator:hover {
-    background: rgba(0, 0, 0, 0.4);
-}
-
-/* outfit-carousel: 밝은 배경(bg-secondary)에서도 버튼이 보이도록 */
-.outfit-carousel-section .photo-nav {
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
-}
-.outfit-carousel-section .photo-nav:hover {
-    background: rgba(0, 0, 0, 0.5);
+.outfit-carousel-slide-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+    font-size: var(--font-size-sm);
     color: #fff;
+    font-weight: var(--font-weight-semibold);
+    pointer-events: none;
 }
-.outfit-carousel-section .photo-nav:active {
-    background: rgba(0, 0, 0, 0.6);
+
+.outfit-carousel-slide--empty {
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.outfit-carousel-empty-inner {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-text-secondary);
+}
+
+.outfit-carousel-empty-inner .util-sub {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
 }
 
 /* 필터 + 일별 리스트 (하나의 세트) - overflow: visible 필수 (year/month 레이블 sticky 동작) */
@@ -1564,13 +1745,6 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     stroke-width: 1.5;
 }
 
-.weather-widget-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
-}
-
 .weather-widget-summary {
     display: flex;
     flex-wrap: wrap;
@@ -1745,30 +1919,35 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 /* 연도 레이블 (일별 리스트용) - 좌우 여백 없이 화면 꽉 */
 .year-label-day-view {
     position: sticky;
-    top: 77px;
+    top: var(--home-day-header-height);
     transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
     margin: 0 -20px;
-    padding: 12px 20px 4px;
-    font-size: 22px;
+    padding: 0 20px;
+    min-height: var(--home-day-year-band-height);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
     font-weight: 700;
+    line-height: 1.2;
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
     z-index: 11;
     margin-top: 0;
     margin-bottom: 0;
     width: calc(100% + 40px);
-    display: block;
 }
 
 /* 월 레이블 (일별 리스트용) - 좌우 여백 없이 화면 꽉 */
 .month-label-day-view {
     position: sticky;
-    top: 122px; /* Header(77) + YearLabel(~45) - 간격 최소화 */
+    top: calc(var(--home-day-header-height) + var(--home-day-year-band-height));
     transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
     margin: 0 -20px 8px;
-    padding: 4px 20px 6px;
+    padding: 0 20px 4px;
     font-size: 16px;
     font-weight: 600;
+    line-height: 1.25;
     color: var(--color-text-secondary);
     background-color: var(--color-bg-primary);
     z-index: 11;
@@ -1963,26 +2142,25 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 
 /* 반응형 */
 @media (max-width: 428px) {
+    :root {
+        --home-day-header-height: 72px;
+        --home-day-year-band-height: 28px;
+    }
+
     .container {
         max-width: 100%;
         padding-bottom: calc(var(--bottom-nav-height-mobile) + env(safe-area-inset-bottom, 0px) + var(--spacing-sm));
     }
     
-    .outfit-carousel-title {
-        font-size: 20px;
-    }
-    
     .year-label-day-view {
-        top: 72px;
-        font-size: 20px;
-        padding: 10px var(--spacing-lg) 4px;
+        font-size: 16px;
+        padding: 0 var(--spacing-lg);
         margin-bottom: 0;
     }
     
     .month-label-day-view {
-        top: 110px; /* Header(72) + YearLabel(~38) - 간격 최소화 */
         font-size: 15px;
-        padding: 4px var(--spacing-lg) 4px;
+        padding: 0 var(--spacing-lg) 4px;
         margin-top: 0;
         margin-bottom: 6px;
     }

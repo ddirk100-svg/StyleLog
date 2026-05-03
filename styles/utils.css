@@ -113,3 +113,74 @@
     color: var(--color-text-tertiary);
     font-size: var(--font-size-base);
 }
+
+/* 작성/상세: 본문과 구분되는 보조 액션 (마이페이지 메뉴 행과 톤 맞춤) */
+.page-aux-section {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border-lighter);
+}
+
+.page-aux-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+}
+
+.page-aux-menu {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.page-aux-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px 16px;
+    margin: 0;
+    border: none;
+    background: none;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.page-aux-menu-item:hover {
+    background: var(--color-bg-primary);
+}
+
+.page-aux-menu-item:active {
+    opacity: 0.9;
+}
+
+.page-aux-menu-icon {
+    width: 32px;
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
+    text-align: center;
+}
+
+.page-aux-menu-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.page-aux-menu-arrow {
+    flex-shrink: 0;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--color-text-tertiary);
+    line-height: 1;
+}

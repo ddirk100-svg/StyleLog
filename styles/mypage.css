@@ -119,6 +119,15 @@
     transition: background 0.2s;
 }
 
+.mypage-menu button.menu-item {
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+}
+
 .mypage-menu .menu-item:hover {
     background: var(--color-bg-secondary);
 }

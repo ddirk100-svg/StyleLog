@@ -6,7 +6,9 @@
 
 스타일로그는 일상의 패션 선택을 기록하고, 날씨와 상황에 맞는 스타일을 찾아갈 수 있도록 돕는 서비스입니다.
 
-### v1.2 기능
+### v1.3 기능 (v1.2 포함)
+- ✅ **고객센터**: 1:1 문의(`support_inquiries`), 문의내역·답변 표시, FAQ(인앱 HTML)
+- ✅ **마이페이지**: 하단 앱 버전 표시 (`config.js`의 `APP_VERSION`, 현재 **1.3V**)
 - ✅ 착장 기록 CRUD (사진, 날짜, 메모, 즐겨찾기)
 - ✅ 홈 화면: 연도 선택 + 일별 리스트
 - ✅ **날씨 필터**: 최저/최고 슬라이더 + 드롭다운(오늘/전체/커스텀)
@@ -22,7 +24,9 @@ stylelog/
 ├── home.html              # 홈 화면
 ├── write.html              # 착장 작성/수정
 ├── detail.html             # 상세 보기
-├── mypage.html             # 마이페이지
+├── mypage.html             # 마이페이지 (하단 `APP_VERSION` 표시)
+├── inquiry.html            # 고객센터 (문의내역·FAQ)
+├── inquiry-write.html      # 1:1 문의 작성
 ├── landing.html            # 랜딩 페이지
 ├── login.html              # 로그인
 ├── signup.html             # 회원가입

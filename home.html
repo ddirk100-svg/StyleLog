@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- StyleLog-build: 20250302-thumb (select 제외, statement timeout 수정) -->
+<!-- StyleLog 1.3V · 고객센터(문의·FAQ)·support_inquiries 등 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -65,6 +65,12 @@
                     <p>로딩 중...</p>
                 </div>
                 <div class="menu-items">
+                    <button type="button" class="menu-item" data-open-feedback>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>의견·개선 보내기</span>
+                    </button>
                     <button class="menu-item" onclick="logout()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -97,35 +103,38 @@
                         <span class="weather-widget-status" id="weatherStatus">--</span>
                         <span class="weather-widget-diff" id="weatherDiff"></span>
                     </div>
+                    <div class="weather-recommend-row">
+                        <span class="weather-recommend-label" id="recommendModeLabel">날씨 맞춤 코디</span>
+                        <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 기온별 옷차림 이미지 (스와이프 캐러셀) -->
+        <!-- 기온별 옷차림 (가로 스크롤 칩 → 정적 이미지 1장 교체) -->
         <section class="outfit-carousel-section" id="outfitCarouselSection">
             <h2 class="outfit-carousel-title">기온별 옷차림</h2>
-            <div class="outfit-carousel photo-gallery" id="outfitCarouselGallery">
-                <button type="button" class="photo-nav photo-nav-prev hidden" id="outfitCarouselPrev" aria-label="이전">‹</button>
-                <button type="button" class="photo-nav photo-nav-next" id="outfitCarouselNext" aria-label="다음">›</button>
-                <div class="photo-slider" id="outfitCarouselSlider">
-                    <div class="photo-slide"><img src="img/weather_sample_1.jpg" alt="기온별 옷차림 1" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                    <div class="photo-slide"><img src="img/weather_sample_2.jpg" alt="기온별 옷차림 2" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                    <div class="photo-slide"><img src="img/weather_sample_3.jpg" alt="기온별 옷차림 3" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                    <div class="photo-slide"><img src="img/weather_sample_4.jpg" alt="기온별 옷차림 4" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                    <div class="photo-slide"><img src="img/weather_sample_5.jpg" alt="기온별 옷차림 5" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                    <div class="photo-slide"><img src="img/weather_sample_6.jpg" alt="기온별 옷차림 6" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                    <div class="photo-slide"><img src="img/weather_sample_7.jpg" alt="기온별 옷차림 7" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'"></div>
-                </div>
-                <div class="photo-indicators" id="outfitCarouselIndicators">
-                    <span class="indicator active" data-index="0"></span>
-                    <span class="indicator" data-index="1"></span>
-                    <span class="indicator" data-index="2"></span>
-                    <span class="indicator" data-index="3"></span>
-                    <span class="indicator" data-index="4"></span>
-                    <span class="indicator" data-index="5"></span>
-                    <span class="indicator" data-index="6"></span>
+            <div class="outfit-range-row">
+                <div class="outfit-range-chips-wrap" id="outfitRangeChipsWrap">
+                    <div class="outfit-range-chips" id="outfitRangeSelector" role="radiogroup" aria-label="기온 구간">
+                        <button type="button" class="outfit-range-btn is-active" role="radio" aria-checked="true" data-slide-index="0">4도 이하</button>
+                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="1">5~8도</button>
+                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="2">9~11도</button>
+                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="3">12~16도</button>
+                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="4">17~19도</button>
+                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="5">20~22도</button>
+                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="6">23도 이상</button>
+                    </div>
                 </div>
             </div>
+            <div class="outfit-sample-frame">
+                <img id="outfitSampleImage" src="img/weather_sample_1.jpg" alt="4도 이하 기온 참고 이미지" width="400" height="240" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'">
+            </div>
+        </section>
+
+        <!-- 코디 모음: 필터·일별 리스트 상단 헤더 -->
+        <section class="coordi-collection-heading" aria-labelledby="coordiCollectionHeading">
+            <h2 class="outfit-carousel-title" id="coordiCollectionHeading">코디 모음</h2>
         </section>
 
         <!-- 필터 + 일별 리스트 (하나의 세트) -->
@@ -296,7 +305,8 @@
     <script src="scripts/api.js?v=2" defer></script>
     <script src="scripts/auth.js" defer></script>
     <script src="scripts/common.js" defer></script>
-    <script src="scripts/home.js?v=2" defer></script>
+    <script src="scripts/feedback.js" defer></script>
+    <script src="scripts/home.js?v=14" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

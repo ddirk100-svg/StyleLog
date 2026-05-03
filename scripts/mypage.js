@@ -1,6 +1,10 @@
 // 마이페이지 스크립트
 
 async function initPage() {
+    const verEl = document.querySelector('.app-version');
+    if (verEl && typeof APP_VERSION !== 'undefined' && APP_VERSION) {
+        verEl.textContent = `스타일로그 ${APP_VERSION}`;
+    }
     await loadUserProfile();
     attachEventListeners();
     loadStats().catch(() => {}); /* 통계는 비동기 로드 - 화면 먼저 표시 */

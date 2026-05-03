@@ -23,6 +23,7 @@
     <script src="scripts/api.js"></script>
     <script src="scripts/auth.js"></script>
     <script src="scripts/common.js"></script>
+    <script src="scripts/feedback.js"></script>
 </head>
 <body class="has-bottom-nav">
     <main class="container" id="mypageView">
@@ -60,6 +61,11 @@
                 <span class="menu-label">고객센터</span>
                 <span class="menu-arrow">›</span>
             </a>
+            <button type="button" class="menu-item" data-open-feedback>
+                <span class="menu-icon">💬</span>
+                <span class="menu-label">불편·개선 의견 보내기</span>
+                <span class="menu-arrow" aria-hidden="true">›</span>
+            </button>
         </section>
 
         <section class="mypage-actions">
@@ -67,7 +73,7 @@
         </section>
 
         <section class="mypage-footer">
-            <p class="app-version">스타일로그 1.2.2V</p>
+            <p class="app-version" aria-label="앱 버전">스타일로그 1.3V</p>
         </section>
     </main>
 

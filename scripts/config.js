@@ -1,4 +1,9 @@
 // ===================================
+// 앱 버전 (마이페이지 푸터 등 표시용 — 배포 시 여기와 문서만 맞추면 됩니다)
+// ===================================
+const APP_VERSION = '1.3V';
+
+// ===================================
 // 환경 설정
 // ===================================
 // 개발 환경 체크
@@ -13,6 +18,11 @@ const isAlpha = window.location.hostname.includes('alpha') ||
 
 // 테스트 환경 여부 (dev 또는 alpha)
 const isTestEnvironment = isDevelopment || isAlpha;
+
+/** 로컬·알파에서만 상세 로그 (프로덕션 콘솔·소폭 비용 절감) */
+function debugLog(...args) {
+    if (isTestEnvironment) console.log(...args);
+}
 
 // ===================================
 // Supabase 설정
@@ -52,7 +62,7 @@ if (isDevelopment) {
 }
 
 if (isTestEnvironment) {
-    console.log(`🚀 환경: ${environmentName}`, `DB: 테스트`);
+    debugLog(`🚀 환경: ${environmentName}`, `DB: 테스트`);
 }
 
 // 날씨 API 설정 - Open-Meteo (완전 무료, API 키 불필요!)
