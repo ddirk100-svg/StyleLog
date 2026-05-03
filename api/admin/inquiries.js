@@ -12,6 +12,7 @@ const {
   dbErrorHint
 } = require('../_lib/admin-common.js');
 const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
+const { applyInquiryListFilterByReplyStatus } = require('../_lib/support-inquiries.js');
 
 module.exports = async function handler(req, res) {
   const host = getHost(req);
@@ -43,11 +44,7 @@ module.exports = async function handler(req, res) {
           { count: 'exact' }
         );
 
-      if (statusFilter === 'open') {
-        query = query.or('admin_reply.is.null,admin_reply.eq.');
-      } else if (statusFilter === 'answered') {
-        query = query.not('admin_reply', 'is', null).neq('admin_reply', '');
-      }
+      query = applyInquiryListFilterByReplyStatus(query, statusFilter);
 
       const orPart = orIlikeClauses(['title', 'body'], qRaw);
       if (orPart) query = query.or(orPart);

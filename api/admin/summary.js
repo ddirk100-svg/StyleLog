@@ -7,6 +7,10 @@ const {
   buildSupabaseNotConfiguredBody
 } = require('../_lib/admin-common.js');
 const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
+const {
+  fetchInquiryCountsByReply,
+  enrichRecentInquiriesAdminReply
+} = require('../_lib/support-inquiries.js');
 
 function normalizeDashboardSnapshot(raw) {
   const j = raw && typeof raw === 'object' ? raw : null;
@@ -45,38 +49,6 @@ async function tryDashboardSnapshot(supabase) {
     }
   }
   return normalizeDashboardSnapshot(parsed);
-}
-
-async function fetchInquiryCountsByReply(supabase) {
-  const [openInq, answeredInq] = await Promise.all([
-    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).or('admin_reply.is.null,admin_reply.eq.'),
-    supabase
-      .from('support_inquiries')
-      .select('*', { count: 'exact', head: true })
-      .not('admin_reply', 'is', null)
-      .neq('admin_reply', '')
-  ]);
-  return {
-    inquiriesOpen: openInq.count ?? 0,
-    inquiriesAnswered: answeredInq.count ?? 0
-  };
-}
-
-/** RPC/구 스냅샷에 admin_reply 가 없을 때 대시보드·문의 페이지 상태 불일치 방지 */
-async function enrichRecentInquiriesAdminReply(supabase, rows) {
-  if (!Array.isArray(rows) || rows.length === 0) return rows;
-  const ids = [...new Set(rows.map((r) => r && r.id).filter(Boolean))];
-  if (!ids.length) return rows;
-  const { data, error } = await supabase.from('support_inquiries').select('id,admin_reply').in('id', ids);
-  if (error || !data) {
-    if (error) console.warn('enrichRecentInquiriesAdminReply', error.message || error.code || '');
-    return rows;
-  }
-  const map = new Map(data.map((r) => [r.id, r.admin_reply]));
-  return rows.map((r) => {
-    if (!r || !r.id) return r;
-    return { ...r, admin_reply: map.has(r.id) ? map.get(r.id) : r.admin_reply };
-  });
 }
 
 async function loadSummaryLegacy(supabase, inqCountsPre) {
