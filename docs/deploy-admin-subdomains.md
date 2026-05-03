@@ -52,3 +52,44 @@ Vercel 이 준 비교 화면 기준으로 예시:
 ```
 
 또 나중에 Edge Middleware 로 일반화할 수 있습니다.
+
+---
+
+## 5. 관리자 TOTP(구글 OTP) · API 환경 변수
+
+어드민 데이터는 **RLS로 일반 클라이언트(anon 키)가 전체 조회 불가**이므로, Vercel 서버리스(`/api/admin/*`)가 **Supabase 서비스 롤**로 조회합니다.  
+또 **TOTP 비밀은 브라우저에 두면 안 되므로** 서버에서만 검증합니다.
+
+### Vercel → Project → Settings → Environment Variables
+
+| 변수명 | 설명 |
+|--------|------|
+| `ADMIN_TOTP_SECRET` | 프로덕션(리얼)용 **Base32** 시크릿. Google Authenticator에 수동 입력하거나 QR 생성 시 이 값 사용. |
+| `ADMIN_SESSION_SECRET` | 세션 쿠키 HMAC용 임의 긴 문자열(예: `openssl rand -hex 32`). |
+| `ADMIN_TOTP_SECRET_PREVIEW` | (선택) 프리뷰/알파용 별도 TOTP 시크릿. 없으면 `ADMIN_TOTP_SECRET` 재사용. |
+| `ADMIN_SESSION_SECRET_PREVIEW` | (선택) 프리뷰용 세션 서명. 없으면 `ADMIN_SESSION_SECRET` 재사용. |
+| `SUPABASE_URL_PROD` | 리얼 프로젝트 URL (`config.js` 의 프로덕션과 동일). |
+| `SUPABASE_SERVICE_ROLE_KEY_PROD` | 리얼 **service_role** 키 (Dashboard → Settings → API). **절대 프론트/레포에 커밋 금지.** |
+| `SUPABASE_URL_DEV` | 테스트/알파 프로젝트 URL. |
+| `SUPABASE_SERVICE_ROLE_KEY_DEV` | 테스트 **service_role** 키. |
+
+**이름 단축(선택):** `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`만 넣어도 동작합니다.  
+호스트에 `alpha`가 있거나 Vercel 프리뷰 배포이면 `_DEV` → 없으면 `_PROD` → 둘 다 없으면 공통 변수로 폴백합니다.
+
+### 휴대폰 앱에 등록
+
+1. 시크릿 생성 예: `openssl rand -base32 20`
+2. Google Authenticator → 계정 추가 → **설정 키 입력** → 위 Base32 붙여넣기
+3. Vercel에 동일 값을 `ADMIN_TOTP_SECRET`(또는 프리뷰용 변수)로 저장 후 재배포
+
+### 로컬
+
+`file://` 로 연 HTML에는 API가 없습니다. 저장소 루트에서 `npx vercel dev` 로 띄운 뒤 `/admin/index.html` 경로로 접속하세요.
+
+### API 경로 (참고)
+
+- `GET/POST/DELETE` `/api/admin/session` — OTP 검증·HttpOnly 쿠키
+- `GET` `/api/admin/summary` — 대시보드 카운트
+- `GET` `PATCH` `/api/admin/inquiries` — 문의 목록·답변 저장
+- `GET` `/api/admin/feedback` — 피드백 목록
+- `GET` `/api/admin/members` — Auth 사용자 목록(페이지네이션)·`style_logs` 건수

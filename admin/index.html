@@ -27,32 +27,35 @@
     </aside>
     <div class="admin-main">
         <header class="admin-topbar">
-            <h1 class="admin-page-title">대시보드</h1>
-            <p class="admin-topbar-meta">연동 전 · 수치는 표시만</p>
+            <div class="admin-topbar-title-wrap">
+                <h1 class="admin-page-title">대시보드</h1>
+                <p class="admin-topbar-meta">불러오는 중…</p>
+            </div>
         </header>
         <main class="admin-content">
             <div class="admin-banner">
-                <strong>초안 단계입니다.</strong> Supabase · 인증 · Edge Function 연동 후 카드 수치와 목록이 채워집니다.
-                프로덕션에서는 반드시 관리자 인증과 <code style="font-size:12px">noindex</code> 를 유지하세요.
+                <strong>TOTP 2차 인증</strong> 후에만 대시보드가 사용됩니다. Vercel 환경 변수 설정은
+                <code style="font-size:12px">docs/deploy-admin-subdomains.md</code> 를 참고하세요.
+                공개 색인 방지를 위해 <code style="font-size:12px">noindex</code> 를 유지합니다.
             </div>
 
             <section aria-labelledby="dash-summary">
                 <h2 id="dash-summary" class="admin-section-title">요약</h2>
                 <div class="admin-grid">
                     <a class="admin-card" href="members.html">
-                        <div class="admin-card-label">회원</div>
-                        <div class="admin-card-value">—</div>
-                        <div class="admin-card-hint">가입·활동 요약 (예정)</div>
+                        <div class="admin-card-label">회원 (목록 최대 1000)</div>
+                        <div class="admin-card-value"><span data-admin-metric="members">—</span></div>
+                        <div class="admin-card-hint">Auth · 스타일 로그 수(페이지별)</div>
                     </a>
                     <a class="admin-card" href="inquiries.html">
                         <div class="admin-card-label">문의</div>
-                        <div class="admin-card-value">—</div>
-                        <div class="admin-card-hint">미답변 / 전체 (예정)</div>
+                        <div class="admin-card-value"><span data-admin-metric="inq-open">—</span> / <span data-admin-metric="inq-total">—</span></div>
+                        <div class="admin-card-hint">미답변 / 전체</div>
                     </a>
                     <a class="admin-card" href="feedback.html">
                         <div class="admin-card-label">피드백</div>
-                        <div class="admin-card-value">—</div>
-                        <div class="admin-card-hint">최근 의견 (예정)</div>
+                        <div class="admin-card-value"><span data-admin-metric="fb-total">—</span></div>
+                        <div class="admin-card-hint">user_feedback 전체 건수</div>
                     </a>
                 </div>
             </section>
@@ -62,20 +65,22 @@
                 <div class="admin-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
                     <a class="admin-card" href="members.html">
                         <div class="admin-card-label">회원 현황</div>
-                        <div class="admin-card-hint">Auth / 통계 (예정)</div>
+                        <div class="admin-card-hint">이메일 검색 · 페이지 이동</div>
                     </a>
                     <a class="admin-card" href="inquiries.html">
                         <div class="admin-card-label">고객 문의</div>
-                        <div class="admin-card-hint">목록 · 상세 · 답변 작성 (예정)</div>
+                        <div class="admin-card-hint">답변 저장 · 상태 변경</div>
                     </a>
                     <a class="admin-card" href="feedback.html">
                         <div class="admin-card-label">고객 피드백</div>
-                        <div class="admin-card-hint">user_feedback 목록 (예정)</div>
+                        <div class="admin-card-hint">유형 · 본문 확인</div>
                     </a>
                 </div>
             </section>
         </main>
     </div>
-    <script src="/scripts/admin-shell.js"></script>
+    <script src="/scripts/admin-gate.js" defer></script>
+    <script src="/scripts/admin-shell.js" defer></script>
+    <script src="/scripts/admin-page-dashboard.js" defer></script>
 </body>
 </html>
