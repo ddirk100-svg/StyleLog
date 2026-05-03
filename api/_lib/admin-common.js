@@ -16,6 +16,32 @@ const SESSION_MAX_MS = 10 * 60 * 60 * 1000; // 10h
 const DEFAULT_DEV_SUPABASE_URL = 'https://roeurruguzxipevppnko.supabase.co';
 const DEFAULT_PROD_SUPABASE_URL = 'https://zymszibiwojzrtxhiesc.supabase.co';
 
+/**
+ * Dashboard 에서 복사한 값이 /rest/v1 · /auth/v1 등으로 끝나는 경우가 많음.
+ * 그대로 두면 Auth 요청이 …/auth/v1/auth/v1/... 가 되어 "Invalid path specified in request URL" 이 난다.
+ * @param {string} raw
+ * @returns {string}
+ */
+function normalizeSupabaseProjectUrl(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  let s = raw.trim().replace(/\/+$/, '');
+  const lower = s.toLowerCase();
+  const suffixes = ['/rest/v1', '/auth/v1', '/storage/v1', '/functions/v1', '/realtime/v1'];
+  for (const suf of suffixes) {
+    if (lower.endsWith(suf)) {
+      s = s.slice(0, s.length - suf.length).replace(/\/+$/, '');
+      break;
+    }
+  }
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
+    if (!u.hostname) return raw.trim().replace(/\/+$/, '');
+    return `${u.protocol}//${u.hostname}`;
+  } catch {
+    return raw.trim().replace(/\/+$/, '');
+  }
+}
+
 function getHost(req) {
   const h = req.headers['x-forwarded-host'] || req.headers.host || '';
   return String(h).split(',')[0].trim().toLowerCase();
@@ -96,9 +122,10 @@ function resolveSupabaseEnv(host) {
   const test = useTestDatabase(host);
 
   if (!test) {
-    const url =
+    const rawUrl =
       firstEnvStr('SUPABASE_URL_PROD', 'SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL') ||
       DEFAULT_PROD_SUPABASE_URL;
+    const url = normalizeSupabaseProjectUrl(rawUrl);
     const key = firstEnvStr(
       'SUPABASE_SERVICE_ROLE_KEY_PROD',
       'SUPABASE_SERVICE_ROLE_PROD',
@@ -110,10 +137,12 @@ function resolveSupabaseEnv(host) {
 
   const strict = usesStrictDevSupabase(host);
 
-  const devUrl = strict
+  const rawDev = strict
     ? firstEnvStr('SUPABASE_URL_DEV') || DEFAULT_DEV_SUPABASE_URL
     : firstEnvStr('SUPABASE_URL_DEV', 'SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL') ||
       DEFAULT_DEV_SUPABASE_URL;
+
+  const devUrl = normalizeSupabaseProjectUrl(rawDev);
 
   const devKey = strict
     ? firstEnvStr('SUPABASE_SERVICE_ROLE_KEY_DEV', 'SUPABASE_SERVICE_ROLE_DEV')
