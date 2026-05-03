@@ -47,8 +47,18 @@
       g.AdminEnvHint?.applyServerMisconfigured?.(meta, null, j);
     } else {
       const H = g.AdminEnvHint;
-      if (H) H.applyMetaForApiFailure(meta, r.status);
-      else if (meta) meta.textContent = '불러오기 실패';
+      const parts = [];
+      if (j && j.error) parts.push(String(j.error));
+      if (j && j.detail) parts.push(String(j.detail));
+      if (j && j.hint) parts.push(String(j.hint));
+      if (meta && parts.length) {
+        meta.removeAttribute('hidden');
+        meta.textContent = `HTTP ${r.status}: ${parts.join(' — ')}`;
+      } else if (H) {
+        H.applyMetaForApiFailure(meta, r.status);
+      } else if (meta) {
+        meta.textContent = '불러오기 실패';
+      }
     }
     if (tbody) {
       tbody.innerHTML = `<tr class="admin-placeholder-row"><td colspan="${colspan}">불러오기 실패</td></tr>`;
