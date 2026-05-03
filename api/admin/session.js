@@ -1,5 +1,6 @@
 const {
   getHost,
+  isAdminDevOtpBypass,
   sessionSecretForHost,
   totpSecretForHost,
   listMissingAdminAuthEnv,
@@ -23,7 +24,10 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      if (!sessionSecretForHost(host) || !totpSecretForHost(host)) {
+      if (
+        !isAdminDevOtpBypass(host) &&
+        (!sessionSecretForHost(host) || !totpSecretForHost(host))
+      ) {
         const missing = listMissingAdminAuthEnv(host);
         sendJson(res, 503, {
           ok: false,
@@ -39,7 +43,11 @@ module.exports = async function handler(req, res) {
       }
       const sess = getSessionFromRequest(req, host);
       if (sess) {
-        sendJson(res, 200, { ok: true, authed: true });
+        sendJson(res, 200, {
+          ok: true,
+          authed: true,
+          devBypass: Boolean(sess.devBypass)
+        });
       } else {
         sendJson(res, 401, { ok: false, authed: false });
       }
@@ -47,12 +55,19 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      if (!sessionSecretForHost(host) || !totpSecretForHost(host)) {
+      if (
+        !isAdminDevOtpBypass(host) &&
+        (!sessionSecretForHost(host) || !totpSecretForHost(host))
+      ) {
         sendJson(res, 503, {
           ok: false,
           error: 'server_misconfigured',
           missing: listMissingAdminAuthEnv(host)
         });
+        return;
+      }
+      if (isAdminDevOtpBypass(host)) {
+        sendJson(res, 200, { ok: true, devBypass: true });
         return;
       }
       const body = await readJsonBody(req);

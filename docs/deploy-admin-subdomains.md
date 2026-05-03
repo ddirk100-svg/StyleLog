@@ -93,6 +93,15 @@ npm run admin:secrets
 
 `file://` 로 연 HTML에는 API가 없습니다. 저장소 루트에서 `npx vercel dev` 로 띄운 뒤 `/admin/index.html` 경로로 접속하세요.
 
+**OTP 없이 로컬만 어드민 UI 테스트:** 프로젝트 루트에 `.env.local` 을 만들고(저장소는 `.gitignore`에 포함됨):
+
+```env
+ADMIN_DEV_OTP_BYPASS=1
+```
+
+`vercel dev` 로 열고 브라우저가 **`localhost` 또는 `127.0.0.1`** 일 때만 OTP·세션 시크릿 없이 통과합니다.  
+이 변수는 **Vercel 클라우드(Production/Preview)에는 넣지 마세요.** 배포 빌드에서는 `VERCEL_ENV` 가 `production` / `preview` 일 때 우회 로직이 **절대 동작하지 않도록** 막아 두었습니다.
+
 ### API 경로 (참고)
 
 - `GET/POST/DELETE` `/api/admin/session` — OTP 검증·HttpOnly 쿠키

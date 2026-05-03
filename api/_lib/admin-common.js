@@ -13,6 +13,14 @@ function getHost(req) {
   return String(h).split(',')[0].trim().toLowerCase();
 }
 
+/** 호스트명만 (포트 제거). IPv4 루프백·localhost 판별용 */
+function hostnameOnly(host) {
+  if (!host) return '';
+  const h = String(host).toLowerCase();
+  if (h.startsWith('[')) return h.split(']')[0] + ']';
+  return h.split(':')[0];
+}
+
 /** config.js 와 같이 alpha 호스트 → 테스트 DB */
 function isAlphaHost(host) {
   return (
@@ -58,6 +66,19 @@ function envStr(name) {
   if (v == null || typeof v !== 'string') return '';
   const t = v.trim();
   return t;
+}
+
+/**
+ * 로컬 vercel dev 전용 OTP 생략.
+ * - .env.local 에만 ADMIN_DEV_OTP_BYPASS=1 (Git 무시됨)
+ * - alpha/real 등 배포(VERCEL_ENV=production|preview)에서는 절대 동작하지 않음
+ */
+function isAdminDevOtpBypass(host) {
+  if (envStr('ADMIN_DEV_OTP_BYPASS') !== '1') return false;
+  const vercelEnv = process.env.VERCEL_ENV;
+  if (vercelEnv === 'production' || vercelEnv === 'preview') return false;
+  const name = hostnameOnly(host);
+  return name === 'localhost' || name === '127.0.0.1' || name === '::1';
 }
 
 function totpSecretForHost(host) {
@@ -131,6 +152,7 @@ function readSessionPayload(rawToken, sessionSecret) {
 }
 
 function getSessionFromRequest(req, host) {
+  if (isAdminDevOtpBypass(host)) return { ok: true, devBypass: true };
   const secret = sessionSecretForHost(host);
   if (!secret) return null;
   const cookies = parseCookies(req.headers.cookie || '');
@@ -139,6 +161,9 @@ function getSessionFromRequest(req, host) {
 }
 
 function requireSession(req, host) {
+  if (isAdminDevOtpBypass(host)) {
+    return { exp: Date.now() + SESSION_MAX_MS, v: 1, devBypass: true };
+  }
   const secret = sessionSecretForHost(host);
   if (!secret) {
     const err = new Error('ADMIN_SESSION_SECRET not configured');
@@ -230,8 +255,10 @@ function readJsonBody(req) {
 module.exports = {
   COOKIE_NAME,
   getHost,
+  hostnameOnly,
   useTestDatabase,
   getSupabaseAdmin,
+  isAdminDevOtpBypass,
   totpSecretForHost,
   sessionSecretForHost,
   listMissingAdminAuthEnv,
