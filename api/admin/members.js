@@ -6,6 +6,7 @@ const {
   sendJson,
   buildSupabaseNotConfiguredBody
 } = require('../_lib/admin-common.js');
+const { getStyleLogCountsByUserIds } = require('../_lib/style-log-counts.js');
 
 module.exports = async function handler(req, res) {
   const host = getHost(req);
@@ -45,18 +46,12 @@ module.exports = async function handler(req, res) {
     }
 
     const users = data?.users || [];
-    const counts = await Promise.all(
-      users.map(async (u) => {
-        const { count, error: cErr } = await supabase
-          .from('style_logs')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', u.id);
-        if (cErr) return 0;
-        return count ?? 0;
-      })
+    const countByUser = await getStyleLogCountsByUserIds(
+      supabase,
+      users.map((u) => u.id)
     );
 
-    const items = users.map((u, i) => ({
+    const items = users.map((u) => ({
       id: u.id,
       email: u.email || '—',
       phone: u.phone || null,
@@ -65,7 +60,7 @@ module.exports = async function handler(req, res) {
       last_sign_in_at: u.last_sign_in_at || null,
       email_confirmed_at: u.email_confirmed_at || null,
       banned_until: u.banned_until || null,
-      style_log_count: counts[i] ?? 0
+      style_log_count: countByUser.get(u.id) ?? 0
     }));
 
     const total = typeof data?.total === 'number' ? data.total : null;
