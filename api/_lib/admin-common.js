@@ -62,10 +62,16 @@ function firstEnvStr(...names) {
   return '';
 }
 
+/** admin.alpha.* 또는 alpha 브랜치 Vercel 프리뷰 호스트 → 리얼 URL/키와 섞지 않음 */
+function usesStrictDevSupabase(host) {
+  const h = String(host || '').toLowerCase();
+  return h.includes('admin.alpha.') || h.includes('-git-alpha-');
+}
+
 /**
- * alpha·Preview·localhost: 우선 테스트 DB(DEV URL + DEV/공통 service_role).
- * DEV·공통 키가 없고 PROD service_role 만 있으면 프로덕션 URL·키로 폴백( Vercel에 _DEV 미설정 시 리얼과 동일 DB).
- * 리얼 호스트: 프로덕션 URL + PROD/공통 키.
+ * alpha·Preview·localhost: 테스트 DB 분기.
+ * admin.alpha.* / *-git-alpha-*.vercel.app 은 SUPABASE_*_DEV 만 허용(코드 내 기본 DEV URL은 폴백).
+ * 그 외(로컬·일반 Preview)는 공통 SUPABASE_URL 도 허용하나, 리얼로의 자동 폴백은 하지 않음.
  */
 function resolveSupabaseEnv(host) {
   const test = useTestDatabase(host);
@@ -83,28 +89,24 @@ function resolveSupabaseEnv(host) {
     return { url, key, test: false };
   }
 
-  const devUrl =
-    firstEnvStr('SUPABASE_URL_DEV', 'SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL') ||
-    DEFAULT_DEV_SUPABASE_URL;
-  const devOrSharedKey = firstEnvStr(
-    'SUPABASE_SERVICE_ROLE_KEY_DEV',
-    'SUPABASE_SERVICE_ROLE_DEV',
-    'SUPABASE_SERVICE_ROLE_KEY',
-    'SUPABASE_SERVICE_ROLE'
-  );
-  if (devOrSharedKey) {
-    return { url: devUrl, key: devOrSharedKey, test: true };
-  }
+  const strict = usesStrictDevSupabase(host);
 
-  const prodKey = firstEnvStr(
-    'SUPABASE_SERVICE_ROLE_KEY_PROD',
-    'SUPABASE_SERVICE_ROLE_PROD'
-  );
-  if (prodKey) {
-    const prodUrl =
-      firstEnvStr('SUPABASE_URL_PROD', 'SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL') ||
-      DEFAULT_PROD_SUPABASE_URL;
-    return { url: prodUrl, key: prodKey, test: true };
+  const devUrl = strict
+    ? firstEnvStr('SUPABASE_URL_DEV') || DEFAULT_DEV_SUPABASE_URL
+    : firstEnvStr('SUPABASE_URL_DEV', 'SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL') ||
+      DEFAULT_DEV_SUPABASE_URL;
+
+  const devKey = strict
+    ? firstEnvStr('SUPABASE_SERVICE_ROLE_KEY_DEV', 'SUPABASE_SERVICE_ROLE_DEV')
+    : firstEnvStr(
+        'SUPABASE_SERVICE_ROLE_KEY_DEV',
+        'SUPABASE_SERVICE_ROLE_DEV',
+        'SUPABASE_SERVICE_ROLE_KEY',
+        'SUPABASE_SERVICE_ROLE'
+      );
+
+  if (devKey) {
+    return { url: devUrl, key: devKey, test: true };
   }
 
   return { url: devUrl, key: '', test: true };
@@ -127,13 +129,13 @@ function buildSupabaseNotConfiguredBody(host) {
   const missing = [];
   if (!url) {
     missing.push(
-      test ? 'SUPABASE_URL_DEV 또는 SUPABASE_URL' : 'SUPABASE_URL_PROD 또는 SUPABASE_URL'
+      test ? 'SUPABASE_URL_DEV (admin.alpha·alpha 프리뷰는 공통 SUPABASE_URL 미사용)' : 'SUPABASE_URL_PROD 또는 SUPABASE_URL'
     );
   }
   if (!key) {
     missing.push(
       test
-        ? 'SUPABASE_SERVICE_ROLE_KEY_DEV 또는 SUPABASE_SERVICE_ROLE_KEY(또는 SUPABASE_SERVICE_ROLE)'
+        ? 'SUPABASE_SERVICE_ROLE_KEY_DEV (admin.alpha / alpha 프리뷰는 리얼 키로 폴백하지 않음)'
         : 'SUPABASE_SERVICE_ROLE_KEY_PROD 또는 SUPABASE_SERVICE_ROLE_KEY(또는 SUPABASE_SERVICE_ROLE)'
     );
   }
@@ -143,7 +145,7 @@ function buildSupabaseNotConfiguredBody(host) {
     usesTestDb: test,
     missing,
     message: test
-      ? 'admin.alpha·Preview: 테스트 DB를 쓰려면 SUPABASE_SERVICE_ROLE_KEY_DEV 등이 필요합니다. Vercel에 _DEV만 없고 SUPABASE_SERVICE_ROLE_KEY_PROD만 있으면 리얼 DB와 동일하게 연결됩니다. Preview에도 변수를 넣으세요.'
+      ? '테스트 DB: Vercel에 SUPABASE_URL_DEV·SUPABASE_SERVICE_ROLE_KEY_DEV를 넣으세요. admin.alpha / alpha 브랜치 배포는 리얼 변수(SUPABASE_SERVICE_ROLE_KEY_PROD 등)로 자동 연결되지 않습니다.'
       : '리얼 관리자: Vercel Production에 Supabase service_role 키가 필요합니다. SUPABASE_SERVICE_ROLE_KEY_PROD·SUPABASE_SERVICE_ROLE_KEY·SUPABASE_SERVICE_ROLE 등. 프로젝트 URL은 비어 있으면 앱과 동일한 프로덕션 URL을 씁니다(다른 프로젝트면 SUPABASE_URL_PROD를 넣으세요).'
   };
 }

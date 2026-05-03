@@ -79,15 +79,15 @@ Vercel 이 준 비교 화면 기준으로 예시:
 | `SUPABASE_URL_DEV` | 테스트/알파 프로젝트 URL. |
 | `SUPABASE_SERVICE_ROLE_KEY_DEV` | 테스트 **service_role** 키. |
 
-**admin.alpha·Preview·localhost 는「테스트 DB」분기**를 탑니다. API는 다음 순서로 Supabase를 고릅니다.
+**admin.alpha 호스트(`admin.alpha.*`)·alpha 브랜치 Vercel 프리뷰 URL(`…-git-alpha-….vercel.app`)** 는 **테스트 전용**으로만 연결됩니다.
 
-1. `SUPABASE_URL_DEV`·`SUPABASE_SERVICE_ROLE_KEY_DEV`(또는 `SUPABASE_SERVICE_ROLE_DEV`) → **테스트 프로젝트**
-2. 없으면 공통 `SUPABASE_URL`·`SUPABASE_SERVICE_ROLE_KEY`(또는 `SUPABASE_SERVICE_ROLE`) + 위와 같은 URL 규칙
-3. **DEV·공통 키가 없고** `SUPABASE_SERVICE_ROLE_KEY_PROD`(또는 `SUPABASE_SERVICE_ROLE_PROD`)만 있으면 **리얼과 동일한 프로덕션 URL·키**로 연결됩니다(코드 기본값·`SUPABASE_URL_PROD`·`SUPABASE_URL` 등).
+- **허용:** `SUPABASE_URL_DEV`, `SUPABASE_SERVICE_ROLE_KEY_DEV`(또는 `SUPABASE_SERVICE_ROLE_DEV`)
+- URL 미설정 시 코드에 있는 기본 테스트 URL(`DEFAULT_DEV_SUPABASE_URL`)을 쓰지만, **키는 반드시 `_DEV` 를 넣어야** 합니다.
+- **불가:** `SUPABASE_SERVICE_ROLE_KEY_PROD` 만 있을 때 리얼 DB로 자동 붙이기(예전 동작)는 **하지 않습니다.** 리얼과 같은 데이터가 보였다면 Vercel **Production** 환경에 위 `_DEV` 변수를 추가하세요.
 
-즉 **Vercel에 `_PROD` 키만** 있어도 `admin.alpha`는 리얼 DB에 붙을 수 있습니다. 알파에서 **반드시 테스트 DB만** 보려면 `SUPABASE_SERVICE_ROLE_KEY_DEV` 등을 넣으세요.
+**일반 Preview(PR 등)·`localhost`** 는 기존처럼 공통 `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` 로 테스트 프로젝트를 가리킬 수 있습니다(리얼 폴백 없음).
 
-**alpha 브랜치 → Vercel Preview 배포**(`*.vercel.app`)인 경우, 위 변수가 **Preview** 환경에도 체크돼 있는지 확인하세요. Production에만 있으면 Preview 함수에는 주입되지 않아 503이 납니다.
+**admin.stylelog.co.kr(리얼 관리자)** 만 `SUPABASE_URL_PROD`·`SUPABASE_SERVICE_ROLE_KEY_PROD` 등 프로덕션 변수를 씁니다.
 
 ### 휴대폰 앱에 등록
 
