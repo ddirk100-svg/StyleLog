@@ -312,7 +312,14 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const authLoading = document.getElementById('authLoading');
             authLoading.style.display = 'flex';
-            
+
+            // 관리자 전용 호스트: 앱 로그인·Supabase 분기와 무관하게 랜딩으로 보내지 않음
+            const host = window.location.hostname;
+            if (host === 'admin.stylelog.co.kr' || host === 'admin.alpha.stylelog.co.kr') {
+                authLoading.style.display = 'none';
+                return;
+            }
+
             try {
                 // supabaseClient가 초기화되었는지 확인
                 if (typeof supabaseClient === 'undefined' || !supabaseClient) {
