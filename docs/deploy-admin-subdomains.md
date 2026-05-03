@@ -7,7 +7,9 @@
 | `admin.stylelog.co.kr` | 리얼 관리자 | 호스트에 `alpha` 없음 → **프로덕션 DB** |
 | `admin.alpha.stylelog.co.kr` | 알파 관리자 | 호스트에 `alpha` 포함 → **테스트 DB** |
 
-어드민 HTML 은 `/styles`, `/scripts`, `/img` 를 **사이트 루트 절대경로**로 불러오므로, 메인 앱과 같은 배포에서 정적 파일이 그대로 제공됩니다.
+어드민 HTML 은 `/styles`, `/scripts`, `/img` 를 **사이트 루트 절대경로**로 불러옵니다. **사이드바**도 `/`(대시보드), `/members.html` 등 루트 절대경로로 두어야 합니다. `href="index.html"` 같은 상대경로는 주소가 `/admin/...` 일 때 잘못 풀려 메인 앱(`home.html` 등)으로 이어질 수 있습니다.
+
+---
 
 **관리자 호스트 전용:** `admin.*` 으로 접속했을 때 `/home.html`, `/write.html` 등 **앱 페이지**로 직접 들어가면, 메인 도메인으로 **302 리다이렉트**됩니다 (`admin.alpha` → `alpha.stylelog.co.kr`, `admin` → `stylelog.co.kr`). 관리 화면은 `/`(대시보드), `/admin/*.html`, 또는 리라이트된 `/members.html` 등만 쓰면 됩니다.
 
