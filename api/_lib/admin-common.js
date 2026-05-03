@@ -169,13 +169,25 @@ function clearSessionCookie(res) {
   res.setHeader('Set-Cookie', parts.join('; '));
 }
 
+function normalizeTotpSecret(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  // 공백·개행 제거, padding·소문자 정리 (Authenticator / Vercel 복붙 오차 대비)
+  let s = raw.replace(/\s+/g, '').replace(/=/g, '').toUpperCase();
+  // 실수로 따옴표까지 붙은 경우
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1);
+  }
+  return s;
+}
+
 function verifyTotpCode(host, code) {
-  const secret = totpSecretForHost(host);
+  const secret = normalizeTotpSecret(totpSecretForHost(host));
   if (!secret) return false;
   const normalized = String(code || '').replace(/\s/g, '');
   if (!/^\d{6}$/.test(normalized)) return false;
-  authenticator.options = { window: 1 };
-  return authenticator.verify({ token: normalized, secret: secret.trim() });
+  // window 2 ≈ 전후 2스텝(약 ±90초~) — 폰/서버 시각 어긋남 완화
+  authenticator.options = { window: 2 };
+  return authenticator.verify({ token: normalized, secret });
 }
 
 function sendJson(res, status, body) {
