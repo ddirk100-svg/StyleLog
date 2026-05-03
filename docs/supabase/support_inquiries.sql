@@ -91,14 +91,19 @@ create trigger support_inquiries_reply_timestamps_trigger
   execute procedure public.support_inquiries_touch_reply_timestamps();
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- 운영자: Table Editor 또는 SQL로 답변 등록
+-- 운영자: 어드민 UI에서 답변 저장 시 API가 admin_reply 내용에 맞춰 status 를 자동 설정함
+--   (비어 있으면 open, 내용 있으면 answered). Table Editor / SQL 로 넣을 때는 아래처럼 둘 다 맞추면 됨.
 --   update public.support_inquiries
 --   set admin_reply = '...', status = 'answered'
 --   where id = '문의-uuid';
---   (replied_at / admin_reply_updated_at 은 트리거가 자동. 필요 시 수동 덮어쓰기도 가능.)
+--   (replied_at / admin_reply_updated_at 은 트리거가 자동.)
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- 기존 행만 과거 시각 백필(선택): 답은 있는데 admin_reply_updated_at 만 비어 있을 때
 --   update public.support_inquiries
 --   set admin_reply_updated_at = coalesce(replied_at, now())
 --   where admin_reply is not null and trim(admin_reply) <> '' and admin_reply_updated_at is null;
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- 기존 행(답변 텍스트는 있는데 status 만 open): 선택 — 한 번 정리
+--   update public.support_inquiries set status = 'answered'
+--   where admin_reply is not null and trim(admin_reply) <> '' and status = 'open';
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

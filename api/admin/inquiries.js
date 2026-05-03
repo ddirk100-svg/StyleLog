@@ -89,8 +89,12 @@ module.exports = async function handler(req, res) {
       }
 
       const patch = {};
-      if (adminReply !== undefined) patch.admin_reply = adminReply;
-      if (status !== undefined) {
+      // admin_reply 가 요청에 있으면 trim 후 내용 유무로 status 통일(사용자 앱은 답변 텍스트 기준).
+      if (adminReply !== undefined) {
+        const trimmed = String(adminReply).trim();
+        patch.admin_reply = trimmed;
+        patch.status = trimmed.length > 0 ? 'answered' : 'open';
+      } else if (status !== undefined) {
         if (!['open', 'answered'].includes(status)) {
           sendJson(res, 400, { ok: false, error: 'invalid_status' });
           return;
