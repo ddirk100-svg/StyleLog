@@ -144,6 +144,10 @@ async function loadInquiries() {
   }
   const r = await fetch('/api/admin/inquiries', { credentials: 'same-origin' });
   if (!r.ok) {
+    const meta = document.querySelector('.admin-topbar-meta');
+    const H = globalThis.AdminEnvHint;
+    if (H) H.applyMetaForApiFailure(meta, r.status);
+    else if (meta) meta.textContent = '불러오기 실패';
     if (tbody) {
       tbody.innerHTML =
         '<tr class="admin-placeholder-row"><td colspan="6">불러오기 실패</td></tr>';

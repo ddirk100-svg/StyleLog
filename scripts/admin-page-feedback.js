@@ -89,6 +89,10 @@ async function loadFeedback() {
   }
   const r = await fetch('/api/admin/feedback', { credentials: 'same-origin' });
   if (!r.ok) {
+    const meta = document.querySelector('.admin-topbar-meta');
+    const H = globalThis.AdminEnvHint;
+    if (H) H.applyMetaForApiFailure(meta, r.status);
+    else if (meta) meta.textContent = '불러오기 실패';
     if (tbody) {
       tbody.innerHTML =
         '<tr class="admin-placeholder-row"><td colspan="5">불러오기 실패</td></tr>';

@@ -87,7 +87,13 @@ async function loadAdminDashboard() {
   try {
     const r = await fetch('/api/admin/summary', { credentials: 'same-origin' });
     if (!r.ok) {
-      if (meta) meta.textContent = '요약을 불러오지 못했습니다 (API 또는 인증 확인).';
+      const H = globalThis.AdminEnvHint;
+      if (H) {
+        H.applyMetaForApiFailure(meta, r.status);
+        H.upgradeDashboardBanner(document.getElementById('admin-dash-banner'), r.status);
+      } else if (meta) {
+        meta.textContent = '요약을 불러오지 못했습니다 (API 또는 인증 확인).';
+      }
       return;
     }
     const j = await r.json();
@@ -118,7 +124,13 @@ async function loadAdminDashboard() {
       meta.textContent = `갱신 ${new Date().toLocaleString('ko-KR')} · 회원 수는 Auth 기준(목록 상한 반영)`;
     }
   } catch {
-    if (meta) meta.textContent = '요약 연결 실패 (로컬 정적 미리보기일 수 있음).';
+    const H = globalThis.AdminEnvHint;
+    if (H) {
+      H.applyMetaForApiFailure(meta, undefined);
+      H.upgradeDashboardBanner(document.getElementById('admin-dash-banner'), undefined);
+    } else if (meta) {
+      meta.textContent = '요약 연결 실패 (Live Server·정적 호스트일 수 있음).';
+    }
   }
 }
 

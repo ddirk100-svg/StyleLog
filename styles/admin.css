@@ -156,6 +156,16 @@
     color: var(--color-primary-dark);
 }
 
+.admin-banner.admin-banner--warn {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: var(--color-text-secondary);
+}
+
+.admin-banner.admin-banner--warn strong {
+    color: #9a3412;
+}
+
 .admin-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
