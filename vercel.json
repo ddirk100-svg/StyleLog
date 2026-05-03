@@ -26,7 +26,20 @@
     {"source": "/favicon.ico", "destination": "/img/StyleLog_logo%28favicon%29.png", "permanent": false}
   ],
   "rewrites": [
-    {"source": "/", "destination": "/landing.html"},
-    {"source": "/robots.txt", "destination": "/api/robots"}
+    {"source": "/robots.txt", "destination": "/api/robots"},
+
+    {"source": "/", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/index.html"},
+    {"source": "/index.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/index.html"},
+    {"source": "/members.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/members.html"},
+    {"source": "/inquiries.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/inquiries.html"},
+    {"source": "/feedback.html", "has": [{"type": "host", "value": "admin.stylelog.co.kr"}], "destination": "/admin/feedback.html"},
+
+    {"source": "/", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/index.html"},
+    {"source": "/index.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/index.html"},
+    {"source": "/members.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/members.html"},
+    {"source": "/inquiries.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/inquiries.html"},
+    {"source": "/feedback.html", "has": [{"type": "host", "value": "admin.alpha.stylelog.co.kr"}], "destination": "/admin/feedback.html"},
+
+    {"source": "/", "destination": "/landing.html"}
   ]
 }

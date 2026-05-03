@@ -27,7 +27,7 @@ stylelog/
 ├── mypage.html             # 마이페이지 (하단 `APP_VERSION` 표시)
 ├── inquiry.html            # 고객센터 (문의내역·FAQ)
 ├── inquiry-write.html      # 1:1 문의 작성
-├── landing.html            # 랜딩 페이지
+├── admin/                  # 내부 관리 UI (서브도메인 라우팅 → deploy 문서)
 ├── login.html              # 로그인
 ├── signup.html             # 회원가입
 ├── styles/
@@ -40,7 +40,8 @@ stylelog/
 │   ├── bottom-nav.css
 │   ├── menu-popup.css
 │   ├── weather-compact.css
-│   └── variables.css
+│   ├── variables.css
+│   └── admin.css
 └── scripts/
     ├── home.js
     ├── detail.js
@@ -49,7 +50,8 @@ stylelog/
     ├── config.js
     ├── api.js
     ├── common.js
-    └── auth.js
+    ├── auth.js
+    └── admin-shell.js
 ```
 
 ## 🚀 배포 환경
@@ -58,7 +60,11 @@ stylelog/
 |------|-----|-----|
 | **프로덕션** | https://www.stylelog.co.kr/ | 리얼 DB |
 | **Alpha** | https://alpha.stylelog.co.kr/ | 테스트 DB |
+| **관리자(리얼)** | https://admin.stylelog.co.kr/ | 리얼 DB (`config.js` 호스트) |
+| **관리자(Alpha)** | https://admin.alpha.stylelog.co.kr/ | 테스트 DB |
 | **로컬** | http://localhost:8000 | 테스트 DB |
+
+관리자 서브도메인 DNS·Vercel 설정: [docs/deploy-admin-subdomains.md](docs/deploy-admin-subdomains.md)
 
 ### 배포 방법
 - **Alpha 배포**: `deploy-to-alpha.bat` 실행

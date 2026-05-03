@@ -1,0 +1,317 @@
+/* StyleLog 내부 관리자 — admin/ 전용 레이아웃 */
+@import url('variables.css');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.admin-app {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    background: var(--color-bg-muted);
+    color: var(--color-text-primary);
+    display: flex;
+    letter-spacing: -0.02em;
+}
+
+.admin-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: #1e293b;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.admin-brand {
+    padding: 20px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-brand-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 4px;
+}
+
+.admin-brand-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.admin-env-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(251, 191, 36, 0.2);
+    color: #fcd34d;
+}
+
+.admin-env-badge--real {
+    background: rgba(34, 197, 94, 0.22);
+    color: #86efac;
+}
+
+.admin-nav {
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-nav a:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.admin-nav a.is-active {
+    background: rgba(59, 130, 246, 0.25);
+    color: #fff;
+}
+
+.admin-nav-icon {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-topbar {
+    height: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.admin-page-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.admin-topbar-meta {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+}
+
+.admin-content {
+    flex: 1;
+    padding: 24px;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.admin-banner {
+    background: var(--color-primary-light);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.admin-banner strong {
+    color: var(--color-primary-dark);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.admin-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 12px;
+    padding: 18px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+a.admin-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+
+.admin-card-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    margin-bottom: 8px;
+}
+
+.admin-card-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+}
+
+.admin-card-hint {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.admin-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 14px;
+}
+
+.admin-panel {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.admin-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-lighter);
+}
+
+.admin-table th {
+    background: var(--color-bg-secondary);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.admin-table tbody tr:hover {
+    background: var(--color-bg-hover);
+}
+
+.admin-placeholder-row td {
+    color: var(--color-text-tertiary);
+    font-style: italic;
+    padding: 28px 16px;
+    text-align: center;
+}
+
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border-lighter);
+    background: var(--color-bg-tertiary);
+}
+
+.admin-toolbar-spacer {
+    flex: 1;
+}
+
+.admin-input {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    min-width: 160px;
+}
+
+.admin-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--color-border-light);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: inherit;
+}
+
+.admin-btn-primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.admin-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .admin-app {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        min-height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .admin-brand {
+        border-bottom: none;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        flex: 1;
+    }
+
+    .admin-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        flex: 1 1 100%;
+    }
+
+    .admin-detail-layout {
+        grid-template-columns: 1fr;
+    }
+}
