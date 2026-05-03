@@ -39,19 +39,27 @@ function useTestDatabase(host) {
   return isAlphaHost(host) || isPreviewDeploy();
 }
 
-function supabaseCredentials(host) {
+function envStr(name) {
+  const v = process.env[name];
+  if (v == null || typeof v !== 'string') return '';
+  const t = v.trim();
+  return t;
+}
+
+/** alpha·Preview·localhost → DEV 또는 공통 SUPABASE_* (PROD 접미사 키는 쓰지 않음) */
+function resolveSupabaseEnv(host) {
   const test = useTestDatabase(host);
   const url = test
-    ? process.env.SUPABASE_URL_DEV || process.env.SUPABASE_URL || ''
-    : process.env.SUPABASE_URL_PROD || process.env.SUPABASE_URL || '';
+    ? envStr('SUPABASE_URL_DEV') || envStr('SUPABASE_URL')
+    : envStr('SUPABASE_URL_PROD') || envStr('SUPABASE_URL');
   const key = test
-    ? process.env.SUPABASE_SERVICE_ROLE_KEY_DEV || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-    : process.env.SUPABASE_SERVICE_ROLE_KEY_PROD || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    ? envStr('SUPABASE_SERVICE_ROLE_KEY_DEV') || envStr('SUPABASE_SERVICE_ROLE_KEY')
+    : envStr('SUPABASE_SERVICE_ROLE_KEY_PROD') || envStr('SUPABASE_SERVICE_ROLE_KEY');
   return { url, key, test };
 }
 
 function getSupabaseAdmin(host) {
-  const { url, key } = supabaseCredentials(host);
+  const { url, key } = resolveSupabaseEnv(host);
   if (!url || !key) return null;
   return createClient(url, key, {
     auth: {
@@ -61,11 +69,31 @@ function getSupabaseAdmin(host) {
   });
 }
 
-function envStr(name) {
-  const v = process.env[name];
-  if (v == null || typeof v !== 'string') return '';
-  const t = v.trim();
-  return t;
+/** API 503 JSON — 클라이언트 안내용 (비밀 값 없음) */
+function buildSupabaseNotConfiguredBody(host) {
+  const { url, key, test } = resolveSupabaseEnv(host);
+  const missing = [];
+  if (!url) {
+    missing.push(
+      test ? 'SUPABASE_URL_DEV 또는 SUPABASE_URL' : 'SUPABASE_URL_PROD 또는 SUPABASE_URL'
+    );
+  }
+  if (!key) {
+    missing.push(
+      test
+        ? 'SUPABASE_SERVICE_ROLE_KEY_DEV 또는 SUPABASE_SERVICE_ROLE_KEY'
+        : 'SUPABASE_SERVICE_ROLE_KEY_PROD 또는 SUPABASE_SERVICE_ROLE_KEY'
+    );
+  }
+  return {
+    ok: false,
+    error: 'supabase_not_configured',
+    usesTestDb: test,
+    missing,
+    message: test
+      ? 'admin.alpha·Preview·localhost는「테스트 DB」설정을 씁니다. SUPABASE_URL_DEV·SERVICE_ROLE_KEY_DEV를 넣거나, 한 프로젝트만 쓰면 SUPABASE_URL·SUPABASE_SERVICE_ROLE_KEY를 넣으세요. _PROD만 있으면 alpha에서 비어 있습니다. alpha 브랜치 배포에는 Vercel에서 Preview(또는 해당 환경)에도 변수를 넣어야 합니다.'
+      : '리얼 관리자는 SUPABASE_URL_PROD·SUPABASE_SERVICE_ROLE_KEY_PROD(또는 공통 SUPABASE_URL·SERVICE_ROLE)가 필요합니다.'
+  };
 }
 
 /**
@@ -255,7 +283,9 @@ module.exports = {
   getHost,
   hostnameOnly,
   useTestDatabase,
+  resolveSupabaseEnv,
   getSupabaseAdmin,
+  buildSupabaseNotConfiguredBody,
   isAdminDevOtpBypass,
   totpSecretForHost,
   sessionSecretForHost,

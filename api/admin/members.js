@@ -2,7 +2,8 @@ const {
   getHost,
   getSupabaseAdmin,
   requireSession,
-  sendJson
+  sendJson,
+  buildSupabaseNotConfiguredBody
 } = require('../_lib/admin-common.js');
 
 module.exports = async function handler(req, res) {
@@ -26,7 +27,7 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabaseAdmin(host);
   if (!supabase) {
-    sendJson(res, 503, { ok: false, error: 'supabase_not_configured' });
+    sendJson(res, 503, buildSupabaseNotConfiguredBody(host));
     return;
   }
 

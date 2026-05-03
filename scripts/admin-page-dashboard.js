@@ -86,7 +86,16 @@ async function loadAdminDashboard() {
 
   try {
     const r = await fetch('/api/admin/summary', { credentials: 'same-origin' });
+    const j = await r.json().catch(() => ({}));
     if (!r.ok) {
+      if (j.error === 'supabase_not_configured') {
+        globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(
+          meta,
+          document.getElementById('admin-dash-banner'),
+          j
+        );
+        return;
+      }
       const H = globalThis.AdminEnvHint;
       if (H) {
         H.applyMetaForApiFailure(meta, r.status);
@@ -96,7 +105,6 @@ async function loadAdminDashboard() {
       }
       return;
     }
-    const j = await r.json();
     if (!j.ok) {
       if (meta) meta.textContent = '요약 응답이 올바르지 않습니다.';
       return;

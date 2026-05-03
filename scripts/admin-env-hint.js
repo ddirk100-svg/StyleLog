@@ -31,9 +31,32 @@
       'Supabase·<code style="font-size:12px">.env.local</code>는 docs/deploy-admin-subdomains.md 를 참고하세요.';
   }
 
+  function applySupabaseNotConfigured(metaEl, bannerEl, payload) {
+    if (!payload || payload.error !== 'supabase_not_configured') return;
+    const missing = Array.isArray(payload.missing) ? payload.missing.join(', ') : '';
+    const base = payload.message || 'Supabase URL·서비스 롤 키가 이 배포에 없습니다.';
+    if (metaEl) metaEl.textContent = missing ? base + ' (' + missing + ')' : base;
+    if (bannerEl) {
+      bannerEl.classList.add('admin-banner--warn');
+      bannerEl.replaceChildren();
+      const strong = document.createElement('strong');
+      strong.textContent = 'Supabase 환경 변수';
+      bannerEl.appendChild(strong);
+      bannerEl.appendChild(document.createTextNode(' ' + base + ' '));
+      if (missing) {
+        bannerEl.appendChild(document.createTextNode('변수: ' + missing + '. '));
+      }
+      const ref = document.createElement('span');
+      ref.style.fontSize = '12px';
+      ref.textContent = 'docs/deploy-admin-subdomains.md';
+      bannerEl.appendChild(ref);
+    }
+  }
+
   globalThis.AdminEnvHint = {
     likelyStaticNoApi,
     applyMetaForApiFailure,
-    upgradeDashboardBanner
+    upgradeDashboardBanner,
+    applySupabaseNotConfigured
   };
 })();

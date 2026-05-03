@@ -73,8 +73,11 @@ Vercel 이 준 비교 화면 기준으로 예시:
 | `SUPABASE_URL_DEV` | 테스트/알파 프로젝트 URL. |
 | `SUPABASE_SERVICE_ROLE_KEY_DEV` | 테스트 **service_role** 키. |
 
-**이름 단축(선택):** `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`만 넣어도 동작합니다.  
-호스트에 `alpha`가 있거나 Vercel 프리뷰 배포이면 `_DEV` → 없으면 `_PROD` → 둘 다 없으면 공통 변수로 폴백합니다.
+**admin.alpha·Preview·localhost 는「테스트 DB」분기입니다.** 이 경우 API는 `SUPABASE_URL_DEV`·`SUPABASE_SERVICE_ROLE_KEY_DEV`를 먼저 쓰고, 없으면 **공통** `SUPABASE_URL`·`SUPABASE_SERVICE_ROLE_KEY`만 봅니다. **`SUPABASE_URL_PROD`만 넣어 두면 alpha 관리자에서는 DB에 연결되지 않습니다.** (리얼 관리자 호스트에서만 `_PROD` 또는 공통 변수를 씁니다.)
+
+한 개의 Supabase 프로젝트만 쓸 때는 **공통** `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`에 테스트 프로젝트 값을 넣으면 alpha·로컬·Preview 모두 동작합니다.
+
+**alpha 브랜치 → Vercel Preview 배포**인 경우, 위 Supabase 변수가 **Preview** 환경에도 체크돼 있는지 확인하세요. Production에만 있으면 Preview 배포에는 주입되지 않아 대시보드가 비어 있습니다.
 
 ### 휴대폰 앱에 등록
 

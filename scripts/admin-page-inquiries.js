@@ -143,18 +143,22 @@ async function loadInquiries() {
       '<tr class="admin-placeholder-row"><td colspan="6">불러오는 중…</td></tr>';
   }
   const r = await fetch('/api/admin/inquiries', { credentials: 'same-origin' });
+  const j = await r.json().catch(() => ({}));
   if (!r.ok) {
     const meta = document.querySelector('.admin-topbar-meta');
-    const H = globalThis.AdminEnvHint;
-    if (H) H.applyMetaForApiFailure(meta, r.status);
-    else if (meta) meta.textContent = '불러오기 실패';
+    if (j.error === 'supabase_not_configured') {
+      globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(meta, null, j);
+    } else {
+      const H = globalThis.AdminEnvHint;
+      if (H) H.applyMetaForApiFailure(meta, r.status);
+      else if (meta) meta.textContent = '불러오기 실패';
+    }
     if (tbody) {
       tbody.innerHTML =
         '<tr class="admin-placeholder-row"><td colspan="6">불러오기 실패</td></tr>';
     }
     return;
   }
-  const j = await r.json();
   if (!j.ok || !Array.isArray(j.items)) return;
   inquiriesItems = j.items;
   renderInquiriesTable();
