@@ -4,25 +4,11 @@ const {
   requireSession,
   replyForRequireSessionError,
   sendJson,
-  buildSupabaseNotConfiguredBody
+  buildSupabaseNotConfiguredBody,
+  escapeForIlike,
+  parsePagedListQuery
 } = require('../_lib/admin-common.js');
-
-async function emailsForUserIds(supabase, ids) {
-  const unique = [...new Set(ids.filter(Boolean))];
-  const map = new Map();
-  await Promise.all(
-    unique.map(async (id) => {
-      try {
-        const { data, error } = await supabase.auth.admin.getUserById(id);
-        if (!error && data?.user?.email) map.set(id, data.user.email);
-        else map.set(id, '—');
-      } catch {
-        map.set(id, '—');
-      }
-    })
-  );
-  return map;
-}
+const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
 
 module.exports = async function handler(req, res) {
   const host = getHost(req);
@@ -46,11 +32,23 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { data: rows, error } = await supabase
+    const url = new URL(req.url || '/', `http://${host}`);
+    const { page, perPage, from, to } = parsePagedListQuery(url, host);
+    const qRaw = (url.searchParams.get('q') || '').trim();
+
+    let query = supabase
       .from('user_feedback')
-      .select('id,user_id,category,title,body,created_at')
+      .select('id,user_id,category,title,body,created_at', { count: 'exact' });
+
+    if (qRaw) {
+      const safe = escapeForIlike(qRaw);
+      const pat = `%${safe}%`;
+      query = query.or(`title.ilike.${pat},body.ilike.${pat},category.ilike.${pat}`);
+    }
+
+    const { data: rows, error, count } = await query
       .order('created_at', { ascending: false })
-      .limit(300);
+      .range(from, to);
 
     if (error) {
       console.error('feedback select', error);
@@ -65,7 +63,8 @@ module.exports = async function handler(req, res) {
       user_email: emailMap.get(r.user_id) || '—'
     }));
 
-    sendJson(res, 200, { ok: true, items: list });
+    const total = typeof count === 'number' ? count : 0;
+    sendJson(res, 200, { ok: true, page, perPage, total, items: list });
   } catch (e) {
     console.error('admin/feedback', e);
     sendJson(res, 500, { ok: false, error: 'internal_error' });

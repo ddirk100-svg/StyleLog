@@ -1,22 +1,8 @@
+const { escapeHtml, formatDate, applyAdminFetchFailure } = globalThis.AdminPageUtils;
+
 let membersItems = [];
 let membersPage = 1;
 let membersLastPayload = null;
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? '—' : d.toLocaleString('ko-KR');
-  } catch {
-    return '—';
-  }
-}
 
 function emailConfirmShort(iso) {
   if (!iso) return '미인증';
@@ -96,25 +82,28 @@ function applyMembersFilter() {
 }
 
 function syncMembersPager() {
-  const prev = document.getElementById('admin-members-prev');
-  const next = document.getElementById('admin-members-next');
+  const el = document.getElementById('admin-members-pager');
   const j = membersLastPayload;
-  if (!prev || !next || !j) return;
-
-  prev.disabled = j.page <= 1;
-
-  const total = j.total;
-  const per = j.perPage;
-  const page = j.page;
-  if (typeof total === 'number' && total > 0) {
-    next.disabled = page * per >= total;
-  } else {
-    next.disabled = !Array.isArray(j.items) || j.items.length < per;
+  if (!el) return;
+  if (!j || !Array.isArray(j.items)) {
+    el.replaceChildren();
+    return;
   }
+  globalThis.AdminPagination?.render?.(el, {
+    page: j.page,
+    perPage: j.perPage,
+    total: j.total,
+    itemCount: j.items.length,
+    onPage: (n) => {
+      membersPage = n;
+      loadMembers();
+    }
+  });
 }
 
 async function loadMembers() {
   const tbody = document.getElementById('admin-members-tbody');
+  const meta = document.querySelector('.admin-topbar-meta');
   if (tbody) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="6">불러오는 중…</td></tr>';
@@ -125,22 +114,9 @@ async function loadMembers() {
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const meta = document.querySelector('.admin-topbar-meta');
-    if (j.error === 'supabase_not_configured') {
-      globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(meta, null, j);
-    } else if (j.error === 'server_misconfigured') {
-      globalThis.AdminEnvHint?.applyServerMisconfigured?.(meta, null, j);
-    } else {
-      const H = globalThis.AdminEnvHint;
-      if (H) H.applyMetaForApiFailure(meta, r.status);
-      else if (meta) meta.textContent = '불러오기 실패';
-    }
-    if (tbody) {
-      tbody.innerHTML =
-        '<tr class="admin-placeholder-row"><td colspan="6">불러오기 실패</td></tr>';
-    }
     membersLastPayload = null;
     syncMembersPager();
+    applyAdminFetchFailure(meta, tbody, 6, r, j);
     return;
   }
   if (!j.ok || !Array.isArray(j.items)) {
@@ -157,7 +133,6 @@ async function loadMembers() {
   applyMembersFilter();
   syncMembersPager();
 
-  const meta = document.querySelector('.admin-topbar-meta');
   if (meta) {
     const totalPart =
       typeof j.total === 'number' && j.total >= 0 ? ` · 전체 ${j.total}명` : '';
@@ -172,19 +147,6 @@ function startMembersPage() {
   search?.removeAttribute('disabled');
   search?.removeAttribute('aria-disabled');
   search?.addEventListener('input', () => applyMembersFilter());
-
-  const prev = document.getElementById('admin-members-prev');
-  const next = document.getElementById('admin-members-next');
-  prev?.addEventListener('click', () => {
-    if (membersPage > 1) {
-      membersPage -= 1;
-      loadMembers();
-    }
-  });
-  next?.addEventListener('click', () => {
-    membersPage += 1;
-    loadMembers();
-  });
 }
 
 document.addEventListener('admin:session-ok', startMembersPage);

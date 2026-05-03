@@ -9,12 +9,27 @@
     return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1';
   }
 
+  function applyGateRootLayout(root) {
+    // body.admin-app 은 flex 레이아웃이라, 예전 캐시된 admin.css(게이트 블록 없음)일 때
+    // document.body 자식으로 두면 카드만 오른쪽 플렉스 아이템처럼 붙는다. html 붙임 + 인라인으로 뷰포트 전체 고정.
+    root.style.position = 'fixed';
+    root.style.inset = '0';
+    root.style.zIndex = '10000';
+    root.style.display = 'flex';
+    root.style.alignItems = 'center';
+    root.style.justifyContent = 'center';
+    root.style.padding = '24px';
+    root.style.boxSizing = 'border-box';
+    root.style.background = 'rgba(15, 23, 42, 0.55)';
+  }
+
   function ensureGateMarkup() {
     if (document.getElementById(GATE_ID)) return;
     const root = document.createElement('div');
     root.id = GATE_ID;
     root.className = 'admin-gate';
     root.hidden = true;
+    applyGateRootLayout(root);
     root.innerHTML = [
       '<div class="admin-gate-card" role="dialog" aria-modal="true" aria-labelledby="admin-gate-title">',
       '  <h1 id="admin-gate-title" class="admin-gate-title">관리자 인증</h1>',
@@ -26,7 +41,7 @@
       '  <p class="admin-gate-msg" role="status"></p>',
       '</div>'
     ].join('');
-    document.body.appendChild(root);
+    document.documentElement.appendChild(root);
   }
 
   function showGate() {

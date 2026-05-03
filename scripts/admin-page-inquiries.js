@@ -1,46 +1,18 @@
+const {
+  escapeHtml,
+  formatDate,
+  previewText,
+  statusLabelInquiry,
+  statusClassInquiry,
+  applyAdminFetchFailure,
+  setTopbarMetaPaged
+} = globalThis.AdminPageUtils;
+
 let inquiriesItems = [];
 let selectedInquiryId = null;
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? '—' : d.toLocaleString('ko-KR');
-  } catch {
-    return '—';
-  }
-}
-
-function statusLabel(st) {
-  return st === 'answered' ? '답변완료' : '미답변';
-}
-
-function statusClass(st) {
-  return st === 'answered' ? 'admin-pill admin-pill--ok' : 'admin-pill admin-pill--warn';
-}
-
-function previewBody(text, n) {
-  const t = (text || '').replace(/\s+/g, ' ').trim();
-  if (!t) return '—';
-  return t.length <= n ? t : t.slice(0, n) + '…';
-}
-
-function getFilteredInquiries() {
-  const status = document.getElementById('admin-inq-filter')?.value || 'all';
-  const q = (document.getElementById('admin-inq-search')?.value || '').trim().toLowerCase();
-  return inquiriesItems.filter((row) => {
-    if (status !== 'all' && row.status !== status) return false;
-    if (!q) return true;
-    const hay = `${row.title || ''} ${row.body || ''} ${row.user_email || ''}`.toLowerCase();
-    return hay.includes(q);
-  });
-}
+let inqPage = 1;
+const INQ_PER_PAGE = 25;
+let inqSearchDebounce = null;
 
 function renderInquiryDetail(row) {
   const aside = document.getElementById('admin-inq-detail');
@@ -54,7 +26,7 @@ function renderInquiryDetail(row) {
   const replyVal = row.admin_reply != null ? String(row.admin_reply) : '';
   aside.innerHTML = [
     '<h2 class="admin-section-title" style="margin-top:0;">문의 상세</h2>',
-    `<p class="admin-card-hint">${escapeHtml(statusLabel(row.status))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
+    `<p class="admin-card-hint">${escapeHtml(statusLabelInquiry(row.status))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
     `<p class="admin-detail-line"><strong>작성자</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
     `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
     `<p class="admin-detail-line"><strong>답변일(replied_at)</strong><br>${escapeHtml(formatDate(row.replied_at))}</p>`,
@@ -105,7 +77,7 @@ function renderInquiryDetail(row) {
 function renderInquiriesTable() {
   const tbody = document.getElementById('admin-inq-tbody');
   if (!tbody) return;
-  const rows = getFilteredInquiries();
+  const rows = inquiriesItems;
   if (!rows.length) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="6">표시할 문의가 없습니다.</td></tr>';
@@ -115,9 +87,9 @@ function renderInquiriesTable() {
     .map(
       (row) => `
     <tr data-inq-id="${escapeHtml(row.id)}" class="${row.id === selectedInquiryId ? 'is-selected' : ''}">
-      <td><span class="${escapeHtml(statusClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span></td>
+      <td><span class="${escapeHtml(statusClassInquiry(row.status))}">${escapeHtml(statusLabelInquiry(row.status))}</span></td>
       <td>${escapeHtml(row.title || '')}</td>
-      <td>${escapeHtml(previewBody(row.body, 56))}</td>
+      <td>${escapeHtml(previewText(row.body, 56))}</td>
       <td>${escapeHtml(formatDate(row.created_at))}</td>
       <td>${escapeHtml(formatDate(row.replied_at))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>
@@ -136,36 +108,65 @@ function renderInquiriesTable() {
   });
 }
 
+function syncInquiriesPager(j) {
+  const el = document.getElementById('admin-inq-pager');
+  if (!el) return;
+  if (!j || !j.ok || !Array.isArray(j.items)) {
+    el.replaceChildren();
+    return;
+  }
+  globalThis.AdminPagination?.render?.(el, {
+    page: j.page,
+    perPage: j.perPage,
+    total: j.total,
+    itemCount: j.items.length,
+    onPage: (n) => {
+      inqPage = n;
+      loadInquiries();
+    }
+  });
+}
+
 async function loadInquiries() {
   const tbody = document.getElementById('admin-inq-tbody');
+  const meta = document.querySelector('.admin-topbar-meta');
+  selectedInquiryId = null;
+  renderInquiryDetail(null);
+
   if (tbody) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="6">불러오는 중…</td></tr>';
   }
-  const r = await fetch('/api/admin/inquiries', { credentials: 'same-origin' });
+
+  const sp = new URLSearchParams({
+    page: String(inqPage),
+    perPage: String(INQ_PER_PAGE)
+  });
+  const st = document.getElementById('admin-inq-filter')?.value || 'all';
+  if (st && st !== 'all') sp.set('status', st);
+  const q = (document.getElementById('admin-inq-search')?.value || '').trim();
+  if (q) sp.set('q', q);
+
+  const r = await fetch('/api/admin/inquiries?' + sp.toString(), { credentials: 'same-origin' });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const meta = document.querySelector('.admin-topbar-meta');
-    if (j.error === 'supabase_not_configured') {
-      globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(meta, null, j);
-    } else if (j.error === 'server_misconfigured') {
-      globalThis.AdminEnvHint?.applyServerMisconfigured?.(meta, null, j);
-    } else {
-      const H = globalThis.AdminEnvHint;
-      if (H) H.applyMetaForApiFailure(meta, r.status);
-      else if (meta) meta.textContent = '불러오기 실패';
-    }
+    syncInquiriesPager(null);
+    applyAdminFetchFailure(meta, tbody, 6, r, j);
+    return;
+  }
+  if (!j.ok || !Array.isArray(j.items)) {
+    syncInquiriesPager(null);
     if (tbody) {
       tbody.innerHTML =
-        '<tr class="admin-placeholder-row"><td colspan="6">불러오기 실패</td></tr>';
+        '<tr class="admin-placeholder-row"><td colspan="6">목록을 해석할 수 없습니다.</td></tr>';
     }
     return;
   }
-  if (!j.ok || !Array.isArray(j.items)) return;
+
   inquiriesItems = j.items;
   renderInquiriesTable();
-  const meta = document.querySelector('.admin-topbar-meta');
-  if (meta) meta.textContent = `총 ${j.items.length}건 (최대 300)`;
+  syncInquiriesPager(j);
+  setTopbarMetaPaged(meta, j, '건');
 }
 
 function startInquiriesPage() {
@@ -175,8 +176,17 @@ function startInquiriesPage() {
   f?.removeAttribute('disabled');
   s?.removeAttribute('disabled');
   ref?.removeAttribute('disabled');
-  f?.addEventListener('change', () => renderInquiriesTable());
-  s?.addEventListener('input', () => renderInquiriesTable());
+  f?.addEventListener('change', () => {
+    inqPage = 1;
+    loadInquiries();
+  });
+  s?.addEventListener('input', () => {
+    clearTimeout(inqSearchDebounce);
+    inqSearchDebounce = setTimeout(() => {
+      inqPage = 1;
+      loadInquiries();
+    }, 320);
+  });
   ref?.addEventListener('click', () => loadInquiries());
 
   loadInquiries();

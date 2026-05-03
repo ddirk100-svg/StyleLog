@@ -1,38 +1,11 @@
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? '—' : d.toLocaleString('ko-KR');
-  } catch {
-    return '—';
-  }
-}
-
-function statusLabelInq(st) {
-  return st === 'answered' ? '답변완료' : '미답변';
-}
-
-function statusClassInq(st) {
-  return st === 'answered' ? 'admin-pill admin-pill--ok' : 'admin-pill admin-pill--warn';
-}
-
-function categoryLabelFb(c) {
-  if (c === 'bug') return '버그';
-  if (c === 'idea') return '아이디어';
-  return '기타';
-}
-
-function previewText(text, n) {
-  const t = (text || '').replace(/\s+/g, ' ').trim();
-  if (!t) return '—';
-  return t.length <= n ? t : t.slice(0, n) + '…';
-}
+const {
+  escapeHtml,
+  formatDate,
+  previewText,
+  statusLabelInquiry,
+  statusClassInquiry,
+  categoryLabelFeedback
+} = globalThis.AdminPageUtils;
 
 function renderDashRecentInquiries(rows) {
   const tbody = document.getElementById('admin-dash-inq-tbody');
@@ -46,7 +19,7 @@ function renderDashRecentInquiries(rows) {
     .map(
       (row) => `
     <tr>
-      <td><span class="${escapeHtml(statusClassInq(row.status))}">${escapeHtml(statusLabelInq(row.status))}</span></td>
+      <td><span class="${escapeHtml(statusClassInquiry(row.status))}">${escapeHtml(statusLabelInquiry(row.status))}</span></td>
       <td>${escapeHtml(previewText(row.title, 48))}</td>
       <td>${escapeHtml(formatDate(row.created_at))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>
@@ -67,7 +40,7 @@ function renderDashRecentFeedback(rows) {
     .map(
       (row) => `
     <tr>
-      <td>${escapeHtml(categoryLabelFb(row.category))}</td>
+      <td>${escapeHtml(categoryLabelFeedback(row.category))}</td>
       <td>${escapeHtml(previewText(row.title, 40))}</td>
       <td>${escapeHtml(formatDate(row.created_at))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>
@@ -109,12 +82,16 @@ async function loadAdminDashboard() {
         H.applyMetaForApiFailure(meta, r.status);
         H.upgradeDashboardBanner(document.getElementById('admin-dash-banner'), r.status);
       } else if (meta) {
+        meta.removeAttribute('hidden');
         meta.textContent = '요약을 불러오지 못했습니다 (API 또는 인증 확인).';
       }
       return;
     }
     if (!j.ok) {
-      if (meta) meta.textContent = '요약 응답이 올바르지 않습니다.';
+      if (meta) {
+        meta.removeAttribute('hidden');
+        meta.textContent = '요약 응답이 올바르지 않습니다.';
+      }
       return;
     }
 
@@ -136,15 +113,19 @@ async function loadAdminDashboard() {
     renderDashRecentInquiries(j.recentInquiries);
     renderDashRecentFeedback(j.recentFeedback);
 
-    if (meta) {
-      meta.textContent = `갱신 ${new Date().toLocaleString('ko-KR')} · 회원 수는 Auth 기준(목록 상한 반영)`;
-    }
+    globalThis.AdminEnvHint?.setDashHintLine?.(document.getElementById('admin-dash-banner'), '', false);
+
+    globalThis.AdminEnvHint?.showMeta?.(
+      meta,
+      `갱신 ${new Date().toLocaleString('ko-KR')} · 회원 수는 Auth 기준(목록 상한 반영)`
+    );
   } catch {
     const H = globalThis.AdminEnvHint;
     if (H) {
       H.applyMetaForApiFailure(meta, undefined);
       H.upgradeDashboardBanner(document.getElementById('admin-dash-banner'), undefined);
     } else if (meta) {
+      meta.removeAttribute('hidden');
       meta.textContent = '요약 연결 실패 (Live Server·정적 호스트일 수 있음).';
     }
   }

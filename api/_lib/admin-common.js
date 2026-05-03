@@ -259,13 +259,40 @@ function requireSession(req, host) {
   return payload;
 }
 
+/** PostgREST ilike 검색문: % _ \ 와 쉼표 왜곡 완화 */
+function escapeForIlike(qRaw) {
+  if (!qRaw || typeof qRaw !== 'string') return '';
+  return qRaw.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_').replace(/,/g, ' ');
+}
+
+/**
+ * 공통 페이지 목록 쿼리 (?page &perPage)
+ * @param {URL|string} url
+ * @param {string} host
+ * @param {{ defaultPerPage?: number, minPerPage?: number, maxPerPage?: number }} [opts]
+ */
+function parsePagedListQuery(url, host, opts) {
+  const u = url instanceof URL ? url : new URL(String(url || '/'), `http://${host}`);
+  const defPer = opts?.defaultPerPage ?? 25;
+  const minP = opts?.minPerPage ?? 5;
+  const maxP = opts?.maxPerPage ?? 100;
+  const page = Math.max(1, parseInt(u.searchParams.get('page') || '1', 10) || 1);
+  const perPage = Math.min(
+    maxP,
+    Math.max(minP, parseInt(u.searchParams.get('perPage') || String(defPer), 10) || defPer)
+  );
+  const from = (page - 1) * perPage;
+  const to = from + perPage - 1;
+  return { page, perPage, from, to };
+}
+
 /** requireSession catch 블록용 — 401 / 503 본문 통일 */
 function replyForRequireSessionError(res, host, err) {
   if (err && err.code === 'UNAUTHORIZED') {
     sendJson(res, 401, { ok: false, error: 'unauthorized' });
     return;
   }
-  if (err.code === 'NO_SESSION_SECRET') {
+  if (err && err.code === 'NO_SESSION_SECRET') {
     const missing = listMissingAdminAuthEnv(host);
     sendJson(res, 503, {
       ok: false,
@@ -361,6 +388,8 @@ module.exports = {
   resolveSupabaseEnv,
   getSupabaseAdmin,
   buildSupabaseNotConfiguredBody,
+  escapeForIlike,
+  parsePagedListQuery,
   isAdminDevOtpBypass,
   totpSecretForHost,
   sessionSecretForHost,

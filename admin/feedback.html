@@ -18,10 +18,10 @@
             <span class="admin-env-badge">…</span>
         </div>
         <nav class="admin-nav">
-            <a href="/" data-admin-nav="dashboard"><span class="admin-nav-icon" aria-hidden="true">▣</span>대시보드</a>
-            <a href="/members.html" data-admin-nav="members"><span class="admin-nav-icon" aria-hidden="true">👤</span>회원 현황</a>
-            <a href="/inquiries.html" data-admin-nav="inquiries"><span class="admin-nav-icon" aria-hidden="true">✉</span>고객 문의</a>
-            <a href="/feedback.html" data-admin-nav="feedback"><span class="admin-nav-icon" aria-hidden="true">💬</span>고객 피드백</a>
+            <a href="index.html" data-admin-nav="dashboard"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3"/><rect width="7" height="7" x="14" y="3"/><rect width="7" height="7" x="14" y="14"/><rect width="7" height="7" x="3" y="14"/></svg></span>대시보드</a>
+            <a href="members.html" data-admin-nav="members"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>회원 현황</a>
+            <a href="inquiries.html" data-admin-nav="inquiries"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>고객 문의</a>
+            <a href="feedback.html" data-admin-nav="feedback"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>고객 피드백</a>
         </nav>
     </aside>
     <div class="admin-main">
@@ -33,9 +33,10 @@
         </header>
         <main class="admin-content">
             <div class="admin-toolbar">
-                <input type="search" id="admin-fb-search" class="admin-input" placeholder="제목·내용·이메일 검색" disabled>
+                <input type="search" id="admin-fb-search" class="admin-input" placeholder="제목·내용·유형 검색" disabled>
                 <div class="admin-toolbar-spacer"></div>
             </div>
+            <nav id="admin-fb-pager" class="admin-pagination" aria-label="페이지"></nav>
             <div class="admin-detail-layout">
                 <div class="admin-panel">
                     <div class="admin-table-wrap">
@@ -67,6 +68,8 @@
     <script src="/scripts/admin-gate.js" defer></script>
     <script src="/scripts/admin-shell.js" defer></script>
     <script src="/scripts/admin-env-hint.js" defer></script>
+    <script src="/scripts/admin-page-utils.js" defer></script>
+    <script src="/scripts/admin-pagination.js" defer></script>
     <script src="/scripts/admin-page-feedback.js" defer></script>
 </body>
 </html>

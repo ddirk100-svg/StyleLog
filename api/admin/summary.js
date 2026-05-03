@@ -6,6 +6,7 @@ const {
   sendJson,
   buildSupabaseNotConfiguredBody
 } = require('../_lib/admin-common.js');
+const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
 
 module.exports = async function handler(req, res) {
   const host = getHost(req);
@@ -83,18 +84,7 @@ module.exports = async function handler(req, res) {
     const uidSet = new Set();
     inqList.forEach((r) => r.user_id && uidSet.add(r.user_id));
     fbList.forEach((r) => r.user_id && uidSet.add(r.user_id));
-    const emailMap = new Map();
-    await Promise.all(
-      [...uidSet].map(async (uid) => {
-        try {
-          const { data, error } = await supabase.auth.admin.getUserById(uid);
-          if (!error && data?.user?.email) emailMap.set(uid, data.user.email);
-          else emailMap.set(uid, '—');
-        } catch {
-          emailMap.set(uid, '—');
-        }
-      })
-    );
+    const emailMap = await emailsForUserIds(supabase, [...uidSet]);
 
     const recentInquiries = inqList.map((r) => ({
       ...r,

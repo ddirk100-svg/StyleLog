@@ -1,46 +1,21 @@
+const {
+  escapeHtml,
+  formatDate,
+  previewText,
+  categoryLabelFeedback,
+  applyAdminFetchFailure,
+  setTopbarMetaPaged
+} = globalThis.AdminPageUtils;
+
 let feedbackItems = [];
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? '—' : d.toLocaleString('ko-KR');
-  } catch {
-    return '—';
-  }
-}
-
-function categoryLabel(c) {
-  if (c === 'bug') return '버그';
-  if (c === 'idea') return '아이디어';
-  return '기타';
-}
-
-function preview(text, n) {
-  const t = (text || '').replace(/\s+/g, ' ').trim();
-  if (t.length <= n) return t;
-  return t.slice(0, n) + '…';
-}
-
-function getFilteredFeedback() {
-  const q = (document.getElementById('admin-fb-search')?.value || '').trim().toLowerCase();
-  if (!q) return feedbackItems;
-  return feedbackItems.filter((row) => {
-    const hay = `${row.title || ''} ${row.body || ''} ${row.user_email || ''} ${row.category || ''}`.toLowerCase();
-    return hay.includes(q);
-  });
-}
+let fbPage = 1;
+const FB_PER_PAGE = 25;
+let fbSearchDebounce = null;
 
 function renderFeedbackTable() {
   const tbody = document.getElementById('admin-fb-tbody');
   if (!tbody) return;
-  const rows = getFilteredFeedback();
+  const rows = feedbackItems;
   if (!rows.length) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="5">표시할 피드백이 없습니다.</td></tr>';
@@ -51,9 +26,9 @@ function renderFeedbackTable() {
       (row) => `
     <tr data-fb-id="${escapeHtml(row.id)}">
       <td>${escapeHtml(formatDate(row.created_at))}</td>
-      <td>${escapeHtml(categoryLabel(row.category))}</td>
+      <td>${escapeHtml(categoryLabelFeedback(row.category))}</td>
       <td>${escapeHtml(row.title || '—')}</td>
-      <td>${escapeHtml(preview(row.body, 72))}</td>
+      <td>${escapeHtml(previewText(row.body, 72))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>
     </tr>`
     )
@@ -70,7 +45,7 @@ function renderFeedbackTable() {
       aside.innerHTML = [
         '<h2 class="admin-section-title" style="margin-top:0;">상세</h2>',
         `<p class="admin-card-hint">${escapeHtml(formatDate(row.created_at))}</p>`,
-        `<p class="admin-detail-line"><strong>유형</strong><br>${escapeHtml(categoryLabel(row.category))}</p>`,
+        `<p class="admin-detail-line"><strong>유형</strong><br>${escapeHtml(categoryLabelFeedback(row.category))}</p>`,
         `<p class="admin-detail-line"><strong>이메일</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
         `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
         `<p class="admin-detail-line"><strong>제목</strong><br>${escapeHtml(row.title)}</p>`,
@@ -81,42 +56,72 @@ function renderFeedbackTable() {
   });
 }
 
+function syncFeedbackPager(j) {
+  const el = document.getElementById('admin-fb-pager');
+  if (!el) return;
+  if (!j || !j.ok || !Array.isArray(j.items)) {
+    el.replaceChildren();
+    return;
+  }
+  globalThis.AdminPagination?.render?.(el, {
+    page: j.page,
+    perPage: j.perPage,
+    total: j.total,
+    itemCount: j.items.length,
+    onPage: (n) => {
+      fbPage = n;
+      loadFeedback();
+    }
+  });
+}
+
 async function loadFeedback() {
   const tbody = document.getElementById('admin-fb-tbody');
+  const meta = document.querySelector('.admin-topbar-meta');
   if (tbody) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="5">불러오는 중…</td></tr>';
   }
-  const r = await fetch('/api/admin/feedback', { credentials: 'same-origin' });
+
+  const sp = new URLSearchParams({
+    page: String(fbPage),
+    perPage: String(FB_PER_PAGE)
+  });
+  const q = (document.getElementById('admin-fb-search')?.value || '').trim();
+  if (q) sp.set('q', q);
+
+  const r = await fetch('/api/admin/feedback?' + sp.toString(), { credentials: 'same-origin' });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const meta = document.querySelector('.admin-topbar-meta');
-    if (j.error === 'supabase_not_configured') {
-      globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(meta, null, j);
-    } else if (j.error === 'server_misconfigured') {
-      globalThis.AdminEnvHint?.applyServerMisconfigured?.(meta, null, j);
-    } else {
-      const H = globalThis.AdminEnvHint;
-      if (H) H.applyMetaForApiFailure(meta, r.status);
-      else if (meta) meta.textContent = '불러오기 실패';
-    }
+    syncFeedbackPager(null);
+    applyAdminFetchFailure(meta, tbody, 5, r, j);
+    return;
+  }
+  if (!j.ok || !Array.isArray(j.items)) {
+    syncFeedbackPager(null);
     if (tbody) {
       tbody.innerHTML =
-        '<tr class="admin-placeholder-row"><td colspan="5">불러오기 실패</td></tr>';
+        '<tr class="admin-placeholder-row"><td colspan="5">목록을 해석할 수 없습니다.</td></tr>';
     }
     return;
   }
-  if (!j.ok || !Array.isArray(j.items)) return;
+
   feedbackItems = j.items;
   renderFeedbackTable();
-  const meta = document.querySelector('.admin-topbar-meta');
-  if (meta) meta.textContent = `총 ${j.items.length}건 (최대 300)`;
+  syncFeedbackPager(j);
+  setTopbarMetaPaged(meta, j, '건');
 }
 
 function startFeedbackPage() {
   const s = document.getElementById('admin-fb-search');
   s?.removeAttribute('disabled');
-  s?.addEventListener('input', () => renderFeedbackTable());
+  s?.addEventListener('input', () => {
+    clearTimeout(fbSearchDebounce);
+    fbSearchDebounce = setTimeout(() => {
+      fbPage = 1;
+      loadFeedback();
+    }, 320);
+  });
   loadFeedback();
 }
 

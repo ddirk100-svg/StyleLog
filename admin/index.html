@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Vercel: admin.stylelog.co.kr · admin.alpha.stylelog.co.kr → vercel.json 에서 /admin/*.html 로 라우팅. 에셋은 /styles · /scripts · /img 절대경로 -->
+<!-- 관리자 페이지 간 이동은 같은 폴더 상대경로(members.html 등) → Live Server로 /admin/*.html 열어도 동작. 에셋·API는 /styles · /scripts · /img · /api 절대경로 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -19,10 +19,10 @@
             <span class="admin-env-badge">…</span>
         </div>
         <nav class="admin-nav">
-            <a href="/" data-admin-nav="dashboard"><span class="admin-nav-icon" aria-hidden="true">▣</span>대시보드</a>
-            <a href="/members.html" data-admin-nav="members"><span class="admin-nav-icon" aria-hidden="true">👤</span>회원 현황</a>
-            <a href="/inquiries.html" data-admin-nav="inquiries"><span class="admin-nav-icon" aria-hidden="true">✉</span>고객 문의</a>
-            <a href="/feedback.html" data-admin-nav="feedback"><span class="admin-nav-icon" aria-hidden="true">💬</span>고객 피드백</a>
+            <a href="index.html" data-admin-nav="dashboard"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3"/><rect width="7" height="7" x="14" y="3"/><rect width="7" height="7" x="14" y="14"/><rect width="7" height="7" x="3" y="14"/></svg></span>대시보드</a>
+            <a href="members.html" data-admin-nav="members"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>회원 현황</a>
+            <a href="inquiries.html" data-admin-nav="inquiries"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>고객 문의</a>
+            <a href="feedback.html" data-admin-nav="feedback"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>고객 피드백</a>
         </nav>
     </aside>
     <div class="admin-main">
@@ -33,25 +33,21 @@
             </div>
         </header>
         <main class="admin-content">
-            <div class="admin-banner" id="admin-dash-banner">
-                <strong>로컬에서 숫자·목록을 보려면</strong> Live Server(<code style="font-size:12px">:5500</code>)가 아니라
-                터미널의 <code style="font-size:12px">npm run dev</code> 주소(예: <code style="font-size:12px">localhost:3000</code>)로
-                <code style="font-size:12px">/admin/index.html</code>을 여세요. 배포 URL에서도 동일합니다.
-            </div>
+            <p class="admin-hint-line" id="admin-dash-banner" hidden></p>
 
             <section aria-label="요약">
                 <div class="admin-grid">
-                    <a class="admin-card" href="/members.html">
+                    <a class="admin-card" href="members.html">
                         <div class="admin-card-label">회원 (목록 최대 1000)</div>
                         <div class="admin-card-value"><span data-admin-metric="members">—</span></div>
                         <div class="admin-card-hint">Auth · 스타일 로그 수(페이지별)</div>
                     </a>
-                    <a class="admin-card" href="/inquiries.html">
+                    <a class="admin-card" href="inquiries.html">
                         <div class="admin-card-label">문의</div>
                         <div class="admin-card-value"><span data-admin-metric="inq-open">—</span> / <span data-admin-metric="inq-total">—</span></div>
                         <div class="admin-card-hint">미답변 / 전체</div>
                     </a>
-                    <a class="admin-card" href="/feedback.html">
+                    <a class="admin-card" href="feedback.html">
                         <div class="admin-card-label">피드백</div>
                         <div class="admin-card-value"><span data-admin-metric="fb-total">—</span></div>
                         <div class="admin-card-hint">user_feedback 전체 건수</div>
@@ -126,6 +122,7 @@
     <script src="/scripts/admin-gate.js" defer></script>
     <script src="/scripts/admin-shell.js" defer></script>
     <script src="/scripts/admin-env-hint.js" defer></script>
+    <script src="/scripts/admin-page-utils.js" defer></script>
     <script src="/scripts/admin-page-dashboard.js" defer></script>
 </body>
 </html>
