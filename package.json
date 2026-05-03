@@ -3,7 +3,11 @@
   "private": true,
   "description": "StyleLog static site + Vercel serverless (admin API)",
   "scripts": {
+    "dev": "vercel dev",
     "admin:secrets": "node scripts/generate-admin-secrets.js"
+  },
+  "devDependencies": {
+    "vercel": "^41.7.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

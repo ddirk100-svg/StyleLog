@@ -89,19 +89,25 @@ npm run admin:secrets
 1. **Vercel**에 위 두 Key–Value 를 **Environment Variables** 로 저장 → **Redeploy**
 2. **Google Authenticator** → 계정 추가 → **설정 키 입력** → 키에 `ADMIN_TOTP_SECRET` 과 **동일한** 문자열 → **시간 기준**
 
-### 로컬
+### 로컬 (`vercel dev` 권장)
 
-`file://` 로 연 HTML에는 API가 없습니다. 저장소 루트에서 `npx vercel dev` 로 띄운 뒤 `/admin/index.html` 경로로 접속하세요.
+`file://` 이나 **VS Code Live Server만** 쓰면 `/api/*` 가 없어 대시보드 숫자·목록을 불러올 수 없습니다. 저장소 루트에서 아래처럼 실행하세요.
 
-**OTP 없이 로컬만 어드민 UI 테스트:** 프로젝트 루트에 `.env.local` 을 만들고(저장소는 `.gitignore`에 포함됨):
+1. **의존성 설치(최초 1회):** `npm install`
+2. **환경 변수:** `.env.local.example` 을 참고해 프로젝트 루트에 `.env.local` 생성 (Git에 커밋하지 않음)
+3. **개발 서버:** `npm run dev` → 터미널에 나온 주소(보통 `http://localhost:3000`)에서 **`/admin/index.html`** 로 접속
+
+**OTP 없이 로컬에서 API·UI 함께 확인:** `.env.local` 에 다음을 넣습니다.
 
 ```env
 ADMIN_DEV_OTP_BYPASS=1
 ```
 
-`vercel dev` 로 열고 브라우저가 **`localhost` 또는 `127.0.0.1`** 일 때만 OTP·세션 시크릿 없이 통과합니다. (`vercel dev`가 `VERCEL_ENV=preview`로 잡혀도 루프백이면 우회됩니다.)
+`npm run dev` 로 열고 브라우저 주소가 **`localhost` 또는 `127.0.0.1`** 일 때만 OTP·세션 시크릿 없이 통과합니다. (`VERCEL_ENV=preview` 여도 루프백이면 우회됩니다.)
 
-**VS Code Live Server만 쓸 때:** 주소가 `localhost` / `127.0.0.1` 이면 `/api` 가 없어서 **자동으로 OTP 창을 건너뛰고** 레이아웃만 열립니다. (대시보드 숫자 등은 `vercel dev` 또는 배포 URL에서 확인.)
+**로컬 DB 대상:** `api/_lib/admin-common.js` 기준으로 `localhost` / `127.0.0.1` 은 **테스트 DB**(`SUPABASE_URL_DEV` 등)를 씁니다. 리얼 DB만 보려면 배포 URL의 `admin.stylelog.co.kr` 을 사용하세요.
+
+**Live Server만 쓸 때:** `/api` 가 없으면 **OTP 창을 건너뛰고** 레이아웃만 열립니다. 실데이터 확인은 **`npm run dev`** 또는 배포 URL을 사용합니다.
 
 이 변수는 **Vercel 클라우드(Production/Preview)에는 넣지 마세요.** (`ADMIN_DEV_OTP_BYPASS`는 클라우드에서 Host가 실제 도메인이라 우회 조건이 성립하지 않습니다.)
 
