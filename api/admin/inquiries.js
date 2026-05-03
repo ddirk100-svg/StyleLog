@@ -6,7 +6,7 @@ const {
   sendJson,
   readJsonBody,
   buildSupabaseNotConfiguredBody,
-  escapeForIlike,
+  orIlikeClauses,
   parsePagedListQuery
 } = require('../_lib/admin-common.js');
 const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
@@ -45,11 +45,8 @@ module.exports = async function handler(req, res) {
         query = query.eq('status', statusFilter);
       }
 
-      if (qRaw) {
-        const safe = escapeForIlike(qRaw);
-        const pat = `%${safe}%`;
-        query = query.or(`title.ilike.${pat},body.ilike.${pat}`);
-      }
+      const orPart = orIlikeClauses(['title', 'body'], qRaw);
+      if (orPart) query = query.or(orPart);
 
       const { data: rows, error, count } = await query
         .order('created_at', { ascending: false })

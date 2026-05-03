@@ -268,6 +268,22 @@ function escapeForIlike(qRaw) {
 }
 
 /**
+ * PostgREST or=(col.ilike.…) 용: 패턴을 큰따옴표로 감싸 %·특수문자 파싱 오류 방지
+ * @param {string[]} columns
+ * @param {string} qRaw
+ * @returns {string|null}
+ */
+function orIlikeClauses(columns, qRaw) {
+  if (!qRaw || typeof qRaw !== 'string' || !columns.length) return null;
+  const trimmed = qRaw.trim();
+  if (!trimmed) return null;
+  const safe = escapeForIlike(trimmed);
+  const pat = `%${safe}%`;
+  const quoted = `"${pat.replace(/\\/g, '\\\\').replace(/"/g, '""')}"`;
+  return columns.map((c) => `${c}.ilike.${quoted}`).join(',');
+}
+
+/**
  * 공통 페이지 목록 쿼리 (?page &perPage)
  * @param {URL|string} url
  * @param {string} host
@@ -391,6 +407,7 @@ module.exports = {
   getSupabaseAdmin,
   buildSupabaseNotConfiguredBody,
   escapeForIlike,
+  orIlikeClauses,
   parsePagedListQuery,
   isAdminDevOtpBypass,
   totpSecretForHost,
