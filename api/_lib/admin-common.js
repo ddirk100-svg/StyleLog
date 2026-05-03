@@ -368,6 +368,22 @@ function verifyTotpCode(host, code) {
   return authenticator.verify({ token: normalized, secret });
 }
 
+/** PostgREST / 테이블 없음 등 — API JSON에 넣을 안내 문구 */
+function dbErrorHint(err) {
+  const msg = `${err?.message || ''} ${err?.details || err?.hint || ''}`.toLowerCase();
+  if (!msg.trim()) return '';
+  if (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find the table') ||
+    msg.includes('unknown json') ||
+    msg.includes('permission denied')
+  ) {
+    return '테스트 Supabase에 테이블·함수가 없을 수 있습니다. docs/supabase 의 support_inquiries.sql, user_feedback.sql 실행 후 admin_emails_and_dashboard_snapshot.sql, style_log_counts_for_users.sql 을 같은 프로젝트에서 실행했는지 확인하세요. style_logs 는 앱과 동일한 스키마가 필요합니다.';
+  }
+  return '';
+}
+
 function sendJson(res, status, body) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -420,6 +436,7 @@ module.exports = {
   setSessionCookie,
   clearSessionCookie,
   verifyTotpCode,
+  dbErrorHint,
   sendJson,
   readJsonBody
 };

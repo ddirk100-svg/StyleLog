@@ -4,7 +4,8 @@ const {
   requireSession,
   replyForRequireSessionError,
   sendJson,
-  buildSupabaseNotConfiguredBody
+  buildSupabaseNotConfiguredBody,
+  dbErrorHint
 } = require('../_lib/admin-common.js');
 const { getStyleLogCountsByUserIds } = require('../_lib/style-log-counts.js');
 
@@ -41,7 +42,12 @@ module.exports = async function handler(req, res) {
 
     if (error) {
       console.error('listUsers', error);
-      sendJson(res, 500, { ok: false, error: 'auth_error', detail: error.message });
+      sendJson(res, 500, {
+        ok: false,
+        error: 'auth_error',
+        detail: error.message,
+        hint: dbErrorHint(error) || 'SUPABASE_SERVICE_ROLE_KEY_DEV 가 테스트 프로젝트의 service_role 인지, URL(DEV)과 짝이 맞는지 확인하세요.'
+      });
       return;
     }
 

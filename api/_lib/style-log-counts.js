@@ -16,46 +16,51 @@ async function getStyleLogCountsByUserIds(supabase, userIds) {
 
   if (!ids.length) return new Map();
 
-  const { data: rpcRows, error: rpcErr } = await supabase.rpc('style_log_counts_for_users', {
-    p_user_ids: ids
-  });
+  try {
+    const { data: rpcRows, error: rpcErr } = await supabase.rpc('style_log_counts_for_users', {
+      p_user_ids: ids
+    });
 
-  if (!rpcErr && Array.isArray(rpcRows)) {
-    const m = zeros();
-    for (const row of rpcRows) {
-      if (row && row.user_id != null && row.log_count != null) {
-        m.set(row.user_id, Number(row.log_count));
+    if (!rpcErr && Array.isArray(rpcRows)) {
+      const m = zeros();
+      for (const row of rpcRows) {
+        if (row && row.user_id != null && row.log_count != null) {
+          m.set(row.user_id, Number(row.log_count));
+        }
       }
-    }
-    return m;
-  }
-
-  if (rpcErr) {
-    console.warn('style_log_counts_for_users RPC (using fallback)', rpcErr.message || rpcErr.code || '');
-  }
-
-  const m = zeros();
-  let from = 0;
-  for (;;) {
-    const { data, error } = await supabase
-      .from('style_logs')
-      .select('user_id')
-      .in('user_id', ids)
-      .range(from, from + PAGE - 1);
-
-    if (error) {
-      console.error('style_logs count fallback', error);
       return m;
     }
-    const rows = data || [];
-    for (const row of rows) {
-      const uid = row.user_id;
-      if (uid) m.set(uid, (m.get(uid) || 0) + 1);
+
+    if (rpcErr) {
+      console.warn('style_log_counts_for_users RPC (using fallback)', rpcErr.message || rpcErr.code || '');
     }
-    if (rows.length < PAGE) break;
-    from += PAGE;
+
+    const m = zeros();
+    let from = 0;
+    for (;;) {
+      const { data, error } = await supabase
+        .from('style_logs')
+        .select('user_id')
+        .in('user_id', ids)
+        .range(from, from + PAGE - 1);
+
+      if (error) {
+        console.error('style_logs count fallback', error);
+        return m;
+      }
+      const rows = data || [];
+      for (const row of rows) {
+        const uid = row.user_id;
+        if (uid) m.set(uid, (m.get(uid) || 0) + 1);
+      }
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+    return m;
+  } catch (e) {
+    console.error('getStyleLogCountsByUserIds', e);
+    return zeros();
   }
-  return m;
 }
 
 module.exports = { getStyleLogCountsByUserIds };

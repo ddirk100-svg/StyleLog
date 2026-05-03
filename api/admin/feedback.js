@@ -6,7 +6,8 @@ const {
   sendJson,
   buildSupabaseNotConfiguredBody,
   orIlikeClauses,
-  parsePagedListQuery
+  parsePagedListQuery,
+  dbErrorHint
 } = require('../_lib/admin-common.js');
 const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
 
@@ -49,7 +50,12 @@ module.exports = async function handler(req, res) {
 
     if (error) {
       console.error('feedback select', error);
-      sendJson(res, 500, { ok: false, error: 'db_error', detail: error.message });
+      sendJson(res, 500, {
+        ok: false,
+        error: 'db_error',
+        detail: error.message,
+        hint: dbErrorHint(error)
+      });
       return;
     }
 

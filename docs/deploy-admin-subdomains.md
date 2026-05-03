@@ -89,6 +89,17 @@ Vercel 이 준 비교 화면 기준으로 예시:
 
 **admin.stylelog.co.kr(리얼 관리자)** 만 `SUPABASE_URL_PROD`·`SUPABASE_SERVICE_ROLE_KEY_PROD` 등 프로덕션 변수를 씁니다.
 
+### 알파(테스트) Supabase — 관리자 페이지가 500이거나 대시보드만 비어 있을 때
+
+`admin.alpha` 는 **테스트 프로젝트**를 붙입니다. 리얼 DB에만 있던 테이블·함수를 테스트 프로젝트에 만들지 않았다면 **문의·피드백·회원 로그 수** API가 실패할 수 있습니다. **테스트 프로젝트** → **SQL Editor**에서 아래를 실행했는지 확인하세요.
+
+1. `docs/supabase/support_inquiries.sql`
+2. `docs/supabase/user_feedback.sql`
+3. (성능·이메일용) `docs/supabase/admin_emails_and_dashboard_snapshot.sql`
+4. (성능용) `docs/supabase/style_log_counts_for_users.sql`
+
+`style_logs` 테이블은 메인 앱과 같은 스키마가 이미 있어야 회원 **로그 수**·대시보드 **스타일 로그 카운트**가 맞습니다. 없으면 해당 쿼리만 에러 나거나 0으로 보일 수 있습니다.
+
 ### 휴대폰 앱에 등록
 
 **시크릿 만들기 (Windows·openssl 불필요):** 저장소 루트에서
