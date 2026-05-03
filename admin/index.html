@@ -15,7 +15,7 @@
     <aside class="admin-sidebar" aria-label="관리자 메뉴">
         <div class="admin-brand">
             <p class="admin-brand-name">StyleLog Admin</p>
-            <p class="admin-brand-sub">내부 관리 (초안 레이아웃)</p>
+            <p class="admin-brand-sub">내부 관리 · DB 요약</p>
             <span class="admin-env-badge">…</span>
         </div>
         <nav class="admin-nav">
@@ -33,10 +33,9 @@
             </div>
         </header>
         <main class="admin-content">
-            <div class="admin-banner">
-                <strong>TOTP 2차 인증</strong> 후에만 대시보드가 사용됩니다. Vercel 환경 변수 설정은
-                <code style="font-size:12px">docs/deploy-admin-subdomains.md</code> 를 참고하세요.
-                공개 색인 방지를 위해 <code style="font-size:12px">noindex</code> 를 유지합니다.
+            <div class="admin-banner" id="admin-dash-banner">
+                <strong>관리자 대시보드.</strong> 숫자·목록은 Supabase에서 가져옵니다. 배포 URL·<code style="font-size:12px">vercel dev</code>에서 확인하세요.
+                (<code style="font-size:12px">Live Server</code>만 쓰면 API가 없어 아래는 비어 있을 수 있습니다.)
             </div>
 
             <section aria-labelledby="dash-summary">
@@ -57,6 +56,72 @@
                         <div class="admin-card-value"><span data-admin-metric="fb-total">—</span></div>
                         <div class="admin-card-hint">user_feedback 전체 건수</div>
                     </a>
+                </div>
+            </section>
+
+            <section aria-labelledby="dash-db" class="admin-dash-db-section">
+                <h2 id="dash-db" class="admin-section-title">DB 지표</h2>
+                <div class="admin-grid">
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">스타일 로그 (전체)</div>
+                        <div class="admin-card-value"><span data-admin-metric="style-logs">—</span></div>
+                        <div class="admin-card-hint">style_logs 행 수</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">문의 · 답변완료</div>
+                        <div class="admin-card-value"><span data-admin-metric="inq-answered">—</span></div>
+                        <div class="admin-card-hint">status = answered</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">피드백 유형</div>
+                        <div class="admin-card-hint" style="margin:0;line-height:1.6;">
+                            아이디어 <strong data-admin-metric="fb-idea">—</strong> ·
+                            버그 <strong data-admin-metric="fb-bug">—</strong> ·
+                            기타 <strong data-admin-metric="fb-other">—</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section aria-labelledby="dash-recent-inq" class="admin-dash-db-section">
+                <h2 id="dash-recent-inq" class="admin-section-title">최근 문의</h2>
+                <div class="admin-panel">
+                    <div class="admin-table-wrap">
+                        <table class="admin-table admin-table--compact" id="admin-dash-table-inq">
+                            <thead>
+                                <tr>
+                                    <th>상태</th>
+                                    <th>제목</th>
+                                    <th>작성일</th>
+                                    <th>작성자</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-dash-inq-tbody">
+                                <tr class="admin-placeholder-row"><td colspan="4">데이터 없음</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section aria-labelledby="dash-recent-fb" class="admin-dash-db-section">
+                <h2 id="dash-recent-fb" class="admin-section-title">최근 피드백</h2>
+                <div class="admin-panel">
+                    <div class="admin-table-wrap">
+                        <table class="admin-table admin-table--compact" id="admin-dash-table-fb">
+                            <thead>
+                                <tr>
+                                    <th>유형</th>
+                                    <th>제목</th>
+                                    <th>작성일</th>
+                                    <th>작성자</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-dash-fb-tbody">
+                                <tr class="admin-placeholder-row"><td colspan="4">데이터 없음</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 

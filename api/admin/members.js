@@ -61,15 +61,22 @@ module.exports = async function handler(req, res) {
     const items = users.map((u, i) => ({
       id: u.id,
       email: u.email || '—',
+      phone: u.phone || null,
       created_at: u.created_at,
+      updated_at: u.updated_at || null,
       last_sign_in_at: u.last_sign_in_at || null,
+      email_confirmed_at: u.email_confirmed_at || null,
+      banned_until: u.banned_until || null,
       style_log_count: counts[i] ?? 0
     }));
+
+    const total = typeof data?.total === 'number' ? data.total : null;
 
     sendJson(res, 200, {
       ok: true,
       page,
       perPage,
+      total,
       items
     });
   } catch (e) {

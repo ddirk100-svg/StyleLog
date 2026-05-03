@@ -25,6 +25,12 @@ function statusClass(st) {
   return st === 'answered' ? 'admin-pill admin-pill--ok' : 'admin-pill admin-pill--warn';
 }
 
+function previewBody(text, n) {
+  const t = (text || '').replace(/\s+/g, ' ').trim();
+  if (!t) return '—';
+  return t.length <= n ? t : t.slice(0, n) + '…';
+}
+
 function getFilteredInquiries() {
   const status = document.getElementById('admin-inq-filter')?.value || 'all';
   const q = (document.getElementById('admin-inq-search')?.value || '').trim().toLowerCase();
@@ -50,6 +56,9 @@ function renderInquiryDetail(row) {
     '<h2 class="admin-section-title" style="margin-top:0;">문의 상세</h2>',
     `<p class="admin-card-hint">${escapeHtml(statusLabel(row.status))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
     `<p class="admin-detail-line"><strong>작성자</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
+    `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
+    `<p class="admin-detail-line"><strong>답변일(replied_at)</strong><br>${escapeHtml(formatDate(row.replied_at))}</p>`,
+    `<p class="admin-detail-line"><strong>답변 수정일</strong><br>${escapeHtml(formatDate(row.admin_reply_updated_at))}</p>`,
     `<p class="admin-detail-line"><strong>제목</strong><br>${escapeHtml(row.title)}</p>`,
     '<p class="admin-detail-line"><strong>본문</strong></p>',
     `<pre class="admin-pre">${escapeHtml(row.body || '')}</pre>`,
@@ -99,7 +108,7 @@ function renderInquiriesTable() {
   const rows = getFilteredInquiries();
   if (!rows.length) {
     tbody.innerHTML =
-      '<tr class="admin-placeholder-row"><td colspan="4">표시할 문의가 없습니다.</td></tr>';
+      '<tr class="admin-placeholder-row"><td colspan="6">표시할 문의가 없습니다.</td></tr>';
     return;
   }
   tbody.innerHTML = rows
@@ -108,7 +117,9 @@ function renderInquiriesTable() {
     <tr data-inq-id="${escapeHtml(row.id)}" class="${row.id === selectedInquiryId ? 'is-selected' : ''}">
       <td><span class="${escapeHtml(statusClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span></td>
       <td>${escapeHtml(row.title || '')}</td>
+      <td>${escapeHtml(previewBody(row.body, 56))}</td>
       <td>${escapeHtml(formatDate(row.created_at))}</td>
+      <td>${escapeHtml(formatDate(row.replied_at))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>
     </tr>`
     )
@@ -129,13 +140,13 @@ async function loadInquiries() {
   const tbody = document.getElementById('admin-inq-tbody');
   if (tbody) {
     tbody.innerHTML =
-      '<tr class="admin-placeholder-row"><td colspan="4">불러오는 중…</td></tr>';
+      '<tr class="admin-placeholder-row"><td colspan="6">불러오는 중…</td></tr>';
   }
   const r = await fetch('/api/admin/inquiries', { credentials: 'same-origin' });
   if (!r.ok) {
     if (tbody) {
       tbody.innerHTML =
-        '<tr class="admin-placeholder-row"><td colspan="4">불러오기 실패</td></tr>';
+        '<tr class="admin-placeholder-row"><td colspan="6">불러오기 실패</td></tr>';
     }
     return;
   }

@@ -43,7 +43,7 @@ function renderFeedbackTable() {
   const rows = getFilteredFeedback();
   if (!rows.length) {
     tbody.innerHTML =
-      '<tr class="admin-placeholder-row"><td colspan="4">표시할 피드백이 없습니다.</td></tr>';
+      '<tr class="admin-placeholder-row"><td colspan="5">표시할 피드백이 없습니다.</td></tr>';
     return;
   }
   tbody.innerHTML = rows
@@ -52,7 +52,8 @@ function renderFeedbackTable() {
     <tr data-fb-id="${escapeHtml(row.id)}">
       <td>${escapeHtml(formatDate(row.created_at))}</td>
       <td>${escapeHtml(categoryLabel(row.category))}</td>
-      <td>${escapeHtml(preview(row.body, 80))}</td>
+      <td>${escapeHtml(row.title || '—')}</td>
+      <td>${escapeHtml(preview(row.body, 72))}</td>
       <td>${escapeHtml(row.user_email || '—')}</td>
     </tr>`
     )
@@ -71,6 +72,7 @@ function renderFeedbackTable() {
         `<p class="admin-card-hint">${escapeHtml(formatDate(row.created_at))}</p>`,
         `<p class="admin-detail-line"><strong>유형</strong><br>${escapeHtml(categoryLabel(row.category))}</p>`,
         `<p class="admin-detail-line"><strong>이메일</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
+        `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
         `<p class="admin-detail-line"><strong>제목</strong><br>${escapeHtml(row.title)}</p>`,
         '<p class="admin-detail-line"><strong>내용</strong></p>',
         `<pre class="admin-pre">${escapeHtml(row.body || '')}</pre>`
@@ -83,13 +85,13 @@ async function loadFeedback() {
   const tbody = document.getElementById('admin-fb-tbody');
   if (tbody) {
     tbody.innerHTML =
-      '<tr class="admin-placeholder-row"><td colspan="4">불러오는 중…</td></tr>';
+      '<tr class="admin-placeholder-row"><td colspan="5">불러오는 중…</td></tr>';
   }
   const r = await fetch('/api/admin/feedback', { credentials: 'same-origin' });
   if (!r.ok) {
     if (tbody) {
       tbody.innerHTML =
-        '<tr class="admin-placeholder-row"><td colspan="4">불러오기 실패</td></tr>';
+        '<tr class="admin-placeholder-row"><td colspan="5">불러오기 실패</td></tr>';
     }
     return;
   }

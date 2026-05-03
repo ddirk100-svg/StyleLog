@@ -179,6 +179,22 @@ a.admin-card:hover {
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
 }
 
+.admin-card.admin-card--static {
+    cursor: default;
+    pointer-events: none;
+}
+
+.admin-dash-db-section {
+    margin-bottom: 32px;
+}
+
+.admin-table--compact th,
+.admin-table--compact td {
+    padding: 8px 12px;
+    font-size: 12px;
+    vertical-align: top;
+}
+
 .admin-card-label {
     font-size: 12px;
     font-weight: 600;

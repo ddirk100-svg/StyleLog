@@ -14,7 +14,7 @@
     <aside class="admin-sidebar" aria-label="관리자 메뉴">
         <div class="admin-brand">
             <p class="admin-brand-name">StyleLog Admin</p>
-            <p class="admin-brand-sub">내부 관리 (초안 레이아웃)</p>
+            <p class="admin-brand-sub">내부 관리 · DB 요약</p>
             <span class="admin-env-badge">…</span>
         </div>
         <nav class="admin-nav">
@@ -33,7 +33,7 @@
         </header>
         <main class="admin-content">
             <div class="admin-toolbar">
-                <input type="search" id="admin-members-search" class="admin-input" placeholder="이메일·UUID 검색" disabled aria-disabled="true">
+                <input type="search" id="admin-members-search" class="admin-input" placeholder="이메일·전화·UUID 검색" disabled aria-disabled="true">
                 <button type="button" class="admin-btn" id="admin-members-prev" title="이전 페이지">이전</button>
                 <button type="button" class="admin-btn" id="admin-members-next" title="다음 페이지">다음</button>
                 <div class="admin-toolbar-spacer"></div>
@@ -45,14 +45,16 @@
                             <thead>
                                 <tr>
                                     <th>이메일</th>
+                                    <th>이메일 인증</th>
                                     <th>가입일</th>
-                                    <th>스타일 로그</th>
+                                    <th>마지막 로그인</th>
+                                    <th>로그 수</th>
                                     <th>ID</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-members-tbody">
                                 <tr class="admin-placeholder-row">
-                                    <td colspan="4">인증 후 목록이 표시됩니다.</td>
+                                    <td colspan="6">인증 후 목록이 표시됩니다.</td>
                                 </tr>
                             </tbody>
                         </table>
