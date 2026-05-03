@@ -69,14 +69,12 @@ function envStr(name) {
 }
 
 /**
- * 로컬 vercel dev 전용 OTP 생략.
- * - .env.local 에만 ADMIN_DEV_OTP_BYPASS=1 (Git 무시됨)
- * - alpha/real 등 배포(VERCEL_ENV=production|preview)에서는 절대 동작하지 않음
+ * 로컬 전용 OTP 생략 (.env.local → ADMIN_DEV_OTP_BYPASS=1).
+ * vercel dev 는 종종 VERCEL_ENV=preview 로 잡혀 기존 preview 차단 로직과 충돌했음 →
+ * 요청 Host 가 루프백일 때만 우회 (실제 배포 도메인 요청과는 절대 겹치지 않음).
  */
 function isAdminDevOtpBypass(host) {
   if (envStr('ADMIN_DEV_OTP_BYPASS') !== '1') return false;
-  const vercelEnv = process.env.VERCEL_ENV;
-  if (vercelEnv === 'production' || vercelEnv === 'preview') return false;
   const name = hostnameOnly(host);
   return name === 'localhost' || name === '127.0.0.1' || name === '::1';
 }

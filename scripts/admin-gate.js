@@ -3,6 +3,31 @@
  */
 (function () {
   const GATE_ID = 'admin-totp-gate';
+  const LOCAL_UI_KEY = 'stylelog_admin_local_ui';
+
+  function isBrowserLoopback() {
+    const h = location.hostname;
+    return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1';
+  }
+
+  /** 정적 서버(Live Server) 등 API 없이 레이아웃만 볼 때. 프로덕션 호스트에서는 무시됨. */
+  function shouldSkipGateLocalStatic() {
+    if (!isBrowserLoopback()) return false;
+    const q = new URLSearchParams(location.search || '');
+    if (q.get('adminLocal') === '1') {
+      try {
+        sessionStorage.setItem(LOCAL_UI_KEY, '1');
+      } catch (_) {
+        /* ignore */
+      }
+      return true;
+    }
+    try {
+      return sessionStorage.getItem(LOCAL_UI_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
 
   function ensureGateMarkup() {
     if (document.getElementById(GATE_ID)) return;
@@ -83,6 +108,13 @@
   }
 
   async function main() {
+    if (shouldSkipGateLocalStatic()) {
+      document.documentElement.classList.add('admin-authed');
+      hideGate();
+      document.dispatchEvent(new CustomEvent('admin:session-ok'));
+      return;
+    }
+
     const result = await checkSession();
     if (result.type === 'ok') {
       document.documentElement.classList.add('admin-authed');

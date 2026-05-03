@@ -99,8 +99,13 @@ npm run admin:secrets
 ADMIN_DEV_OTP_BYPASS=1
 ```
 
-`vercel dev` 로 열고 브라우저가 **`localhost` 또는 `127.0.0.1`** 일 때만 OTP·세션 시크릿 없이 통과합니다.  
-이 변수는 **Vercel 클라우드(Production/Preview)에는 넣지 마세요.** 배포 빌드에서는 `VERCEL_ENV` 가 `production` / `preview` 일 때 우회 로직이 **절대 동작하지 않도록** 막아 두었습니다.
+`vercel dev` 로 열고 브라우저가 **`localhost` 또는 `127.0.0.1`** 일 때만 OTP·세션 시크릿 없이 통과합니다. (`vercel dev`가 `VERCEL_ENV=preview`로 잡혀도 루프백이면 우회됩니다.)
+
+**Live Server / 정적 서버만 쓸 때(API 없음):** 주소에 한 번만 `?adminLocal=1` 을 붙입니다.  
+예: `http://127.0.0.1:5500/admin/index.html?adminLocal=1`  
+같은 탭에서는 `sessionStorage`에 저장되어 이후에는 쿼리 없이도 레이아웃만 볼 수 있습니다. (데이터/OTP 검증은 `vercel dev` 또는 배포 URL에서 확인.)
+
+이 변수는 **Vercel 클라우드(Production/Preview)에는 넣지 마세요.** (`ADMIN_DEV_OTP_BYPASS`는 클라우드에서 Host가 실제 도메인이라 우회 조건이 성립하지 않습니다.)
 
 ### API 경로 (참고)
 
