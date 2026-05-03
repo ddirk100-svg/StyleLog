@@ -47,10 +47,24 @@ async function tryDashboardSnapshot(supabase) {
   return normalizeDashboardSnapshot(parsed);
 }
 
-async function loadSummaryLegacy(supabase) {
+async function fetchInquiryCountsByReply(supabase) {
+  const [openInq, answeredInq] = await Promise.all([
+    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).or('admin_reply.is.null,admin_reply.eq.'),
+    supabase
+      .from('support_inquiries')
+      .select('*', { count: 'exact', head: true })
+      .not('admin_reply', 'is', null)
+      .neq('admin_reply', '')
+  ]);
+  return {
+    inquiriesOpen: openInq.count ?? 0,
+    inquiriesAnswered: answeredInq.count ?? 0
+  };
+}
+
+async function loadSummaryLegacy(supabase, inqCountsPre) {
+  const inqCounts = inqCountsPre ?? (await fetchInquiryCountsByReply(supabase));
   const [
-    openInq,
-    answeredInq,
     totalInq,
     totalFb,
     fbIdea,
@@ -61,12 +75,6 @@ async function loadSummaryLegacy(supabase) {
     recentInqRows,
     recentFbRows
   ] = await Promise.all([
-    supabase.from('support_inquiries').select('*', { count: 'exact', head: true }).or('admin_reply.is.null,admin_reply.eq.'),
-    supabase
-      .from('support_inquiries')
-      .select('*', { count: 'exact', head: true })
-      .not('admin_reply', 'is', null)
-      .neq('admin_reply', ''),
     supabase.from('support_inquiries').select('*', { count: 'exact', head: true }),
     supabase.from('user_feedback').select('*', { count: 'exact', head: true }),
     supabase.from('user_feedback').select('*', { count: 'exact', head: true }).eq('category', 'idea'),
@@ -117,8 +125,8 @@ async function loadSummaryLegacy(supabase) {
 
   return {
     ok: true,
-    inquiriesOpen: openInq.count ?? 0,
-    inquiriesAnswered: answeredInq.count ?? 0,
+    inquiriesOpen: inqCounts.inquiriesOpen,
+    inquiriesAnswered: inqCounts.inquiriesAnswered,
     inquiriesTotal: totalInq.count ?? 0,
     feedbackTotal: totalFb.count ?? 0,
     feedbackIdea: fbIdea.count ?? 0,
@@ -154,12 +162,16 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const countsPromise = fetchInquiryCountsByReply(supabase);
     const snap = await tryDashboardSnapshot(supabase);
+    const inqCounts = await countsPromise;
     if (snap) {
+      snap.inquiriesOpen = inqCounts.inquiriesOpen;
+      snap.inquiriesAnswered = inqCounts.inquiriesAnswered;
       sendJson(res, 200, snap);
       return;
     }
-    const legacy = await loadSummaryLegacy(supabase);
+    const legacy = await loadSummaryLegacy(supabase, inqCounts);
     sendJson(res, 200, legacy);
   } catch (e) {
     console.error('admin/summary', e);

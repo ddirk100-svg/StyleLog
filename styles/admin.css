@@ -417,6 +417,27 @@ a.admin-card:hover {
     color: #15803d;
 }
 
+/* 고객 문의 목록: 상태 열이 좁을 때 뱃지(한글) 가독성 */
+.admin-table--inquiries th:first-child,
+.admin-table--inquiries td:first-child {
+    width: 7.25rem;
+    min-width: 7.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.admin-table--inquiries td:first-child .admin-pill {
+    white-space: nowrap;
+    max-width: none;
+}
+
+#admin-dash-table-inq th:first-child,
+#admin-dash-table-inq td:first-child {
+    min-width: 6.75rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
 .admin-detail-line {
     font-size: 13px;
     line-height: 1.5;
