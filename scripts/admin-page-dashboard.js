@@ -86,8 +86,8 @@ function pushTrendChart(canvas, chartType, opts) {
           borderColor: opts.borderColor,
           borderWidth: 0,
           borderRadius: 4,
-          barPercentage: 0.52,
-          categoryPercentage: 0.68
+          barPercentage: 0.35,
+          categoryPercentage: 0.5
         }
       : {
           label: opts.title,

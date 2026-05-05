@@ -31,7 +31,7 @@
                 <p class="admin-topbar-meta">user_feedback</p>
             </div>
         </header>
-        <main class="admin-content admin-content--list">
+        <main class="admin-content">
             <div class="admin-toolbar">
                 <input type="search" id="admin-fb-search" class="admin-input" placeholder="제목·내용·유형 검색" disabled>
                 <div class="admin-toolbar-spacer"></div>
@@ -61,16 +61,14 @@
     </div>
     <div id="admin-detail-modal" class="admin-detail-modal" hidden aria-modal="true" role="dialog" aria-labelledby="admin-detail-modal-title">
         <div class="admin-detail-modal__backdrop" data-admin-detail-close></div>
-        <div class="admin-detail-modal__frame">
-            <button type="button" class="admin-detail-modal__side-nav" id="admin-detail-modal-prev" aria-label="이전">&lt;</button>
-            <div class="admin-detail-modal__panel">
-                <header class="admin-detail-modal__header">
-                    <h2 class="admin-detail-modal__title" id="admin-detail-modal-title">상세</h2>
-                    <button type="button" class="admin-detail-modal__close" data-admin-detail-close aria-label="닫기">&times;</button>
-                </header>
-                <div class="admin-detail-modal__body" id="admin-detail-modal-body"></div>
-            </div>
-            <button type="button" class="admin-detail-modal__side-nav" id="admin-detail-modal-next" aria-label="다음">&gt;</button>
+        <div class="admin-detail-modal__panel">
+            <header class="admin-detail-modal__header">
+                <button type="button" class="admin-detail-modal__nav" id="admin-detail-modal-prev" aria-label="이전">&lt;</button>
+                <h2 class="admin-detail-modal__title" id="admin-detail-modal-title">상세</h2>
+                <button type="button" class="admin-detail-modal__nav" id="admin-detail-modal-next" aria-label="다음">&gt;</button>
+                <button type="button" class="admin-detail-modal__close" data-admin-detail-close aria-label="닫기">&times;</button>
+            </header>
+            <div class="admin-detail-modal__body" id="admin-detail-modal-body"></div>
         </div>
     </div>
     <script src="/scripts/admin-gate.js" defer></script>
