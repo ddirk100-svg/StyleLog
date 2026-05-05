@@ -35,85 +35,77 @@
         <main class="admin-content">
             <p class="admin-hint-line" id="admin-dash-banner" hidden></p>
 
-            <section aria-label="요약">
-                <div class="admin-grid">
+            <section aria-label="현황 요약">
+                <h2 class="admin-section-title">현황</h2>
+                <div class="admin-grid admin-grid--metrics">
                     <a class="admin-card" href="members.html">
-                        <div class="admin-card-label">회원 (목록 최대 1000)</div>
+                        <div class="admin-card-label">회원</div>
                         <div class="admin-card-value"><span data-admin-metric="members">—</span></div>
-                        <div class="admin-card-hint">Auth · 스타일 로그 수(페이지별)</div>
+                        <div class="admin-card-hint">가입 회원 수 (Auth)</div>
                     </a>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">스타일 로그</div>
+                        <div class="admin-card-value"><span data-admin-metric="style-logs">—</span></div>
+                        <div class="admin-card-hint">누적 기록 수</div>
+                    </div>
                     <a class="admin-card" href="inquiries.html">
                         <div class="admin-card-label">문의</div>
                         <div class="admin-card-value"><span data-admin-metric="inq-open">—</span> / <span data-admin-metric="inq-total">—</span></div>
-                        <div class="admin-card-hint">미답변 / 전체</div>
+                        <div class="admin-card-hint">미답변 / 전체 · 답변완료 <span data-admin-metric="inq-answered">—</span></div>
                     </a>
                     <a class="admin-card" href="feedback.html">
                         <div class="admin-card-label">피드백</div>
                         <div class="admin-card-value"><span data-admin-metric="fb-total">—</span></div>
-                        <div class="admin-card-hint">user_feedback 전체 건수</div>
+                        <div class="admin-card-hint">누적 건수</div>
                     </a>
-                </div>
-            </section>
-
-            <section aria-label="DB 지표" class="admin-dash-db-section">
-                <div class="admin-grid">
-                    <div class="admin-card admin-card--static">
-                        <div class="admin-card-label">스타일 로그 (전체)</div>
-                        <div class="admin-card-value"><span data-admin-metric="style-logs">—</span></div>
-                        <div class="admin-card-hint">style_logs 행 수</div>
-                    </div>
-                    <div class="admin-card admin-card--static">
-                        <div class="admin-card-label">문의 · 답변완료</div>
-                        <div class="admin-card-value"><span data-admin-metric="inq-answered">—</span></div>
-                        <div class="admin-card-hint">status = answered</div>
-                    </div>
                     <div class="admin-card admin-card--static">
                         <div class="admin-card-label">피드백 유형</div>
-                        <div class="admin-card-hint" style="margin:0;line-height:1.6;">
-                            아이디어 <strong data-admin-metric="fb-idea">—</strong> ·
-                            버그 <strong data-admin-metric="fb-bug">—</strong> ·
-                            기타 <strong data-admin-metric="fb-other">—</strong>
+                        <div class="admin-card-hint admin-card-hint--metrics">
+                            아이디어 <strong data-admin-metric="fb-idea">—</strong>
+                            · 버그 <strong data-admin-metric="fb-bug">—</strong>
+                            · 기타 <strong data-admin-metric="fb-other">—</strong>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section aria-label="최근 문의" class="admin-dash-db-section">
-                <div class="admin-panel">
-                    <div class="admin-table-wrap">
-                        <table class="admin-table admin-table--compact admin-table--inquiries" id="admin-dash-table-inq">
-                            <thead>
-                                <tr>
-                                    <th>상태</th>
-                                    <th>제목</th>
-                                    <th>작성일</th>
-                                    <th>작성자</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-dash-inq-tbody">
-                                <tr class="admin-placeholder-row"><td colspan="4">데이터 없음</td></tr>
-                            </tbody>
-                        </table>
+            <section class="admin-dash-trends" aria-label="기간별 추이">
+                <div class="admin-dash-trends-head">
+                    <h2 class="admin-section-title admin-dash-trends-title">추이</h2>
+                    <div class="admin-dash-trends-toolbar">
+                        <label for="admin-dash-range-select" class="admin-dash-toolbar-label">기간</label>
+                        <select id="admin-dash-range-select" class="admin-input admin-dash-range-select" aria-label="추이 표시 기간">
+                            <option value="1m">최근 1개월</option>
+                            <option value="3m">최근 3개월</option>
+                            <option value="6m" selected>최근 6개월</option>
+                            <option value="1y">최근 1년</option>
+                            <option value="all">전체</option>
+                        </select>
                     </div>
                 </div>
-            </section>
-
-            <section aria-label="최근 피드백" class="admin-dash-db-section">
-                <div class="admin-panel">
-                    <div class="admin-table-wrap">
-                        <table class="admin-table admin-table--compact" id="admin-dash-table-fb">
-                            <thead>
-                                <tr>
-                                    <th>유형</th>
-                                    <th>제목</th>
-                                    <th>작성일</th>
-                                    <th>작성자</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-dash-fb-tbody">
-                                <tr class="admin-placeholder-row"><td colspan="4">데이터 없음</td></tr>
-                            </tbody>
-                        </table>
+                <div class="admin-panel admin-dash-trends-panel">
+                    <p class="admin-dash-chart-hint admin-hint-line admin-hint-line--subtle" id="admin-dash-chart-hint" hidden></p>
+                    <div class="admin-dash-chart-grid" role="list">
+                        <div class="admin-dash-chart-cell" role="listitem">
+                            <div class="admin-dash-chart-wrap admin-dash-chart-wrap--tile">
+                                <canvas id="admin-dash-chart-members-new" aria-label="회원가입 기간별 신규 추이"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-dash-chart-cell" role="listitem">
+                            <div class="admin-dash-chart-wrap admin-dash-chart-wrap--tile">
+                                <canvas id="admin-dash-chart-members-cum" aria-label="회원가입 누적 추이"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-dash-chart-cell" role="listitem">
+                            <div class="admin-dash-chart-wrap admin-dash-chart-wrap--tile">
+                                <canvas id="admin-dash-chart-logs-new" aria-label="스타일 로그 기간별 신규 추이"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-dash-chart-cell" role="listitem">
+                            <div class="admin-dash-chart-wrap admin-dash-chart-wrap--tile">
+                                <canvas id="admin-dash-chart-logs-cum" aria-label="스타일 로그 누적 추이"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -122,7 +114,7 @@
     <script src="/scripts/admin-gate.js" defer></script>
     <script src="/scripts/admin-shell.js" defer></script>
     <script src="/scripts/admin-env-hint.js" defer></script>
-    <script src="/scripts/admin-page-utils.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
     <script src="/scripts/admin-page-dashboard.js" defer></script>
 </body>
 </html>

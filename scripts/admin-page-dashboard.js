@@ -1,53 +1,241 @@
-const {
-  escapeHtml,
-  formatDate,
-  previewText,
-  statusLabelInquiry,
-  statusClassInquiry,
-  inquiryStatusFromRow,
-  categoryLabelFeedback
-} = globalThis.AdminPageUtils;
+/** @type {import('chart.js').Chart[]} */
+const dashCharts = [];
 
-function renderDashRecentInquiries(rows) {
-  const tbody = document.getElementById('admin-dash-inq-tbody');
-  if (!tbody) return;
-  if (!rows || !rows.length) {
-    tbody.innerHTML =
-      '<tr class="admin-placeholder-row"><td colspan="4">표시할 문의가 없습니다.</td></tr>';
-    return;
+let trendsRange = '6m';
+let trendsControlsInited = false;
+
+function readCssColor(varName, fallback) {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    if (v) return v;
+  } catch {
+    /* ignore */
   }
-  tbody.innerHTML = rows
-    .map(
-      (row) => `
-    <tr>
-      <td><span class="${escapeHtml(statusClassInquiry(inquiryStatusFromRow(row)))}">${escapeHtml(statusLabelInquiry(inquiryStatusFromRow(row)))}</span></td>
-      <td>${escapeHtml(previewText(row.title, 48))}</td>
-      <td>${escapeHtml(formatDate(row.created_at))}</td>
-      <td>${escapeHtml(row.user_email || '—')}</td>
-    </tr>`
-    )
-    .join('');
+  return fallback;
 }
 
-function renderDashRecentFeedback(rows) {
-  const tbody = document.getElementById('admin-dash-fb-tbody');
-  if (!tbody) return;
-  if (!rows || !rows.length) {
-    tbody.innerHTML =
-      '<tr class="admin-placeholder-row"><td colspan="4">표시할 피드백이 없습니다.</td></tr>';
-    return;
+function parseColorToRgb(color) {
+  const c = (color || '').trim();
+  if (c.startsWith('#') && c.length === 7) {
+    return [
+      parseInt(c.slice(1, 3), 16),
+      parseInt(c.slice(3, 5), 16),
+      parseInt(c.slice(5, 7), 16)
+    ];
   }
-  tbody.innerHTML = rows
-    .map(
-      (row) => `
-    <tr>
-      <td>${escapeHtml(categoryLabelFeedback(row.category))}</td>
-      <td>${escapeHtml(previewText(row.title, 40))}</td>
-      <td>${escapeHtml(formatDate(row.created_at))}</td>
-      <td>${escapeHtml(row.user_email || '—')}</td>
-    </tr>`
-    )
-    .join('');
+  const m = c.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+  return null;
+}
+
+function colorWithAlpha(color, alpha) {
+  const rgb = parseColorToRgb(color);
+  if (!rgb) return `rgba(37, 99, 235, ${alpha})`;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
+function destroyDashCharts() {
+  while (dashCharts.length) {
+    const c = dashCharts.pop();
+    c.destroy();
+  }
+}
+
+/** @param {number} baseline */
+function prefixSumFromBaseline(baseline, values) {
+  let acc = Number(baseline) || 0;
+  return values.map((v) => {
+    acc += Number(v) || 0;
+    return acc;
+  });
+}
+
+function formatBucketLabel(isoOrDate, granularity) {
+  const d = new Date(isoOrDate);
+  if (Number.isNaN(d.getTime())) return String(isoOrDate);
+  if (granularity === 'day') {
+    return d.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+  }
+  if (granularity === 'week') {
+    return d.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+  }
+  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'short' });
+}
+
+/**
+ * @param {HTMLCanvasElement | null} canvas
+ * @param {{ title: string; labels: string[]; data: number[]; borderColor: string; fillColor: string }} opts
+ */
+function pushLineChart(canvas, opts) {
+  if (!canvas || typeof Chart === 'undefined') return;
+  const titleColor = readCssColor('--color-text-primary', '#333');
+  const ch = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: opts.labels,
+      datasets: [
+        {
+          label: opts.title,
+          data: opts.data,
+          borderColor: opts.borderColor,
+          backgroundColor: opts.fillColor,
+          tension: 0.25,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        title: {
+          display: true,
+          text: opts.title,
+          color: titleColor,
+          font: { size: 13, weight: '600' },
+          padding: { bottom: 8 }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0, color: readCssColor('--color-text-tertiary', '#999') },
+          grid: { color: readCssColor('--color-border-lighter', '#f0f0f0') }
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 12,
+            color: readCssColor('--color-text-tertiary', '#999')
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+  dashCharts.push(ch);
+}
+
+function syncRangeSelect(range) {
+  const sel = document.getElementById('admin-dash-range-select');
+  if (sel && sel.value !== range) sel.value = range;
+}
+
+function renderTrendsCharts(payload) {
+  const hintEl = document.getElementById('admin-dash-chart-hint');
+  const buckets = Array.isArray(payload?.buckets) ? payload.buckets : [];
+  const granularity = payload?.granularity || 'month';
+
+  if (hintEl) {
+    if (payload?.hint) {
+      hintEl.hidden = false;
+      hintEl.textContent = payload.hint;
+    } else if (payload?.rpcMissing) {
+      hintEl.hidden = false;
+      hintEl.textContent =
+        '추이 차트는 Supabase에 admin_dashboard_trends 함수(최신 버전)가 필요합니다. docs/supabase/admin_dashboard_trends.sql 을 실행한 뒤 새로고침하세요.';
+    } else {
+      hintEl.hidden = true;
+      hintEl.textContent = '';
+    }
+  }
+
+  destroyDashCharts();
+
+  const labels = buckets.map((b) => formatBucketLabel(b.t, granularity));
+  const signups = buckets.map((b) => Number(b.signups ?? 0));
+  const styleLogs = buckets.map((b) => Number(b.styleLogs ?? 0));
+  const membersBefore = Number(payload?.membersBefore ?? 0);
+  const styleLogsBefore = Number(payload?.styleLogsBefore ?? 0);
+  const signupsCum = prefixSumFromBaseline(membersBefore, signups);
+  const logsCum = prefixSumFromBaseline(styleLogsBefore, styleLogs);
+
+  const primary = readCssColor('--color-primary', '#2563eb');
+  const accent = readCssColor('--color-accent', '#3b82f6');
+
+  pushLineChart(document.getElementById('admin-dash-chart-members-new'), {
+    title: '회원가입 (기간별 신규)',
+    labels,
+    data: signups,
+    borderColor: primary,
+    fillColor: colorWithAlpha(primary, 0.12)
+  });
+
+  pushLineChart(document.getElementById('admin-dash-chart-members-cum'), {
+    title: '회원가입 (누적)',
+    labels,
+    data: signupsCum,
+    borderColor: primary,
+    fillColor: colorWithAlpha(primary, 0.08)
+  });
+
+  pushLineChart(document.getElementById('admin-dash-chart-logs-new'), {
+    title: '스타일 로그 (기간별 신규)',
+    labels,
+    data: styleLogs,
+    borderColor: accent,
+    fillColor: colorWithAlpha(accent, 0.12)
+  });
+
+  pushLineChart(document.getElementById('admin-dash-chart-logs-cum'), {
+    title: '스타일 로그 (누적)',
+    labels,
+    data: logsCum,
+    borderColor: accent,
+    fillColor: colorWithAlpha(accent, 0.08)
+  });
+}
+
+async function loadTrends(range) {
+  const r = await fetch(`/api/admin/trends?range=${encodeURIComponent(range)}`, {
+    credentials: 'same-origin'
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    return {
+      ok: false,
+      range,
+      granularity: null,
+      membersBefore: 0,
+      styleLogsBefore: 0,
+      buckets: [],
+      hint: '추이 데이터를 불러오지 못했습니다.'
+    };
+  }
+  return j;
+}
+
+async function refreshTrendsChart(range) {
+  trendsRange = range;
+  syncRangeSelect(range);
+  const payload = await loadTrends(range);
+  if (payload && payload.ok !== false) {
+    renderTrendsCharts(payload);
+  } else {
+    renderTrendsCharts({
+      buckets: [],
+      granularity: null,
+      membersBefore: 0,
+      styleLogsBefore: 0,
+      hint: payload?.hint || '추이를 표시할 수 없습니다.'
+    });
+  }
+}
+
+function initTrendsControls() {
+  if (trendsControlsInited) return;
+  trendsControlsInited = true;
+  const sel = document.getElementById('admin-dash-range-select');
+  if (!sel) return;
+  sel.value = trendsRange;
+  sel.addEventListener('change', () => {
+    const r = sel.value;
+    if (r) refreshTrendsChart(r);
+  });
 }
 
 async function loadAdminDashboard() {
@@ -59,7 +247,7 @@ async function loadAdminDashboard() {
   const meta = document.querySelector('.admin-topbar-meta');
 
   try {
-    const r = await fetch('/api/admin/summary', { credentials: 'same-origin' });
+    const r = await fetch('/api/admin/summary?lite=1', { credentials: 'same-origin' });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) {
       if (j.error === 'supabase_not_configured') {
@@ -111,15 +299,14 @@ async function loadAdminDashboard() {
     }
     setText('[data-admin-metric="members"]', memb);
 
-    renderDashRecentInquiries(j.recentInquiries);
-    renderDashRecentFeedback(j.recentFeedback);
-
     globalThis.AdminEnvHint?.setDashHintLine?.(document.getElementById('admin-dash-banner'), '', false);
 
     globalThis.AdminEnvHint?.showMeta?.(
       meta,
-      `갱신 ${new Date().toLocaleString('ko-KR')} · 회원 수는 Auth 기준(목록 상한 반영)`
+      `갱신 ${new Date().toLocaleString('ko-KR')} · 회원 수는 Auth 기준`
     );
+
+    await refreshTrendsChart(trendsRange);
   } catch {
     const H = globalThis.AdminEnvHint;
     if (H) {
@@ -133,6 +320,7 @@ async function loadAdminDashboard() {
 }
 
 function startAdminDashboard() {
+  initTrendsControls();
   loadAdminDashboard();
 }
 

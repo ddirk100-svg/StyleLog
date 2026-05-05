@@ -1,5 +1,6 @@
 const {
   getHost,
+  parseRequestUrl,
   getSupabaseAdmin,
   requireSession,
   replyForRequireSessionError,
@@ -51,7 +52,7 @@ async function tryDashboardSnapshot(supabase) {
   return normalizeDashboardSnapshot(parsed);
 }
 
-async function loadSummaryLegacy(supabase, inqCountsPre) {
+async function loadSummaryLegacy(supabase, inqCountsPre, lite) {
   const inqCounts = inqCountsPre ?? (await fetchInquiryCountsByReply(supabase));
   const [
     totalInq,
@@ -71,16 +72,20 @@ async function loadSummaryLegacy(supabase, inqCountsPre) {
     supabase.from('user_feedback').select('*', { count: 'exact', head: true }).eq('category', 'other'),
     supabase.from('style_logs').select('*', { count: 'exact', head: true }),
     supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-    supabase
-      .from('support_inquiries')
-      .select('id,title,status,user_id,created_at,admin_reply')
-      .order('created_at', { ascending: false })
-      .limit(8),
-    supabase
-      .from('user_feedback')
-      .select('id,title,category,user_id,created_at')
-      .order('created_at', { ascending: false })
-      .limit(8)
+    lite
+      ? Promise.resolve({ data: null, error: null })
+      : supabase
+          .from('support_inquiries')
+          .select('id,title,status,user_id,created_at,admin_reply')
+          .order('created_at', { ascending: false })
+          .limit(8),
+    lite
+      ? Promise.resolve({ data: null, error: null })
+      : supabase
+          .from('user_feedback')
+          .select('id,title,category,user_id,created_at')
+          .order('created_at', { ascending: false })
+          .limit(8)
   ]);
 
   const userCount =
@@ -96,21 +101,24 @@ async function loadSummaryLegacy(supabase, inqCountsPre) {
     }
   }
 
-  const inqList = recentInqRows.error || !recentInqRows.data ? [] : recentInqRows.data;
-  const fbList = recentFbRows.error || !recentFbRows.data ? [] : recentFbRows.data;
-  const uidSet = new Set();
-  inqList.forEach((r) => r.user_id && uidSet.add(r.user_id));
-  fbList.forEach((r) => r.user_id && uidSet.add(r.user_id));
-  const emailMap = await emailsForUserIds(supabase, [...uidSet]);
-
-  const recentInquiries = inqList.map((r) => ({
-    ...r,
-    user_email: emailMap.get(r.user_id) || '—'
-  }));
-  const recentFeedback = fbList.map((r) => ({
-    ...r,
-    user_email: emailMap.get(r.user_id) || '—'
-  }));
+  let recentInquiries = [];
+  let recentFeedback = [];
+  if (!lite) {
+    const inqList = recentInqRows.error || !recentInqRows.data ? [] : recentInqRows.data;
+    const fbList = recentFbRows.error || !recentFbRows.data ? [] : recentFbRows.data;
+    const uidSet = new Set();
+    inqList.forEach((r) => r.user_id && uidSet.add(r.user_id));
+    fbList.forEach((r) => r.user_id && uidSet.add(r.user_id));
+    const emailMap = await emailsForUserIds(supabase, [...uidSet]);
+    recentInquiries = inqList.map((r) => ({
+      ...r,
+      user_email: emailMap.get(r.user_id) || '—'
+    }));
+    recentFeedback = fbList.map((r) => ({
+      ...r,
+      user_email: emailMap.get(r.user_id) || '—'
+    }));
+  }
 
   return {
     ok: true,
@@ -150,6 +158,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  const lite = parseRequestUrl(req).searchParams.get('lite') === '1';
+
   try {
     const countsPromise = fetchInquiryCountsByReply(supabase);
     const snap = await tryDashboardSnapshot(supabase);
@@ -157,12 +167,19 @@ module.exports = async function handler(req, res) {
     if (snap) {
       snap.inquiriesOpen = inqCounts.inquiriesOpen;
       snap.inquiriesAnswered = inqCounts.inquiriesAnswered;
-      snap.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, snap.recentInquiries);
+      if (lite) {
+        snap.recentInquiries = [];
+        snap.recentFeedback = [];
+      } else {
+        snap.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, snap.recentInquiries);
+      }
       sendJson(res, 200, snap);
       return;
     }
-    const legacy = await loadSummaryLegacy(supabase, inqCounts);
-    legacy.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, legacy.recentInquiries);
+    const legacy = await loadSummaryLegacy(supabase, inqCounts, lite);
+    if (!lite) {
+      legacy.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, legacy.recentInquiries);
+    }
     sendJson(res, 200, legacy);
   } catch (e) {
     console.error('admin/summary', e);
