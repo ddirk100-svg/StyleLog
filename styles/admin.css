@@ -162,6 +162,20 @@
     margin: 0 auto;
 }
 
+/* 회원·문의·피드백: 테이블·툴바·페이지네이션 열 폭 맞춰 가운데 정렬 */
+.admin-content--list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.admin-content--list .admin-toolbar,
+.admin-content--list .admin-panel,
+.admin-content--list .admin-pagination--footer {
+    width: 100%;
+    max-width: 68rem;
+}
+
 /* 대시보드 한 줄 안내(정상 시 숨김, 오류 시만 표시) — 예전 admin-banner 와 동일한 박스형 */
 .admin-hint-line {
     margin: 0 0 24px;
@@ -506,7 +520,8 @@ body.admin-detail-modal-open {
 .admin-detail-modal__panel {
     position: relative;
     z-index: 1;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     max-width: 42rem;
     max-height: min(88vh, 720px);
     display: flex;
@@ -517,11 +532,58 @@ body.admin-detail-modal-open {
     box-shadow: 0 12px 40px var(--color-shadow-lg);
 }
 
-.admin-detail-modal__header {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
+.admin-detail-modal__frame {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
     gap: var(--spacing-sm);
+    width: 100%;
+    max-width: min(100%, calc(42rem + 5.5rem));
+    pointer-events: none;
+}
+
+.admin-detail-modal__frame > * {
+    pointer-events: auto;
+}
+
+.admin-detail-modal__side-nav {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.42);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    font-family: inherit;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 14px var(--color-shadow-sm);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.admin-detail-modal__side-nav:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.62);
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
+.admin-detail-modal__side-nav:disabled {
+    opacity: 0.32;
+    cursor: default;
+}
+
+.admin-detail-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
     padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--color-border-lighter);
     flex-shrink: 0;
@@ -529,37 +591,15 @@ body.admin-detail-modal-open {
 
 .admin-detail-modal__title {
     margin: 0;
+    flex: 1;
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-bold);
     text-align: center;
     min-width: 0;
 }
 
-.admin-detail-modal__nav {
-    min-width: 2.25rem;
-    padding: 6px 10px;
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-sm);
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
-    font-family: inherit;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.admin-detail-modal__nav:hover:not(:disabled) {
-    background: var(--color-bg-hover);
-}
-
-.admin-detail-modal__nav:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
 .admin-detail-modal__close {
-    margin-left: var(--spacing-sm);
+    flex-shrink: 0;
     width: 2.25rem;
     height: 2.25rem;
     padding: 0;
