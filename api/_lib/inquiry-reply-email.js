@@ -5,14 +5,7 @@
 
 const { sendResendEmail, isResendConfigured } = require('./resend-email.js');
 const { inquiryPageUrl } = require('./stylelog-public-url.js');
-
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+const { escapeHtml, EMAIL_RE } = require('./mail-text.js');
 
 /**
  * @param {{ to: string; title: string; host?: string }} opts
@@ -22,7 +15,7 @@ async function sendInquiryFirstReplyEmail(opts) {
   const to = (opts && opts.to ? String(opts.to) : '').trim().toLowerCase();
   const title = opts && opts.title != null ? String(opts.title).trim() : '';
 
-  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+  if (!to || !EMAIL_RE.test(to)) {
     return { ok: false, skipped: 'invalid_recipient' };
   }
 

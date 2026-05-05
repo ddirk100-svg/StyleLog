@@ -4,18 +4,15 @@
  * 알파: Host에 alpha 포함 시 RESEND_FROM_ALPHA → 없으면 `(Alpha) StyleLog <RESEND_FROM과 동일 주소>`
  */
 
-function envStr(name) {
-  const v = process.env[name];
-  if (v == null || typeof v !== 'string') return '';
-  return v.trim();
-}
+const { envStr } = require('./env.js');
+const { normalizeRecipientList, EMAIL_RE } = require('./mail-text.js');
 
 /** "Name <addr@>" 또는 단일 이메일에서 주소만 */
 function extractEmailFromFromHeader(raw) {
   const s = String(raw || '').trim();
   const m = s.match(/<([^<>\s]+@[^<>\s]+)>/);
   if (m) return m[1].trim().toLowerCase();
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return s.toLowerCase();
+  if (EMAIL_RE.test(s)) return s.toLowerCase();
   return '';
 }
 
@@ -54,13 +51,6 @@ function formatSubjectForAlphaHost(host, subject) {
   return s;
 }
 
-function normalizeRecipients(to) {
-  const list = (Array.isArray(to) ? to : [to])
-    .map((t) => String(t || '').trim().toLowerCase())
-    .filter((t) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t));
-  return [...new Set(list)];
-}
-
 function isResendConfigured() {
   return Boolean(
     envStr('RESEND_API_KEY') &&
@@ -92,7 +82,7 @@ async function sendResendEmail(opts) {
     return { ok: false, skipped: 'missing_body' };
   }
 
-  const toList = normalizeRecipients(opts && opts.to);
+  const toList = normalizeRecipientList(opts && opts.to);
   if (!toList.length) {
     return { ok: false, skipped: 'invalid_recipient' };
   }
@@ -105,7 +95,7 @@ async function sendResendEmail(opts) {
   if (text) payload.text = text;
   if (html) payload.html = html;
   const replyTo = opts && opts.replyTo ? String(opts.replyTo).trim() : '';
-  if (replyTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyTo)) {
+  if (replyTo && EMAIL_RE.test(replyTo)) {
     payload.reply_to = replyTo;
   }
 

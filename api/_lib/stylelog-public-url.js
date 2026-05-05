@@ -2,19 +2,7 @@
  * 메일·링크용 공개 사이트 URL (환경 변수 우선).
  */
 
-function envStr(name) {
-  const v = process.env[name];
-  if (v == null || typeof v !== 'string') return '';
-  return v.trim();
-}
-
-function firstEnvStr(...names) {
-  for (const n of names) {
-    const v = envStr(n);
-    if (v) return v;
-  }
-  return '';
-}
+const { firstEnvStr } = require('./env.js');
 
 /** 루트 URL, 끝 슬래시 제거. 비었을 수 있음. */
 function publicSiteOrigin() {

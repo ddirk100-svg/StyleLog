@@ -13,24 +13,11 @@ const {
 } = require('../_lib/admin-common.js');
 const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
 const { sendAdminNewInquiryEmail } = require('../_lib/admin-inquiry-insert-email.js');
-
-function envStr(name) {
-  const v = process.env[name];
-  if (v == null || typeof v !== 'string') return '';
-  return v.trim();
-}
+const { envStr } = require('../_lib/env.js');
+const { normalizeRecipientList } = require('../_lib/mail-text.js');
 
 function adminInquiryNotifyList() {
-  const raw = envStr('ADMIN_INQUIRY_NOTIFY_EMAIL');
-  if (!raw) return [];
-  return [
-    ...new Set(
-      raw
-        .split(/[,;]+/)
-        .map((s) => s.trim().toLowerCase())
-        .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
-    )
-  ];
+  return normalizeRecipientList(envStr('ADMIN_INQUIRY_NOTIFY_EMAIL'));
 }
 
 function timingSafeEqualStr(a, b) {

@@ -4,14 +4,7 @@
 
 const { sendResendEmail } = require('./resend-email.js');
 const { adminInquiriesPageUrl } = require('./stylelog-public-url.js');
-
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+const { escapeHtml } = require('./mail-text.js');
 
 function truncate(s, max) {
   const t = String(s || '').replace(/\s+/g, ' ').trim();
