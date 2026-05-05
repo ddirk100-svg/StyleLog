@@ -84,12 +84,25 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const t = body && body.type;
-  const table = body && body.table;
-  const schema = body && body.schema;
+  const t0 = body && body.type;
+  const table0 = body && body.table;
+  const schema0 = body && body.schema;
   const record = body && body.record;
 
+  const t = t0 != null ? String(t0).trim().toUpperCase() : '';
+  const table = table0 != null ? String(table0).trim() : '';
+  const schema =
+    schema0 == null || String(schema0).trim() === ''
+      ? 'public'
+      : String(schema0).trim();
+
   if (t !== 'INSERT' || table !== 'support_inquiries' || schema !== 'public' || !record) {
+    console.warn('support-inquiry webhook ignored', {
+      type: t0,
+      table: table0,
+      schema: schema0,
+      hasRecord: Boolean(record)
+    });
     sendJson(res, 200, { ok: true, ignored: true });
     return;
   }
