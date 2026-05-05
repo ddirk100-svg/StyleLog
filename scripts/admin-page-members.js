@@ -1,6 +1,7 @@
 const { escapeHtml, formatDate, applyAdminFetchFailure } = globalThis.AdminPageUtils;
 
 let membersItems = [];
+let membersDisplayed = [];
 let membersPage = 1;
 let membersLastPayload = null;
 
@@ -9,9 +10,40 @@ function emailConfirmShort(iso) {
   return formatDate(iso);
 }
 
+function memberDetailHtml(u) {
+  const phoneLine =
+    u.phone != null && String(u.phone).trim() !== ''
+      ? `<p class="admin-detail-line"><strong>전화</strong><br>${escapeHtml(u.phone)}</p>`
+      : '<p class="admin-detail-line"><strong>전화</strong><br>—</p>';
+  const banLine = u.banned_until
+    ? `<p class="admin-detail-line"><strong>정지·차단 만료</strong><br>${escapeHtml(formatDate(u.banned_until))}</p>`
+    : '';
+  return [
+    phoneLine,
+    `<p class="admin-detail-line"><strong>이메일</strong><br>${escapeHtml(u.email)}</p>`,
+    `<p class="admin-detail-line"><strong>이메일 인증</strong><br>${escapeHtml(formatDate(u.email_confirmed_at) || '미인증')}</p>`,
+    `<p class="admin-detail-line"><strong>가입</strong><br>${escapeHtml(formatDate(u.created_at))}</p>`,
+    `<p class="admin-detail-line"><strong>계정 갱신</strong><br>${escapeHtml(formatDate(u.updated_at))}</p>`,
+    `<p class="admin-detail-line"><strong>마지막 로그인</strong><br>${escapeHtml(formatDate(u.last_sign_in_at))}</p>`,
+    `<p class="admin-detail-line"><strong>스타일 로그 수</strong><br>${escapeHtml(String(u.style_log_count ?? 0))}</p>`,
+    banLine,
+    `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>UUID</strong><br>${escapeHtml(u.id)}</p>`
+  ].join('');
+}
+
+function syncMemberRowSelection(userId) {
+  const tbody = document.getElementById('admin-members-tbody');
+  if (!tbody) return;
+  tbody.querySelectorAll('tr[data-member-id]').forEach((r) => {
+    r.classList.toggle('is-selected', r.getAttribute('data-member-id') === userId);
+  });
+}
+
 function renderMembersTable(items) {
   const tbody = document.getElementById('admin-members-tbody');
   if (!tbody) return;
+
+  membersDisplayed = items;
 
   if (!items.length) {
     tbody.innerHTML =
@@ -35,31 +67,17 @@ function renderMembersTable(items) {
 
   tbody.querySelectorAll('tr[data-member-id]').forEach((row) => {
     row.addEventListener('click', () => {
-      tbody.querySelectorAll('tr').forEach((r) => r.classList.remove('is-selected'));
-      row.classList.add('is-selected');
       const id = row.getAttribute('data-member-id');
-      const u = items.find((x) => x.id === id);
-      const aside = document.getElementById('admin-member-detail');
-      if (!aside || !u) return;
-      const phoneLine =
-        u.phone != null && String(u.phone).trim() !== ''
-          ? `<p class="admin-detail-line"><strong>전화</strong><br>${escapeHtml(u.phone)}</p>`
-          : '<p class="admin-detail-line"><strong>전화</strong><br>—</p>';
-      const banLine = u.banned_until
-        ? `<p class="admin-detail-line"><strong>정지·차단 만료</strong><br>${escapeHtml(formatDate(u.banned_until))}</p>`
-        : '';
-      aside.innerHTML = [
-        '<h2 class="admin-section-title" style="margin-top:0;">상세</h2>',
-        `<p class="admin-detail-line"><strong>이메일</strong><br>${escapeHtml(u.email)}</p>`,
-        phoneLine,
-        `<p class="admin-detail-line"><strong>이메일 인증</strong><br>${escapeHtml(formatDate(u.email_confirmed_at) || '미인증')}</p>`,
-        `<p class="admin-detail-line"><strong>가입</strong><br>${escapeHtml(formatDate(u.created_at))}</p>`,
-        `<p class="admin-detail-line"><strong>계정 갱신</strong><br>${escapeHtml(formatDate(u.updated_at))}</p>`,
-        `<p class="admin-detail-line"><strong>마지막 로그인</strong><br>${escapeHtml(formatDate(u.last_sign_in_at))}</p>`,
-        `<p class="admin-detail-line"><strong>스타일 로그 수</strong><br>${escapeHtml(String(u.style_log_count ?? 0))}</p>`,
-        banLine,
-        `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>UUID</strong><br>${escapeHtml(u.id)}</p>`
-      ].join('');
+      const idx = membersDisplayed.findIndex((x) => x.id === id);
+      if (idx === -1) return;
+      globalThis.AdminDetailModal?.open({
+        index: idx,
+        length: membersDisplayed.length,
+        getTitle: (i) => membersDisplayed[i]?.email || '회원 상세',
+        renderBody: (i) => memberDetailHtml(membersDisplayed[i]),
+        onIndexChange: (i) => syncMemberRowSelection(membersDisplayed[i]?.id)
+      });
+      syncMemberRowSelection(id);
     });
   });
 }
@@ -104,6 +122,8 @@ function syncMembersPager() {
 async function loadMembers() {
   const tbody = document.getElementById('admin-members-tbody');
   const meta = document.querySelector('.admin-topbar-meta');
+  globalThis.AdminDetailModal?.close();
+
   if (tbody) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="6">불러오는 중…</td></tr>';

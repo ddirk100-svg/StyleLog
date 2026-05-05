@@ -84,8 +84,10 @@ function pushTrendChart(canvas, chartType, opts) {
           data: opts.data,
           backgroundColor: opts.fillColor,
           borderColor: opts.borderColor,
-          borderWidth: 1,
-          borderRadius: 6
+          borderWidth: 0,
+          borderRadius: 4,
+          barPercentage: 0.35,
+          categoryPercentage: 0.5
         }
       : {
           label: opts.title,
@@ -93,7 +95,13 @@ function pushTrendChart(canvas, chartType, opts) {
           borderColor: opts.borderColor,
           backgroundColor: opts.fillColor,
           tension: 0.25,
-          fill: true
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBorderWidth: 2,
+          pointHoverBackgroundColor: opts.borderColor,
+          pointHoverBorderColor: opts.borderColor,
+          pointHitRadius: 20
         };
 
   const ch = new Chart(canvas, {
@@ -180,7 +188,7 @@ function renderTrendsCharts(payload) {
     labels,
     data: signups,
     borderColor: primary,
-    fillColor: colorWithAlpha(primary, 0.55)
+    fillColor: colorWithAlpha(primary, 0.38)
   });
 
   pushTrendChart(document.getElementById('admin-dash-chart-members-cum'), 'line', {
@@ -196,7 +204,7 @@ function renderTrendsCharts(payload) {
     labels,
     data: styleLogs,
     borderColor: accent,
-    fillColor: colorWithAlpha(accent, 0.55)
+    fillColor: colorWithAlpha(accent, 0.38)
   });
 
   pushTrendChart(document.getElementById('admin-dash-chart-logs-cum'), 'line', {

@@ -8,9 +8,45 @@ const {
 } = globalThis.AdminPageUtils;
 
 let feedbackItems = [];
+let selectedFeedbackId = null;
 let fbPage = 1;
 const FB_PER_PAGE = 25;
 let fbSearchDebounce = null;
+
+function syncFeedbackRowSelection(id) {
+  const tbody = document.getElementById('admin-fb-tbody');
+  if (!tbody) return;
+  selectedFeedbackId = id;
+  tbody.querySelectorAll('tr[data-fb-id]').forEach((r) => {
+    r.classList.toggle('is-selected', r.getAttribute('data-fb-id') === id);
+  });
+}
+
+function feedbackDetailHtml(row) {
+  if (!row) return '';
+  return [
+    `<p class="admin-card-hint">${escapeHtml(formatDate(row.created_at))}</p>`,
+    `<p class="admin-detail-line"><strong>유형</strong><br>${escapeHtml(categoryLabelFeedback(row.category))}</p>`,
+    `<p class="admin-detail-line"><strong>이메일</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
+    `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
+    `<p class="admin-detail-line"><strong>제목</strong><br>${escapeHtml(row.title)}</p>`,
+    '<p class="admin-detail-line"><strong>내용</strong></p>',
+    `<pre class="admin-pre">${escapeHtml(row.body || '')}</pre>`
+  ].join('');
+}
+
+function openFeedbackModal(index) {
+  globalThis.AdminDetailModal?.open({
+    index,
+    length: feedbackItems.length,
+    getTitle: () => '피드백 상세',
+    renderBody: (i) => feedbackDetailHtml(feedbackItems[i]),
+    onIndexChange: (i) => {
+      const r = feedbackItems[i];
+      syncFeedbackRowSelection(r?.id ?? null);
+    }
+  });
+}
 
 function renderFeedbackTable() {
   const tbody = document.getElementById('admin-fb-tbody');
@@ -24,7 +60,7 @@ function renderFeedbackTable() {
   tbody.innerHTML = rows
     .map(
       (row) => `
-    <tr data-fb-id="${escapeHtml(row.id)}">
+    <tr data-fb-id="${escapeHtml(row.id)}" class="${row.id === selectedFeedbackId ? 'is-selected' : ''}">
       <td>${escapeHtml(formatDate(row.created_at))}</td>
       <td>${escapeHtml(categoryLabelFeedback(row.category))}</td>
       <td>${escapeHtml(row.title || '—')}</td>
@@ -36,22 +72,11 @@ function renderFeedbackTable() {
 
   tbody.querySelectorAll('tr[data-fb-id]').forEach((tr) => {
     tr.addEventListener('click', () => {
-      tbody.querySelectorAll('tr').forEach((r) => r.classList.remove('is-selected'));
-      tr.classList.add('is-selected');
       const id = tr.getAttribute('data-fb-id');
-      const row = feedbackItems.find((x) => x.id === id);
-      const aside = document.getElementById('admin-fb-detail');
-      if (!aside || !row) return;
-      aside.innerHTML = [
-        '<h2 class="admin-section-title" style="margin-top:0;">상세</h2>',
-        `<p class="admin-card-hint">${escapeHtml(formatDate(row.created_at))}</p>`,
-        `<p class="admin-detail-line"><strong>유형</strong><br>${escapeHtml(categoryLabelFeedback(row.category))}</p>`,
-        `<p class="admin-detail-line"><strong>이메일</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
-        `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
-        `<p class="admin-detail-line"><strong>제목</strong><br>${escapeHtml(row.title)}</p>`,
-        '<p class="admin-detail-line"><strong>내용</strong></p>',
-        `<pre class="admin-pre">${escapeHtml(row.body || '')}</pre>`
-      ].join('');
+      const idx = feedbackItems.findIndex((x) => x.id === id);
+      if (idx === -1) return;
+      syncFeedbackRowSelection(id);
+      openFeedbackModal(idx);
     });
   });
 }
@@ -78,6 +103,9 @@ function syncFeedbackPager(j) {
 async function loadFeedback() {
   const tbody = document.getElementById('admin-fb-tbody');
   const meta = document.querySelector('.admin-topbar-meta');
+  globalThis.AdminDetailModal?.close();
+  selectedFeedbackId = null;
+
   if (tbody) {
     tbody.innerHTML =
       '<tr class="admin-placeholder-row"><td colspan="5">불러오는 중…</td></tr>';

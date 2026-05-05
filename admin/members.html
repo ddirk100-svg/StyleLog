@@ -36,39 +36,46 @@
                 <input type="search" id="admin-members-search" class="admin-input" placeholder="이메일·전화·UUID 검색" disabled aria-disabled="true">
                 <div class="admin-toolbar-spacer"></div>
             </div>
-            <nav id="admin-members-pager" class="admin-pagination" aria-label="페이지"></nav>
-            <div class="admin-detail-layout">
-                <div class="admin-panel">
-                    <div class="admin-table-wrap">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>이메일</th>
-                                    <th>이메일 인증</th>
-                                    <th>가입일</th>
-                                    <th>마지막 로그인</th>
-                                    <th>로그 수</th>
-                                    <th>ID</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-members-tbody">
-                                <tr class="admin-placeholder-row">
-                                    <td colspan="6">인증 후 목록이 표시됩니다.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="admin-panel">
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>이메일</th>
+                                <th>이메일 인증</th>
+                                <th>가입일</th>
+                                <th>마지막 로그인</th>
+                                <th>로그 수</th>
+                                <th>ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-members-tbody">
+                            <tr class="admin-placeholder-row">
+                                <td colspan="6">인증 후 목록이 표시됩니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <aside class="admin-panel" id="admin-member-detail" style="padding:16px;">
-                    <h2 class="admin-section-title" style="margin-top:0;">상세</h2>
-                    <p class="admin-card-hint" style="margin:0;">목록에서 행을 선택하세요.</p>
-                </aside>
             </div>
+            <nav id="admin-members-pager" class="admin-pagination admin-pagination--footer" aria-label="페이지"></nav>
         </main>
+    </div>
+    <div id="admin-detail-modal" class="admin-detail-modal" hidden aria-modal="true" role="dialog" aria-labelledby="admin-detail-modal-title">
+        <div class="admin-detail-modal__backdrop" data-admin-detail-close></div>
+        <div class="admin-detail-modal__panel">
+            <header class="admin-detail-modal__header">
+                <button type="button" class="admin-detail-modal__nav" id="admin-detail-modal-prev" aria-label="이전">&lt;</button>
+                <h2 class="admin-detail-modal__title" id="admin-detail-modal-title">상세</h2>
+                <button type="button" class="admin-detail-modal__nav" id="admin-detail-modal-next" aria-label="다음">&gt;</button>
+                <button type="button" class="admin-detail-modal__close" data-admin-detail-close aria-label="닫기">&times;</button>
+            </header>
+            <div class="admin-detail-modal__body" id="admin-detail-modal-body"></div>
+        </div>
     </div>
     <script src="/scripts/admin-gate.js" defer></script>
     <script src="/scripts/admin-shell.js" defer></script>
     <script src="/scripts/admin-env-hint.js" defer></script>
+    <script src="/scripts/admin-detail-modal.js" defer></script>
     <script src="/scripts/admin-page-utils.js" defer></script>
     <script src="/scripts/admin-pagination.js" defer></script>
     <script src="/scripts/admin-page-members.js" defer></script>

@@ -15,19 +15,20 @@ let inqPage = 1;
 const INQ_PER_PAGE = 25;
 let inqSearchDebounce = null;
 
-function renderInquiryDetail(row) {
-  const aside = document.getElementById('admin-inq-detail');
-  if (!aside) return;
-  if (!row) {
-    aside.innerHTML =
-      '<h2 class="admin-section-title" style="margin-top:0;">문의 상세</h2><p class="admin-card-hint">목록에서 항목을 선택하세요.</p>';
-    return;
-  }
+function syncInquiryRowSelection(id) {
+  const tbody = document.getElementById('admin-inq-tbody');
+  if (!tbody) return;
+  selectedInquiryId = id;
+  tbody.querySelectorAll('tr[data-inq-id]').forEach((r) => {
+    r.classList.toggle('is-selected', r.getAttribute('data-inq-id') === id);
+  });
+}
 
+function inquiryDetailBodyHtml(row) {
+  if (!row) return '';
   const replyVal = row.admin_reply != null ? String(row.admin_reply) : '';
   const eff = inquiryStatusFromRow(row);
-  aside.innerHTML = [
-    '<h2 class="admin-section-title" style="margin-top:0;">문의 상세</h2>',
+  return [
     `<p class="admin-card-hint">${escapeHtml(statusLabelInquiry(eff))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
     `<p class="admin-detail-line"><strong>작성자</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
     `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
@@ -42,31 +43,53 @@ function renderInquiryDetail(row) {
     '<button type="button" class="admin-btn admin-btn-primary" id="admin-inq-save">저장</button>',
     '<p class="admin-gate-msg" id="admin-inq-save-msg" role="status" style="margin-top:10px;"></p>'
   ].join('');
+}
 
-  document.getElementById('admin-inq-save')?.addEventListener('click', async () => {
+function wireInquiryDetailActions(index) {
+  if (!inquiriesItems[index]) return;
+  const saveBtn = document.getElementById('admin-inq-save');
+  if (!saveBtn) return;
+  saveBtn.onclick = async () => {
     const ta = document.getElementById('admin-inq-reply');
     const msg = document.getElementById('admin-inq-save-msg');
     if (!ta || !msg) return;
+    const idx = globalThis.AdminDetailModal?.getActiveIndex?.() ?? index;
+    const cur = inquiriesItems[idx];
+    if (!cur) return;
     msg.textContent = '저장 중…';
     const res = await fetch('/api/admin/inquiries', {
       method: 'PATCH',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        id: row.id,
+        id: cur.id,
         admin_reply: ta.value
       })
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.ok && data.item) {
-      const idx = inquiriesItems.findIndex((x) => x.id === row.id);
-      if (idx !== -1) inquiriesItems[idx] = data.item;
+      const fixIdx = inquiriesItems.findIndex((x) => x.id === cur.id);
+      if (fixIdx !== -1) inquiriesItems[fixIdx] = data.item;
       msg.textContent = '저장했습니다.';
       renderInquiriesTable();
-      renderInquiryDetail(data.item);
+      globalThis.AdminDetailModal?.sync();
       return;
     }
     msg.textContent = data.detail || data.error || '저장 실패';
+  };
+}
+
+function openInquiryModal(index) {
+  globalThis.AdminDetailModal?.open({
+    index,
+    length: inquiriesItems.length,
+    getTitle: () => '문의 상세',
+    renderBody: (i) => inquiryDetailBodyHtml(inquiriesItems[i]),
+    afterRender: (i) => wireInquiryDetailActions(i),
+    onIndexChange: (i) => {
+      const r = inquiriesItems[i];
+      syncInquiryRowSelection(r?.id ?? null);
+    }
   });
 }
 
@@ -95,11 +118,11 @@ function renderInquiriesTable() {
 
   tbody.querySelectorAll('tr[data-inq-id]').forEach((tr) => {
     tr.addEventListener('click', () => {
-      selectedInquiryId = tr.getAttribute('data-inq-id');
-      tbody.querySelectorAll('tr').forEach((r) => r.classList.remove('is-selected'));
-      tr.classList.add('is-selected');
-      const row = inquiriesItems.find((x) => x.id === selectedInquiryId);
-      renderInquiryDetail(row);
+      const id = tr.getAttribute('data-inq-id');
+      const idx = inquiriesItems.findIndex((x) => x.id === id);
+      if (idx === -1) return;
+      syncInquiryRowSelection(id);
+      openInquiryModal(idx);
     });
   });
 }
@@ -127,7 +150,7 @@ async function loadInquiries() {
   const tbody = document.getElementById('admin-inq-tbody');
   const meta = document.querySelector('.admin-topbar-meta');
   selectedInquiryId = null;
-  renderInquiryDetail(null);
+  globalThis.AdminDetailModal?.close();
 
   if (tbody) {
     tbody.innerHTML =
