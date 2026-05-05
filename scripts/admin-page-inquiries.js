@@ -1,5 +1,6 @@
+/* common.js 가 전역 escapeHtml 을 두므로 여기서는 별칭 사용 */
 const {
-  escapeHtml,
+  escapeHtml: esc,
   formatDate,
   previewText,
   statusLabelInquiry,
@@ -29,16 +30,16 @@ function inquiryDetailBodyHtml(row) {
   const replyVal = row.admin_reply != null ? String(row.admin_reply) : '';
   const eff = inquiryStatusFromRow(row);
   return [
-    `<p class="admin-card-hint">${escapeHtml(statusLabelInquiry(eff))} · ${escapeHtml(formatDate(row.created_at))}</p>`,
-    `<p class="admin-detail-line"><strong>작성자</strong><br>${escapeHtml(row.user_email || '—')}</p>`,
-    `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${escapeHtml(row.user_id || '—')}</p>`,
-    `<p class="admin-detail-line"><strong>답변일(replied_at)</strong><br>${escapeHtml(formatDate(row.replied_at))}</p>`,
-    `<p class="admin-detail-line"><strong>답변 수정일</strong><br>${escapeHtml(formatDate(row.admin_reply_updated_at))}</p>`,
-    `<p class="admin-detail-line"><strong>제목</strong><br>${escapeHtml(row.title)}</p>`,
+    `<p class="admin-card-hint">${esc(statusLabelInquiry(eff))} · ${esc(formatDate(row.created_at))}</p>`,
+    `<p class="admin-detail-line"><strong>작성자</strong><br>${esc(row.user_email || '—')}</p>`,
+    `<p class="admin-detail-line admin-mono" style="word-break:break-all;"><strong>user_id</strong><br>${esc(row.user_id || '—')}</p>`,
+    `<p class="admin-detail-line"><strong>답변일(replied_at)</strong><br>${esc(formatDate(row.replied_at))}</p>`,
+    `<p class="admin-detail-line"><strong>답변 수정일</strong><br>${esc(formatDate(row.admin_reply_updated_at))}</p>`,
+    `<p class="admin-detail-line"><strong>제목</strong><br>${esc(row.title)}</p>`,
     '<p class="admin-detail-line"><strong>본문</strong></p>',
-    `<pre class="admin-pre">${escapeHtml(row.body || '')}</pre>`,
+    `<pre class="admin-pre">${esc(row.body || '')}</pre>`,
     '<label class="admin-field-label" for="admin-inq-reply">운영자 답변</label>',
-    `<textarea id="admin-inq-reply" class="admin-textarea" rows="6">${escapeHtml(replyVal)}</textarea>`,
+    `<textarea id="admin-inq-reply" class="admin-textarea" rows="6">${esc(replyVal)}</textarea>`,
     '<p class="admin-card-hint" style="margin:0 0 12px; font-size:13px;">내용을 저장하면 자동으로 답변완료·미답변이 정해집니다. (빈 칸 = 미답변)</p>',
     '<button type="button" class="admin-btn admin-btn-primary" id="admin-inq-save">저장</button>'
   ].join('');
@@ -107,13 +108,13 @@ function renderInquiriesTable() {
   tbody.innerHTML = rows
     .map(
       (row) => `
-    <tr data-inq-id="${escapeHtml(row.id)}" class="${row.id === selectedInquiryId ? 'is-selected' : ''}">
-      <td><span class="${escapeHtml(statusClassInquiry(inquiryStatusFromRow(row)))}">${escapeHtml(statusLabelInquiry(inquiryStatusFromRow(row)))}</span></td>
-      <td>${escapeHtml(row.title || '')}</td>
-      <td>${escapeHtml(previewText(row.body, 56))}</td>
-      <td>${escapeHtml(formatDate(row.created_at))}</td>
-      <td>${escapeHtml(formatDate(row.replied_at))}</td>
-      <td>${escapeHtml(row.user_email || '—')}</td>
+    <tr data-inq-id="${esc(row.id)}" class="${row.id === selectedInquiryId ? 'is-selected' : ''}">
+      <td><span class="${esc(statusClassInquiry(inquiryStatusFromRow(row)))}">${esc(statusLabelInquiry(inquiryStatusFromRow(row)))}</span></td>
+      <td>${esc(row.title || '')}</td>
+      <td>${esc(previewText(row.body, 56))}</td>
+      <td>${esc(formatDate(row.created_at))}</td>
+      <td>${esc(formatDate(row.replied_at))}</td>
+      <td>${esc(row.user_email || '—')}</td>
     </tr>`
     )
     .join('');
