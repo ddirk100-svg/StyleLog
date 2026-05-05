@@ -13,6 +13,7 @@ const {
 } = require('../_lib/admin-common.js');
 const { emailsForUserIds } = require('../_lib/admin-user-emails.js');
 const { applyInquiryListFilterByReplyStatus } = require('../_lib/support-inquiries.js');
+const { sendInquiryFirstReplyEmail } = require('../_lib/inquiry-reply-email.js');
 
 module.exports = async function handler(req, res) {
   const host = getHost(req);
@@ -91,6 +92,31 @@ module.exports = async function handler(req, res) {
       }
 
       const trimmed = String(adminReply).trim();
+
+      const { data: prior, error: priorErr } = await supabase
+        .from('support_inquiries')
+        .select('id,user_id,title,replied_at')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (priorErr) {
+        console.error('inquiries patch prior select', priorErr);
+        sendJson(res, 500, {
+          ok: false,
+          error: 'db_error',
+          detail: priorErr.message,
+          hint: dbErrorHint(priorErr)
+        });
+        return;
+      }
+      if (!prior) {
+        sendJson(res, 404, { ok: false, error: 'not_found' });
+        return;
+      }
+
+      const firstReplyMail =
+        trimmed.length > 0 && (prior.replied_at == null || prior.replied_at === '');
+
       const patch = {
         admin_reply: trimmed,
         status: trimmed.length > 0 ? 'answered' : 'open'
@@ -121,9 +147,27 @@ module.exports = async function handler(req, res) {
       }
 
       const emailMap = await emailsForUserIds(supabase, [data.user_id]);
+      const userEmail = emailMap.get(data.user_id) || '—';
+
+      if (firstReplyMail) {
+        try {
+          const mailResult = await sendInquiryFirstReplyEmail({
+            to: userEmail,
+            title: data.title || prior.title || ''
+          });
+          if (!mailResult.ok && mailResult.error) {
+            console.error('inquiry first-reply email', mailResult.error);
+          } else if (!mailResult.ok && mailResult.skipped) {
+            console.warn('inquiry first-reply email skipped', mailResult.skipped);
+          }
+        } catch (e) {
+          console.error('inquiry first-reply email', e);
+        }
+      }
+
       sendJson(res, 200, {
         ok: true,
-        item: { ...data, user_email: emailMap.get(data.user_id) || '—' }
+        item: { ...data, user_email: userEmail }
       });
       return;
     }
