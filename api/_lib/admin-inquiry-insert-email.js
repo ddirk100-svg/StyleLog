@@ -20,7 +20,7 @@ function truncate(s, max) {
 }
 
 /**
- * @param {{ to: string|string[]; title: string; bodyPreview: string; userEmail?: string }} opts
+ * @param {{ to: string|string[]; title: string; bodyPreview: string; userEmail?: string; host?: string }} opts
  * @returns {Promise<{ ok: boolean; skipped?: string; error?: string }>}
  */
 async function sendAdminNewInquiryEmail(opts) {
@@ -59,7 +59,8 @@ async function sendAdminNewInquiryEmail(opts) {
     to: opts && opts.to,
     subject,
     text,
-    html
+    html,
+    host: opts && opts.host
   });
 }
 

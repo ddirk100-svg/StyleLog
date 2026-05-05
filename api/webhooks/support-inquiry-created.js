@@ -137,7 +137,8 @@ module.exports = async function handler(req, res) {
       to: recipients,
       title,
       bodyPreview: bodyText,
-      userEmail
+      userEmail,
+      host
     });
     if (!mailResult.ok) {
       if (mailResult.skipped) {

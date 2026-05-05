@@ -153,7 +153,8 @@ module.exports = async function handler(req, res) {
         try {
           const mailResult = await sendInquiryFirstReplyEmail({
             to: userEmail,
-            title: data.title || prior.title || ''
+            title: data.title || prior.title || '',
+            host
           });
           if (!mailResult.ok && mailResult.error) {
             console.error('inquiry first-reply email', mailResult.error);
