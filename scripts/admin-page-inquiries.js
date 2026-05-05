@@ -40,8 +40,7 @@ function inquiryDetailBodyHtml(row) {
     '<label class="admin-field-label" for="admin-inq-reply">운영자 답변</label>',
     `<textarea id="admin-inq-reply" class="admin-textarea" rows="6">${escapeHtml(replyVal)}</textarea>`,
     '<p class="admin-card-hint" style="margin:0 0 12px; font-size:13px;">내용을 저장하면 자동으로 답변완료·미답변이 정해집니다. (빈 칸 = 미답변)</p>',
-    '<button type="button" class="admin-btn admin-btn-primary" id="admin-inq-save">저장</button>',
-    '<p class="admin-gate-msg" id="admin-inq-save-msg" role="status" style="margin-top:10px;"></p>'
+    '<button type="button" class="admin-btn admin-btn-primary" id="admin-inq-save">저장</button>'
   ].join('');
 }
 
@@ -51,12 +50,13 @@ function wireInquiryDetailActions(index) {
   if (!saveBtn) return;
   saveBtn.onclick = async () => {
     const ta = document.getElementById('admin-inq-reply');
-    const msg = document.getElementById('admin-inq-save-msg');
-    if (!ta || !msg) return;
+    if (!ta || typeof showAlert !== 'function') return;
     const idx = globalThis.AdminDetailModal?.getActiveIndex?.() ?? index;
     const cur = inquiriesItems[idx];
     if (!cur) return;
-    msg.textContent = '저장 중…';
+    const prevLabel = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = '저장 중…';
     const res = await fetch('/api/admin/inquiries', {
       method: 'PATCH',
       credentials: 'same-origin',
@@ -67,15 +67,17 @@ function wireInquiryDetailActions(index) {
       })
     });
     const data = await res.json().catch(() => ({}));
+    saveBtn.disabled = false;
+    saveBtn.textContent = prevLabel;
     if (res.ok && data.ok && data.item) {
       const fixIdx = inquiriesItems.findIndex((x) => x.id === cur.id);
       if (fixIdx !== -1) inquiriesItems[fixIdx] = data.item;
-      msg.textContent = '저장했습니다.';
       renderInquiriesTable();
       globalThis.AdminDetailModal?.sync();
+      await showAlert('저장이 완료되었습니다.');
       return;
     }
-    msg.textContent = data.detail || data.error || '저장 실패';
+    await showAlert(data.detail || data.error || '저장에 실패했습니다. 다시 시도해 주세요.');
   };
 }
 

@@ -40,6 +40,20 @@ function resolveResendFrom(host) {
   return envStr('RESEND_FROM');
 }
 
+/** 알파: [StyleLog] → [(Alpha)StyleLog], [StyleLog 관리자] → [(Alpha)StyleLog 관리자] */
+function formatSubjectForAlphaHost(host, subject) {
+  const s = String(subject || '').trim();
+  if (!s || !isAlphaMailHost(host)) return s;
+  if (/^\[\(Alpha\)StyleLog\]/i.test(s)) return s;
+  const m = s.match(/^\[StyleLog(\s+관리자)?\]\s*(.*)$/is);
+  if (m) {
+    const tail = m[2] != null ? m[2] : '';
+    const branded = m[1] ? '[(Alpha)StyleLog 관리자]' : '[(Alpha)StyleLog]';
+    return tail ? `${branded} ${tail}` : branded;
+  }
+  return s;
+}
+
 function normalizeRecipients(to) {
   const list = (Array.isArray(to) ? to : [to])
     .map((t) => String(t || '').trim().toLowerCase())
@@ -61,7 +75,10 @@ function isResendConfigured() {
 async function sendResendEmail(opts) {
   const apiKey = envStr('RESEND_API_KEY');
   const from = resolveResendFrom(opts && opts.host);
-  const subject = opts && opts.subject != null ? String(opts.subject).trim() : '';
+  const subject = formatSubjectForAlphaHost(
+    opts && opts.host,
+    opts && opts.subject != null ? String(opts.subject).trim() : ''
+  );
   const text = opts && opts.text != null ? String(opts.text) : '';
   const html = opts && opts.html != null ? String(opts.html) : '';
 
