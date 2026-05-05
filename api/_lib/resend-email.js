@@ -1,6 +1,7 @@
 /**
- * Resend REST API 공통 발송 (RESEND_API_KEY, RESEND_FROM).
- * 알파: 요청 Host 에 alpha 가 보이면 RESEND_FROM_ALPHA → 없으면 RESEND_FROM.
+ * Resend REST API 공통 발송.
+ * 리얼: RESEND_FROM
+ * 알파: Host에 alpha 포함 시 RESEND_FROM_ALPHA → 없으면 `(Alpha) StyleLog <RESEND_FROM과 동일 주소>`
  */
 
 function envStr(name) {
@@ -9,12 +10,19 @@ function envStr(name) {
   return v.trim();
 }
 
-function firstEnvStr(...names) {
-  for (const n of names) {
-    const v = envStr(n);
-    if (v) return v;
-  }
+/** "Name <addr@>" 또는 단일 이메일에서 주소만 */
+function extractEmailFromFromHeader(raw) {
+  const s = String(raw || '').trim();
+  const m = s.match(/<([^<>\s]+@[^<>\s]+)>/);
+  if (m) return m[1].trim().toLowerCase();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return s.toLowerCase();
   return '';
+}
+
+function defaultAlphaResendFrom() {
+  const addr =
+    extractEmailFromFromHeader(envStr('RESEND_FROM')) || 'noreply@stylelog.co.kr';
+  return `(Alpha) StyleLog <${addr}>`;
 }
 
 /** alpha.stylelog.co.kr · *-git-alpha-*.vercel.app 등 */
@@ -25,7 +33,9 @@ function isAlphaMailHost(host) {
 
 function resolveResendFrom(host) {
   if (isAlphaMailHost(host)) {
-    return firstEnvStr('RESEND_FROM_ALPHA', 'RESEND_FROM');
+    const override = envStr('RESEND_FROM_ALPHA');
+    if (override) return override;
+    return defaultAlphaResendFrom();
   }
   return envStr('RESEND_FROM');
 }
