@@ -50,7 +50,8 @@
 
     const slots = buildPageSlots(page, totalPages);
 
-    el.className = 'admin-pagination';
+    const keepFooter = el.classList.contains('admin-pagination--footer');
+    el.className = 'admin-pagination' + (keepFooter ? ' admin-pagination--footer' : '');
     el.setAttribute('aria-label', '페이지');
     el.replaceChildren();
 

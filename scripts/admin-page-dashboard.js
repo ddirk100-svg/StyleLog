@@ -86,8 +86,8 @@ function pushTrendChart(canvas, chartType, opts) {
           borderColor: opts.borderColor,
           borderWidth: 0,
           borderRadius: 4,
-          barPercentage: 0.35,
-          categoryPercentage: 0.5
+          barPercentage: 0.58,
+          categoryPercentage: 0.78
         }
       : {
           label: opts.title,
@@ -127,6 +127,7 @@ function pushTrendChart(canvas, chartType, opts) {
       scales: {
         y: {
           beginAtZero: true,
+          ...(chartType === 'line' ? { grace: '12%' } : {}),
           ticks: { precision: 0, color: readCssColor('--color-text-tertiary', '#999') },
           grid: { color: readCssColor('--color-border-lighter', '#f0f0f0') }
         },
