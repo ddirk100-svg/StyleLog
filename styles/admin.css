@@ -192,11 +192,6 @@
     margin-bottom: var(--spacing-3xl);
 }
 
-.admin-card-hint--metrics {
-    margin: 0;
-    line-height: 1.6;
-}
-
 .admin-dash-trends {
     margin-bottom: var(--spacing-3xl);
 }
@@ -298,10 +293,33 @@ a.admin-card:hover {
 }
 
 .admin-card-label {
-    font-size: 12px;
-    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--spacing-xs) var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-text-tertiary);
-    margin-bottom: 8px;
+}
+
+.admin-card-label-primary {
+    flex-shrink: 0;
+}
+
+.admin-card-label-aside {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+    text-align: right;
+    min-width: 0;
+}
+
+.admin-card-label-aside strong {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
 }
 
 .admin-card-value {

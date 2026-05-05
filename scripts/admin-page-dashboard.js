@@ -50,44 +50,62 @@ function prefixSumFromBaseline(baseline, values) {
   });
 }
 
-function formatBucketLabel(isoOrDate, granularity) {
+/**
+ * @param {string} range API/드롭다운 값: 1m | 3m | 6m | 1y | all
+ * - 1y, all: YYYY.MM (예: 2025.05)
+ * - 1m, 3m, 6m: MM/DD (예: 05/02)
+ */
+function formatBucketLabel(isoOrDate, range) {
   const d = new Date(isoOrDate);
   if (Number.isNaN(d.getTime())) return String(isoOrDate);
-  if (granularity === 'day') {
-    return d.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+  const r = String(range || '').toLowerCase();
+  if (r === '1y' || r === 'all') {
+    const y = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+    return `${y}.${mo}`;
   }
-  if (granularity === 'week') {
-    return d.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-  }
-  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'short' });
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const da = String(d.getUTCDate()).padStart(2, '0');
+  return `${mo}/${da}`;
 }
 
 /**
  * @param {HTMLCanvasElement | null} canvas
+ * @param {'line' | 'bar'} chartType
  * @param {{ title: string; labels: string[]; data: number[]; borderColor: string; fillColor: string }} opts
  */
-function pushLineChart(canvas, opts) {
+function pushTrendChart(canvas, chartType, opts) {
   if (!canvas || typeof Chart === 'undefined') return;
   const titleColor = readCssColor('--color-text-primary', '#333');
-  const ch = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: opts.labels,
-      datasets: [
-        {
+  const dataset =
+    chartType === 'bar'
+      ? {
+          label: opts.title,
+          data: opts.data,
+          backgroundColor: opts.fillColor,
+          borderColor: opts.borderColor,
+          borderWidth: 1,
+          borderRadius: 6
+        }
+      : {
           label: opts.title,
           data: opts.data,
           borderColor: opts.borderColor,
           backgroundColor: opts.fillColor,
           tension: 0.25,
           fill: true
-        }
-      ]
+        };
+
+  const ch = new Chart(canvas, {
+    type: chartType,
+    data: {
+      labels: opts.labels,
+      datasets: [dataset]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      interaction: { mode: 'index', intersect: chartType === 'bar' },
       plugins: {
         title: {
           display: true,
@@ -109,7 +127,7 @@ function pushLineChart(canvas, opts) {
             maxRotation: 45,
             minRotation: 0,
             autoSkip: true,
-            maxTicksLimit: 12,
+            maxTicksLimit: 16,
             color: readCssColor('--color-text-tertiary', '#999')
           },
           grid: { display: false }
@@ -128,7 +146,7 @@ function syncRangeSelect(range) {
 function renderTrendsCharts(payload) {
   const hintEl = document.getElementById('admin-dash-chart-hint');
   const buckets = Array.isArray(payload?.buckets) ? payload.buckets : [];
-  const granularity = payload?.granularity || 'month';
+  const rangeKey = String(payload?.range ?? trendsRange).toLowerCase();
 
   if (hintEl) {
     if (payload?.hint) {
@@ -146,7 +164,7 @@ function renderTrendsCharts(payload) {
 
   destroyDashCharts();
 
-  const labels = buckets.map((b) => formatBucketLabel(b.t, granularity));
+  const labels = buckets.map((b) => formatBucketLabel(b.t, rangeKey));
   const signups = buckets.map((b) => Number(b.signups ?? 0));
   const styleLogs = buckets.map((b) => Number(b.styleLogs ?? 0));
   const membersBefore = Number(payload?.membersBefore ?? 0);
@@ -157,15 +175,15 @@ function renderTrendsCharts(payload) {
   const primary = readCssColor('--color-primary', '#2563eb');
   const accent = readCssColor('--color-accent', '#3b82f6');
 
-  pushLineChart(document.getElementById('admin-dash-chart-members-new'), {
+  pushTrendChart(document.getElementById('admin-dash-chart-members-new'), 'bar', {
     title: '회원가입 (기간별 신규)',
     labels,
     data: signups,
     borderColor: primary,
-    fillColor: colorWithAlpha(primary, 0.12)
+    fillColor: colorWithAlpha(primary, 0.55)
   });
 
-  pushLineChart(document.getElementById('admin-dash-chart-members-cum'), {
+  pushTrendChart(document.getElementById('admin-dash-chart-members-cum'), 'line', {
     title: '회원가입 (누적)',
     labels,
     data: signupsCum,
@@ -173,15 +191,15 @@ function renderTrendsCharts(payload) {
     fillColor: colorWithAlpha(primary, 0.08)
   });
 
-  pushLineChart(document.getElementById('admin-dash-chart-logs-new'), {
+  pushTrendChart(document.getElementById('admin-dash-chart-logs-new'), 'bar', {
     title: '스타일 로그 (기간별 신규)',
     labels,
     data: styleLogs,
     borderColor: accent,
-    fillColor: colorWithAlpha(accent, 0.12)
+    fillColor: colorWithAlpha(accent, 0.55)
   });
 
-  pushLineChart(document.getElementById('admin-dash-chart-logs-cum'), {
+  pushTrendChart(document.getElementById('admin-dash-chart-logs-cum'), 'line', {
     title: '스타일 로그 (누적)',
     labels,
     data: logsCum,
@@ -217,8 +235,8 @@ async function refreshTrendsChart(range) {
     renderTrendsCharts(payload);
   } else {
     renderTrendsCharts({
+      range: trendsRange,
       buckets: [],
-      granularity: null,
       membersBefore: 0,
       styleLogsBefore: 0,
       hint: payload?.hint || '추이를 표시할 수 없습니다.'
