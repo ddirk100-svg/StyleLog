@@ -409,6 +409,7 @@ a.admin-card:hover {
     padding: var(--spacing-lg) 0 var(--spacing-sm);
     margin-top: var(--spacing-md);
     border-top: 1px solid var(--color-border-lighter);
+    justify-content: center;
 }
 
 .admin-page-btn {
@@ -475,6 +476,10 @@ a.admin-card:hover {
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: #fff;
+}
+
+.admin-detail-modal[hidden] {
+    display: none !important;
 }
 
 .admin-detail-modal {
