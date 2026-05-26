@@ -29,6 +29,44 @@ function mergeItemsJsonIntoCategoryValueMap(itemsJson, targetMap) {
     });
 }
 
+/**
+ * items(jsonb/배열) 안에서 같은 구분의 품목명을 교체합니다(원본 순서 유지).
+ * @param {unknown} itemsJson
+ * @param {string} category trim된 비교값
+ * @param {string} oldValue trim된 구 품목명
+ * @param {string} newValue trim된 신품목명
+ * @returns {{ changed: boolean, value: unknown }}
+ */
+function remapOutfitItemValueInItemsJson(itemsJson, category, oldValue, newValue) {
+    const cat = String(category || '').trim();
+    const oldV = String(oldValue || '').trim();
+    const newV = String(newValue || '').trim();
+    if (!cat || !oldV || !newV || oldV === newV) return { changed: false, value: itemsJson };
+
+    let arr = itemsJson;
+    if (typeof arr === 'string') {
+        try {
+            arr = JSON.parse(arr);
+        } catch (_) {
+            return { changed: false, value: itemsJson };
+        }
+    }
+    if (!Array.isArray(arr)) return { changed: false, value: itemsJson };
+
+    let changed = false;
+    const next = arr.map((it) => {
+        if (!it || typeof it !== 'object') return it;
+        const c = typeof it.category === 'string' ? it.category.trim() : '';
+        const v = typeof it.value === 'string' ? it.value.trim() : '';
+        if (c === cat && v === oldV) {
+            changed = true;
+            return { ...it, value: newV };
+        }
+        return it;
+    });
+    return { changed, value: next };
+}
+
 /** PostgREST / Supabase 오류 전체를 한 문자열로 — message만 보면 놓치는 케이스 방지 */
 function flattenPostgrestError(error) {
     if (!error) return '';
@@ -758,6 +796,99 @@ const StyleLogAPI = {
             mergeItemsJsonIntoCategoryValueMap(row.items, map);
         });
         return map;
+    },
+
+    /**
+     * 내 모든 style_logs rows 에서 해당 구분·품목명을 새 이름으로 일괄 변경합니다(PATCH).
+     * @param {{ category: string, oldValue: string, newValue: string }} args
+     * @returns {Promise<{ updated?: number, skipped?: boolean }>}
+     */
+    async renameOutfitItemValueAcrossLogs(args = {}) {
+        const category = typeof args.category === 'string' ? args.category.trim() : '';
+        const oldValue = typeof args.oldValue === 'string' ? args.oldValue.trim() : '';
+        const newValue = typeof args.newValue === 'string' ? args.newValue.trim() : '';
+
+        if (!category || !oldValue || !newValue || oldValue === newValue) return { updated: 0 };
+
+        const {
+            data: { user },
+            error: userErr
+        } = await supabaseClient.auth.getUser();
+        if (userErr || !user) return { updated: 0 };
+
+        if (
+            styleLogItemsSuggestionsQueryDisabled ||
+            readItemsColumnUnavailableFlag()
+        ) {
+            return { updated: 0, skipped: true };
+        }
+
+        const pageSize = 500;
+        let offset = 0;
+        let updated = 0;
+
+        try {
+            for (;;) {
+                const { data, error } = await supabaseClient
+                    .from('style_logs')
+                    .select('id,items')
+                    .eq('user_id', user.id)
+                    .not('items', 'is', null)
+                    .order('id', { ascending: true })
+                    .range(offset, offset + pageSize - 1);
+
+                if (error) {
+                    if (isStyleLogItemsColumnUnavailable(error)) {
+                        styleLogItemsSuggestionsQueryDisabled = true;
+                        persistItemsColumnUnavailableFlag();
+                        return { updated, skipped: true };
+                    }
+                    throw error;
+                }
+
+                const rows = data || [];
+                if (!rows.length) break;
+
+                for (const row of rows) {
+                    const remap = remapOutfitItemValueInItemsJson(
+                        row.items,
+                        category,
+                        oldValue,
+                        newValue
+                    );
+                    if (!remap.changed) continue;
+
+                    const payload = { items: remap.value };
+                    let up = await supabaseClient
+                        .from('style_logs')
+                        .update(payload)
+                        .eq('id', row.id);
+
+                    if (up.error && shouldRetryWithoutItemsField(up.error, payload)) {
+                        persistItemsColumnUnavailableFlag();
+                        styleLogItemsSuggestionsQueryDisabled = true;
+                        warnStyleLogBeforeOmitItemsRetry(
+                            up.error,
+                            '착장 품목 이름 일괄 변경(update)'
+                        );
+                        return { updated, skipped: true };
+                    }
+
+                    if (up.error) throw up.error;
+
+                    updated += 1;
+                    clearItemsUnavailableHintsIfOutboundSentItemsPayload(payload);
+                }
+
+                if (rows.length < pageSize) break;
+                offset += pageSize;
+            }
+        } catch (e) {
+            console.error('착장 품목 일괄 이름 변경 오류:', e);
+            throw e;
+        }
+
+        return { updated };
     },
 
     /**

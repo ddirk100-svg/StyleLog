@@ -172,7 +172,46 @@ function renameOutfitSuggestionInPicker(category, oldVal, newVal) {
     return { ok: true, newVal: newV };
 }
 
-// 페이지 초기화
+/** 최근 품목 이름 변경 후, 현재 화면 초안·편집 중 로그의 items 반영 및 행 재렌더 */
+function refreshLocalDraftAfterRenamingOutfitSuggestion(category, oldValue, newValue) {
+    const c = normalizeOutfitCategoryKey(category);
+    const o = String(oldValue || '').trim();
+    const n = String(newValue || '').trim();
+    if (!c || !o || !n || o === n) return;
+
+    outfitItems.forEach((row) => {
+        if (normalizeOutfitCategoryKey(row.category) !== c) return;
+        if (String(row.value || '').trim() === o) row.value = n;
+        if (String(row.valueDraft || '').trim() === o) row.valueDraft = n;
+    });
+
+    if (currentLog && currentLog.items != null) {
+        let arr = currentLog.items;
+        if (typeof arr === 'string') {
+            try {
+                arr = JSON.parse(arr);
+            } catch (_) {
+                arr = [];
+            }
+        }
+        if (Array.isArray(arr)) {
+            let touched = false;
+            const next = arr.map((it) => {
+                if (!it || typeof it !== 'object') return it;
+                const tc = normalizeOutfitCategoryKey(it.category);
+                const tv = typeof it.value === 'string' ? it.value.trim() : '';
+                if (tc === c && tv === o) {
+                    touched = true;
+                    return { ...it, value: n };
+                }
+                return it;
+            });
+            if (touched) currentLog.items = next;
+        }
+    }
+
+    renderOutfitItemRows();
+}
 async function initPage() {
     debugLog('📝 write.html 초기화:', { 
         editLogId, 
@@ -810,13 +849,51 @@ function attachOutfitValueSuggestionUI(inp, panel) {
 
                 cancelBtn.addEventListener('click', () => closeEditAndRefresh());
 
-                okBtn.addEventListener('click', () => {
+                okBtn.addEventListener('click', async () => {
+                    const appliesToCommittedRow =
+                        String(outfitItems[idx]?.value || '').trim() === val;
+
                     const res = renameOutfitSuggestionInPicker(cat, val, editInput.value);
                     if (!res.ok) return;
-                    if (String(outfitItems[idx].value || '').trim() === val) {
-                        applyValueFromSuggestion(res.newVal);
-                    } else {
+                    if (String(val || '').trim() === String(res.newVal || '').trim()) {
                         closeEditAndRefresh();
+                        return;
+                    }
+
+                    okBtn.disabled = true;
+                    try {
+                        await StyleLogAPI.renameOutfitItemValueAcrossLogs({
+                            category: cat,
+                            oldValue: val,
+                            newValue: res.newVal
+                        });
+                    } catch (e) {
+                        console.error(e);
+                        void showAlert(
+                            '다른 기록에 같은 품목명을 바꾸지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.'
+                        );
+                    } finally {
+                        okBtn.disabled = false;
+                    }
+
+                    refreshLocalDraftAfterRenamingOutfitSuggestion(cat, val, res.newVal);
+
+                    if (appliesToCommittedRow) {
+                        const inpNow = document.querySelector(
+                            `.outfit-item-value-input[data-outfit-value-index="${CSS.escape(
+                                String(idx)
+                            )}"]`
+                        );
+                        const cbtn = inpNow
+                            ? document.querySelector(
+                                  `[data-outfit-commit-index="${CSS.escape(String(idx))}"]`
+                              )
+                            : null;
+                        if (inpNow) inpNow.focus();
+                        if (cbtn) refreshOutfitValueCommitBtn(cbtn, idx);
+                        cancelOutfitSuggestionHideForPanel(panel);
+                        panel.hidden = true;
+                        setOutfitSuggestionRowOpenState(panel, false);
                     }
                 });
 

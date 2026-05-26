@@ -22,6 +22,7 @@ body {
 }
 
 /* 헤더 */
+/* 작성 화면 상단 툴바: 제안 패널(920x)·하단 네비(1000)보다 위, 크롭/구분 시트/알림 다이얼로그(99xx~10000)보다 아래 */
 .write-header {
     display: flex;
     justify-content: space-between;
@@ -30,7 +31,7 @@ body {
     position: sticky;
     top: 0;
     background-color: var(--color-bg-primary);
-    z-index: var(--z-index-sticky);
+    z-index: 9300;
     border-bottom: 1px solid var(--color-border-lighter);
 }
 
@@ -444,6 +445,7 @@ input.form-input[readonly] {
 }
 
 /* 크롭 모달 */
+/* 전체 화면 크롭 — sticky 헤더(9300)·구분 시트(9935)보다 위, 스타일로그 다이얼로그(10000)보다 아래 */
 .crop-modal {
     display: none;
     position: fixed;
@@ -451,7 +453,7 @@ input.form-input[readonly] {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
+    z-index: 9945;
 }
 
 .crop-modal.active {
@@ -879,10 +881,11 @@ input.form-input[readonly] {
     z-index: 1;
 }
 
-/* 패널이 열린 동안에도 포커스가 다른 줄로 옮겨가도 이 줄이 위에 오도록 (겹침 방지) */
+/* 패널이 열린 동안에도 포커스가 다른 줄로 옮겨가도 이 줄이 위에 오도록 (겹침 방지)
+   단, sticky 헤더(9300)보다는 낮게 — 스크롤 시 툴바가 항상 위 */
 .outfit-item-row:focus-within,
 .outfit-item-row--suggest-open {
-    z-index: var(--z-index-popup);
+    z-index: 9200;
 }
 
 .outfit-value-field {
@@ -974,7 +977,7 @@ input.form-input[readonly] {
     left: 0;
     right: auto;
     width: min(max(100%, 300px), calc(100vw - 32px));
-    z-index: calc(var(--z-index-popup) + 1);
+    z-index: 9201;
     max-height: min(55vh, 420px);
     overflow: hidden;
     display: flex;
@@ -1036,10 +1039,20 @@ input.form-input[readonly] {
 .outfit-value-suggestion-row--editing {
     flex-wrap: wrap;
     align-items: stretch;
-    padding: var(--spacing-xs);
+    padding: var(--spacing-sm);
     gap: var(--spacing-sm);
-    background-color: var(--color-bg-tertiary);
-    /* 편집 행이 세로로 늘어날 때 같은 스크롤 목록 안의 다음 줄(휴지통 버튼)보다 포인터·페인팅 순서 앞으로 */
+    box-sizing: border-box;
+    /* 패널 가로패딩을 상쇄해 카드처럼 꽉 차게 보이게 함 */
+    margin-inline: calc(-1 * var(--spacing-xs));
+    width: calc(100% + 2 * var(--spacing-xs));
+    max-width: calc(100% + 2 * var(--spacing-xs));
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border-mid);
+    border-radius: 10px;
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--color-bg-primary) 94%, transparent),
+        0 10px 28px rgba(0, 0, 0, 0.14);
+    /* 편집 행이 세로로 늘어날 때 같은 스크롤 목록 안의 다른 줄 버튼보다 앞 레이어 */
     position: relative;
     z-index: 12;
     isolation: isolate;
@@ -1135,6 +1148,10 @@ input.form-input[readonly] {
     display: flex;
     justify-content: flex-end;
     gap: var(--spacing-xs);
+    padding-top: var(--spacing-xs);
+    margin-top: 2px;
+    border-top: 1px solid var(--color-border-lighter);
+    background-color: inherit;
 }
 
 .outfit-value-suggestion-edit-foot {
@@ -1254,11 +1271,11 @@ input.form-input[readonly] {
     background-color: var(--color-bg-tertiary);
 }
 
-/* 바텀시트 */
+/* 바텀시트 — 헤더(9300)보다 위, 크롭(9945)보다 아래, 커스텀 다이얼로그(10000)보다 아래 */
 .outfit-category-sheet {
     position: fixed;
     inset: 0;
-    z-index: calc(var(--z-index-modal) + 2);
+    z-index: 9935;
     display: none;
     align-items: flex-end;
     justify-content: center;
