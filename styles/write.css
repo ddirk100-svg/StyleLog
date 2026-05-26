@@ -1039,6 +1039,10 @@ input.form-input[readonly] {
     padding: var(--spacing-xs);
     gap: var(--spacing-sm);
     background-color: var(--color-bg-tertiary);
+    /* 편집 행이 세로로 늘어날 때 같은 스크롤 목록 안의 다음 줄(휴지통 버튼)보다 포인터·페인팅 순서 앞으로 */
+    position: relative;
+    z-index: 12;
+    isolation: isolate;
 }
 
 .outfit-value-suggestion-select {

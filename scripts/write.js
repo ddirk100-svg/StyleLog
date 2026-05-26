@@ -835,6 +835,7 @@ function attachOutfitValueSuggestionUI(inp, panel) {
                 actions.appendChild(okBtn);
                 row.appendChild(editInput);
                 row.appendChild(actions);
+                row.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 setTimeout(() => {
                     editInput.focus();
                     editInput.select();
