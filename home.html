@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
     <link rel="stylesheet" href="styles/photo-gallery.css">
+    <link rel="stylesheet" href="styles/require-birthdate.css">
 </head>
 <body class="has-bottom-nav">
     <script>if(sessionStorage.getItem('homeScrollY'))document.body.classList.add('scroll-restore-pending');</script>
@@ -79,6 +80,11 @@
                         </svg>
                         <span>로그아웃</span>
                     </button>
+                </div>
+                <div class="menu-legal-row" role="navigation" aria-label="법적 고지">
+                    <a href="terms.html">이용약관</a>
+                    <span aria-hidden="true">·</span>
+                    <a href="privacy.html">개인정보처리방침</a>
                 </div>
             </div>
         </div>
@@ -303,6 +309,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="scripts/config.js" defer></script>
     <script src="scripts/api.js?v=2" defer></script>
+    <script src="scripts/require-birthdate.js" defer></script>
     <script src="scripts/auth.js" defer></script>
     <script src="scripts/common.js" defer></script>
     <script src="scripts/feedback.js" defer></script>
@@ -341,6 +348,15 @@
                     // 로그인 안됐으면 랜딩 페이지로
                     window.location.href = 'landing.html';
                     return;
+                }
+
+                var ures = await supabaseClient.auth.getUser();
+                var userAfter = ures.data && ures.data.user ? ures.data.user : null;
+                if (
+                    typeof RequireBirthdate !== 'undefined' &&
+                    RequireBirthdate.needsBirth(userAfter)
+                ) {
+                    await RequireBirthdate.showModalAndSave();
                 }
                 
                 // 로그인 됐으면 정상 진행

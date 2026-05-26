@@ -24,6 +24,19 @@ async function checkSession() {
     }
 }
 
+// 현재 세션 사용자 기준 생년월일 미입력 시 필수 모달(require-birthdate.js)
+async function enforceBirthDateMetadataIfNeeded() {
+    if (typeof globalThis.RequireBirthdate === 'undefined') return;
+    try {
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        if (error || !user) return;
+        if (!RequireBirthdate.needsBirth(user)) return;
+        await RequireBirthdate.showModalAndSave();
+    } catch (e) {
+        console.error('생년월일 확인 오류:', e);
+    }
+}
+
 // 로그인 필수 페이지에서 인증 체크
 async function requireAuth() {
     const session = await checkSession();
@@ -36,6 +49,8 @@ async function requireAuth() {
         window.location.href = 'login.html';
         return false;
     }
+
+    await enforceBirthDateMetadataIfNeeded();
     
     return true;
 }

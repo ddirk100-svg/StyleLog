@@ -44,6 +44,8 @@
     { "source": "/login.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/login.html", "permanent": false },
     { "source": "/mypage.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/mypage.html", "permanent": false },
     { "source": "/signup.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/signup.html", "permanent": false },
+    { "source": "/terms.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/terms.html", "permanent": false },
+    { "source": "/privacy.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/privacy.html", "permanent": false },
     { "source": "/write.html", "has": [{ "type": "host", "value": "admin.alpha.stylelog.co.kr" }], "destination": "https://alpha.stylelog.co.kr/write.html", "permanent": false },
 
     { "source": "/backfill-thumb.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/backfill-thumb.html", "permanent": false },
@@ -57,6 +59,8 @@
     { "source": "/login.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/login.html", "permanent": false },
     { "source": "/mypage.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/mypage.html", "permanent": false },
     { "source": "/signup.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/signup.html", "permanent": false },
+    { "source": "/terms.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/terms.html", "permanent": false },
+    { "source": "/privacy.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/privacy.html", "permanent": false },
     { "source": "/write.html", "has": [{ "type": "host", "value": "admin.stylelog.co.kr" }], "destination": "https://stylelog.co.kr/write.html", "permanent": false }
   ],
   "rewrites": [

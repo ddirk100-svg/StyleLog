@@ -184,3 +184,21 @@
     font-size: 12px;
     color: var(--color-text-tertiary);
 }
+
+.mypage-legal {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+}
+
+.mypage-legal a {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+}
+
+.mypage-legal a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script>if(window.location.hostname.includes('alpha')){document.write('<meta name="robots" content="noindex,nofollow">');}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StyleLog 이용약관">
+    <link rel="canonical" href="https://www.stylelog.co.kr/terms.html">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4JCJ9BQ674"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-4JCJ9BQ674');
+    </script>
+    <link rel="icon" href="/img/StyleLog_logo(favicon).png" type="image/png" sizes="48x48">
+    <title>이용약관 - StyleLog</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              deep: { 600: '#2563eb', 700: '#1d4ed8' }
+            },
+            fontFamily: { sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Malgun Gothic', 'sans-serif'] }
+          }
+        }
+      };
+    </script>
+    <link rel="stylesheet" href="styles/legal-pages.css">
+</head>
+<body class="bg-white text-gray-900 antialiased min-h-screen" data-legal-doc="terms">
+    <header class="sticky top-0 z-10 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <a href="landing.html" class="text-sm font-semibold text-deep-600 hover:underline shrink-0">← StyleLog 홈</a>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 ml-auto justify-end">
+                <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+                    <a href="terms.html" class="font-semibold text-gray-900" aria-current="page">이용약관</a>
+                    <a href="privacy.html" class="hover:text-deep-600">개인정보처리방침</a>
+                </nav>
+                <div class="legal-rev-corner shrink-0">
+                    <label for="legal-history-select" class="legal-rev-sr-only">개정본(시행일)</label>
+                    <select id="legal-history-select" class="legal-history-select legal-history-select--corner"></select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="legal-page max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-16">
+        <div id="legal-body" aria-live="polite"></div>
+    </main>
+    <script src="scripts/legal-history.js" defer></script>
+</body>
+</html>

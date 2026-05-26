@@ -1,0 +1,111 @@
+/* 생년월일 미입력 회원 로그인 시 필수 입력 모달 (닫기 없음, 전체 차단) */
+#mandatory-birth-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100002;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.55);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+#mandatory-birth-overlay.mandatory-birth-overlay--visible {
+    display: flex;
+}
+
+body.mandatory-birth-open {
+    overflow: hidden;
+}
+
+.mandatory-birth-card {
+    width: 100%;
+    max-width: 22rem;
+    padding: 1.5rem 1.35rem;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+    border: 1px solid #e2e8f0;
+}
+
+.mandatory-birth-card h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.mandatory-birth-card p {
+    margin: 0 0 1rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: #475569;
+}
+
+.mandatory-birth-card label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.35rem;
+}
+
+.mandatory-birth-card input[type="date"] {
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.9375rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-family: inherit;
+    color: #0f172a;
+    box-sizing: border-box;
+}
+
+.mandatory-birth-card input[type="date"]:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.mandatory-birth-error {
+    margin: 0.65rem 0 0;
+    font-size: 0.8125rem;
+    color: #b91c1c;
+    line-height: 1.45;
+}
+
+.mandatory-birth-error[hidden] {
+    display: none !important;
+}
+
+.mandatory-birth-submit {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #fff;
+    background: #2563eb;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.mandatory-birth-submit:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.mandatory-birth-submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.mandatory-birth-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.45;
+}
