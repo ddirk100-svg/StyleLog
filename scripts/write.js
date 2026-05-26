@@ -687,7 +687,7 @@ function hideAllOutfitValueSuggestionPanels() {
 
 /** @param {HTMLInputElement} inp @param {HTMLDivElement} panel */
 function attachOutfitValueSuggestionUI(inp, panel) {
-    const MAX_SUGGEST = 14;
+    const MAX_SUGGEST = 200;
 
     const refresh = () => {
         hideOtherOutfitSuggestionPanels(panel);
@@ -880,13 +880,52 @@ function attachOutfitValueSuggestionUI(inp, panel) {
         setOutfitSuggestionRowOpenState(panel, true);
     };
 
+    const bumpSuggestionPanelInteraction = () => {
+        inp._outfitSuggestionInteractUntil = performance.now() + 900;
+    };
+
     panel.addEventListener(
         'pointerdown',
-        () => cancelOutfitSuggestionHideForPanel(panel),
+        () => {
+            bumpSuggestionPanelInteraction();
+            cancelOutfitSuggestionHideForPanel(panel);
+        },
+        true
+    );
+    panel.addEventListener(
+        'touchstart',
+        () => bumpSuggestionPanelInteraction(),
+        { passive: true, capture: true }
+    );
+    panel.addEventListener(
+        'touchmove',
+        () => bumpSuggestionPanelInteraction(),
+        { passive: true, capture: true }
+    );
+    panel.addEventListener(
+        'wheel',
+        () => bumpSuggestionPanelInteraction(),
+        { passive: true, capture: true }
+    );
+
+    /** 데스크톱: 스크롤·빈 영역 탭 시 입력 블러 → 레이어가 바로 닫히는 것 방지(버튼은 그대로) */
+    panel.addEventListener(
+        'mousedown',
+        (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest('button, input, textarea, [contenteditable], a')) return;
+            if (!panel.closest('.outfit-value-field')) return;
+            e.preventDefault();
+        },
         true
     );
 
     inp.addEventListener('focus', () => {
+        window.clearTimeout(inp._outfitFocusOutHideT);
+        window.clearTimeout(inp._outfitFocusOutCommitT);
+        inp._outfitFocusOutHideT = null;
+        inp._outfitFocusOutCommitT = null;
+        inp._outfitSuggestionInteractUntil = 0;
         cancelOutfitSuggestionHideForPanel(panel);
         refresh();
     });
@@ -895,19 +934,38 @@ function attachOutfitValueSuggestionUI(inp, panel) {
         cancelOutfitSuggestionHideForPanel(panel);
         setTimeout(refresh, 0);
     });
-    inp.addEventListener('focusout', (e) => {
-        const rt = e.relatedTarget;
-        if (rt instanceof Node && panel.contains(rt)) {
-            cancelOutfitSuggestionHideForPanel(panel);
-            return;
-        }
-        hideOutfitValueSuggestionSoon(panel);
+    inp.addEventListener('focusout', () => {
+        cancelOutfitSuggestionHideForPanel(panel);
+        window.clearTimeout(inp._outfitFocusOutHideT);
+        window.clearTimeout(inp._outfitFocusOutCommitT);
+
+        const runHideDecision = () => {
+            inp._outfitFocusOutHideT = null;
+            const aeHide = document.activeElement;
+            if (aeHide instanceof Node && panel.contains(aeHide)) {
+                cancelOutfitSuggestionHideForPanel(panel);
+                return;
+            }
+            const until = inp._outfitSuggestionInteractUntil || 0;
+            if (performance.now() < until) {
+                const wait = Math.max(32, Math.ceil(until - performance.now()) + 8);
+                inp._outfitFocusOutHideT = window.setTimeout(runHideDecision, wait);
+                return;
+            }
+            hideOutfitValueSuggestionSoon(panel);
+        };
+        inp._outfitFocusOutHideT = window.setTimeout(runHideDecision, 120);
 
         const idx = parseInt(inp.getAttribute('data-outfit-value-index'), 10);
-        window.setTimeout(() => {
+        inp._outfitFocusOutCommitT = window.setTimeout(() => {
+            inp._outfitFocusOutCommitT = null;
             if (!inp.isConnected) return;
             if (document.activeElement === inp) return;
-            if (panel.contains(document.activeElement)) return;
+            const ae = document.activeElement;
+            const rowWrap = inp.closest('.outfit-item-row');
+            if (rowWrap && ae instanceof Node && rowWrap.contains(ae)) return;
+            if (ae instanceof Node && panel.contains(ae)) return;
+            if (performance.now() < (inp._outfitSuggestionInteractUntil || 0)) return;
             if (Number.isNaN(idx) || !outfitItems[idx]) return;
             const row = outfitItems[idx];
             if (!String(row.category || '').trim()) return;
@@ -917,7 +975,7 @@ function attachOutfitValueSuggestionUI(inp, panel) {
             const dirty = draftTrim !== valTrim;
             if (!dirty && !hasTyped) return;
             commitOutfitItemValue(idx);
-        }, 0);
+        }, 520);
     });
     inp.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -1250,6 +1308,7 @@ function initOutfitItemsUI() {
             const t = e.target;
             if (
                 t.closest?.('.outfit-value-field') ||
+                t.closest?.('.outfit-value-suggestions') ||
                 t.closest?.('.outfit-item-value-commit')
             ) {
                 return;
@@ -1258,10 +1317,15 @@ function initOutfitItemsUI() {
         },
         true
     );
-    window.addEventListener('scroll', () => hideAllOutfitValueSuggestionPanels(), {
-        capture: true,
-        passive: true
-    });
+    window.addEventListener(
+        'scroll',
+        (ev) => {
+            const t = ev.target;
+            if (t instanceof Element && t.closest?.('.outfit-value-suggestions')) return;
+            hideAllOutfitValueSuggestionPanels();
+        },
+        { capture: true, passive: true }
+    );
 
     renderOutfitItemRows();
 

@@ -967,7 +967,7 @@ input.form-input[readonly] {
     background-color: var(--color-bg-primary);
 }
 
-/* 커스텀 품목 제안 (datalist 대체) — 입력칸보다 넓게 잡아 긴 품목명 표시 */
+/* 커스텀 품목 제안 (datalist 대체) — 헤더 고정·목록만 스크롤(모바일 터치 스크롤 안정화) */
 .outfit-value-suggestions {
     position: absolute;
     top: calc(100% + 6px);
@@ -975,8 +975,8 @@ input.form-input[readonly] {
     right: auto;
     width: min(max(100%, 300px), calc(100vw - 32px));
     z-index: calc(var(--z-index-popup) + 1);
-    max-height: min(50vh, 360px);
-    overflow: hidden auto;
+    max-height: min(55vh, 420px);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     padding: var(--spacing-xs);
@@ -987,8 +987,8 @@ input.form-input[readonly] {
     box-shadow:
         0 4px 6px rgba(0, 0, 0, 0.06),
         0 16px 40px rgba(0, 0, 0, 0.14);
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
 }
 
 .outfit-value-suggestions[hidden] {
@@ -1010,6 +1010,13 @@ input.form-input[readonly] {
     flex-direction: column;
     gap: 2px;
     padding-bottom: var(--spacing-xs);
+    min-height: 0;
+    flex: 1 1 auto;
+    max-height: min(42vh, 320px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .outfit-value-suggestion-row {
