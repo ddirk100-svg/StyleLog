@@ -44,6 +44,40 @@
     margin-bottom: 0.35rem;
 }
 
+/* 위탁·법적 표: 가로 스크롤(모바일) */
+.legal-table-wrap {
+    overflow-x: auto;
+    margin: 0.75rem 0 1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.legal-table {
+    width: 100%;
+    min-width: 36rem;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.legal-table th,
+.legal-table td {
+    border: 1px solid #e5e7eb;
+    padding: 0.55rem 0.65rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.legal-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #111827;
+}
+
+.legal-section .legal-table ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+}
+
 /* 헤더 우측: 개정본 드롭다운(콤팩트) */
 .legal-rev-sr-only {
     position: absolute;
