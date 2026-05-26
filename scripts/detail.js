@@ -86,6 +86,8 @@ async function initPage() {
         
         // 이벤트 리스너 등록
         attachEventListeners();
+
+        initDetailContentSwipeNavigation();
         
     } catch (error) {
         console.error('데이터 로드 오류:', error);
@@ -742,6 +744,129 @@ async function toggleFavoriteDetail() {
             }
         }
         showAlert('즐겨찾기 업데이트에 실패했습니다.');
+    }
+}
+
+/** content-section 좌우 스와이프로 타임라인 인접 로그 이동 */
+let detailLogSwipeBusy = false;
+
+function initDetailContentSwipeNavigation() {
+    const zone = document.querySelector('.content-section');
+    if (!zone || !currentLog) return;
+
+    const THRESH_PX = 56;
+    const H_DOMINANCE = 1.2;
+
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let tracking = false;
+
+    /** @param {number} dx @param {number} dy */
+    function tryNavigate(dx, dy) {
+        const adx = Math.abs(dx);
+        const ady = Math.abs(dy);
+        if (adx < THRESH_PX || adx < ady * H_DOMINANCE) return;
+        /** 왼쪽으로 밀기(손가띉이 왼쪽) → 과거글, 오른쪽 → 최신글 — 홈과 같은 타임라인 방향감 */
+        const dir = dx < 0 ? 'older' : 'newer';
+        void navigateToAdjacentDetailLog(dir);
+    }
+
+    zone.addEventListener(
+        'touchstart',
+        (e) => {
+            if (!e.touches || e.touches.length !== 1) return;
+            if (detailLogSwipeBusy) return;
+            startX = lastX = e.touches[0].clientX;
+            startY = lastY = e.touches[0].clientY;
+            tracking = true;
+        },
+        { passive: true }
+    );
+
+    zone.addEventListener(
+        'touchmove',
+        (e) => {
+            if (!tracking || !e.touches || e.touches.length !== 1) return;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+        },
+        { passive: true }
+    );
+
+    zone.addEventListener(
+        'touchend',
+        (e) => {
+            if (!tracking) return;
+            tracking = false;
+            const dx = lastX - startX;
+            const dy = lastY - startY;
+            tryNavigate(dx, dy);
+        },
+        { passive: true }
+    );
+
+    zone.addEventListener(
+        'touchcancel',
+        () => {
+            tracking = false;
+        },
+        { passive: true }
+    );
+
+    let mouseDown = false;
+
+    zone.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || detailLogSwipeBusy) return;
+        mouseDown = true;
+        tracking = true;
+        startX = lastX = e.clientX;
+        startY = lastY = e.clientY;
+    });
+
+    zone.addEventListener('mousemove', (e) => {
+        if (!mouseDown || !tracking) return;
+        lastX = e.clientX;
+        lastY = e.clientY;
+    });
+
+    zone.addEventListener('mouseup', (e) => {
+        if (!mouseDown) return;
+        mouseDown = false;
+        if (!tracking) return;
+        tracking = false;
+        const dx = lastX - startX;
+        const dy = lastY - startY;
+        tryNavigate(dx, dy);
+    });
+
+    zone.addEventListener('mouseleave', () => {
+        if (!mouseDown) return;
+        mouseDown = false;
+        tracking = false;
+    });
+}
+
+async function navigateToAdjacentDetailLog(direction) {
+    if (!currentLog || (direction !== 'older' && direction !== 'newer')) return;
+
+    try {
+        if (detailLogSwipeBusy) return;
+        detailLogSwipeBusy = true;
+
+        const next = await StyleLogAPI.getAdjacentLog(currentLog, direction);
+        detailLogSwipeBusy = false;
+
+        if (!next || !next.id) return;
+
+        const d = encodeURIComponent(next.date || '');
+        const idEnc = encodeURIComponent(next.id);
+        window.location.href = `detail.html?id=${idEnc}&date=${d}`;
+    } catch (err) {
+        detailLogSwipeBusy = false;
+        console.error('인접 로그 이동 오류:', err);
+        void showAlert('이동할 기록을 불러오지 못했습니다.');
     }
 }
 

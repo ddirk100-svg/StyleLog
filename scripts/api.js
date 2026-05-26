@@ -352,7 +352,117 @@ const StyleLogAPI = {
             throw error;
         }
     },
-    
+
+    /**
+     * 홈·월별 타임라인과 동일한 순서 기준 인접 로그.
+     * 정렬 기준: date 내림차순 → created_at 내림차순(같은 날 여러 장이면 늦게 만든 것이 타임라인 위).
+     *
+     * @param {object} referenceRow 최소 필드 { id, date, created_at }
+     * @param {'older'|'newer'} direction older=더 과거 글, newer=더 최근 글
+     * @returns {Promise<object|null>} LIST_SELECT 행 또는 없으면 null
+     */
+    async getAdjacentLog(referenceRow, direction) {
+        try {
+            if (
+                !referenceRow ||
+                !referenceRow.date ||
+                !referenceRow.created_at ||
+                !referenceRow.id
+            ) {
+                return null;
+            }
+
+            const refId = String(referenceRow.id);
+            const refDate = referenceRow.date;
+            const refCreated = referenceRow.created_at;
+
+            if (direction === 'older') {
+                const { data: sameDayOlder, error: errSameOlder } =
+                    await supabaseClient
+                        .from('style_logs')
+                        .select(LIST_SELECT)
+                        .eq('date', refDate)
+                        .lt('created_at', refCreated)
+                        .neq('id', refId)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                if (
+                    errSameOlder &&
+                    errSameOlder.code &&
+                    String(errSameOlder.code) !== 'PGRST116'
+                ) {
+                    throw errSameOlder;
+                }
+                if (sameDayOlder) return sameDayOlder;
+
+                const { data: priorDay, error: errPrior } = await supabaseClient
+                    .from('style_logs')
+                    .select(LIST_SELECT)
+                    .lt('date', refDate)
+                    .order('date', { ascending: false })
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (
+                    errPrior &&
+                    errPrior.code &&
+                    String(errPrior.code) !== 'PGRST116'
+                ) {
+                    throw errPrior;
+                }
+                return priorDay || null;
+            }
+
+            if (direction === 'newer') {
+                const { data: sameDayNewer, error: errSameNewer } =
+                    await supabaseClient
+                        .from('style_logs')
+                        .select(LIST_SELECT)
+                        .eq('date', refDate)
+                        .gt('created_at', refCreated)
+                        .neq('id', refId)
+                        .order('created_at', { ascending: true })
+                        .limit(1)
+                        .maybeSingle();
+
+                if (
+                    errSameNewer &&
+                    errSameNewer.code &&
+                    String(errSameNewer.code) !== 'PGRST116'
+                ) {
+                    throw errSameNewer;
+                }
+                if (sameDayNewer) return sameDayNewer;
+
+                const { data: laterDay, error: errLater } = await supabaseClient
+                    .from('style_logs')
+                    .select(LIST_SELECT)
+                    .gt('date', refDate)
+                    .order('date', { ascending: true })
+                    .order('created_at', { ascending: true })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (
+                    errLater &&
+                    errLater.code &&
+                    String(errLater.code) !== 'PGRST116'
+                ) {
+                    throw errLater;
+                }
+                return laterDay || null;
+            }
+
+            return null;
+        } catch (error) {
+            console.error('인접 로그 조회 오류:', error);
+            throw error;
+        }
+    },
+
     // 새 로그 생성
     async create(logData) {
         try {
