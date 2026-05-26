@@ -372,11 +372,20 @@ const StyleLogAPI = {
                 }
             }
             
-            // user_id 자동 추가
+            // user_id 자동 추가 + (선택) 클라이언트가 지정한 UUID — Storage 경로와 INSERT id 를 맞추기 위함
+            const { id: clientRowId, ...logFields } = logData || {};
             const dataWithUserId = {
-                ...logData,
+                ...logFields,
                 user_id: user.id
             };
+            if (
+                typeof clientRowId === 'string' &&
+                clientRowId.trim() !== '' &&
+                clientRowId !== 'null' &&
+                clientRowId !== 'undefined'
+            ) {
+                dataWithUserId.id = clientRowId.trim();
+            }
 
             debugLog('📝 로그 생성 (user_id 포함):', dataWithUserId);
 

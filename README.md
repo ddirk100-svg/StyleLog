@@ -50,6 +50,7 @@ stylelog/
     ├── mypage.js
     ├── config.js
     ├── api.js
+    ├── photo-storage.js
     ├── common.js
     ├── auth.js
     └── admin-shell.js
@@ -126,9 +127,19 @@ npx http-server
 | weather_temp | NUMERIC | 현재 기온 |
 | weather_temp_min | NUMERIC | 최저 기온 |
 | weather_temp_max | NUMERIC | 최고 기온 |
-| photos | TEXT[] | 사진 URL 배열 |
+| photos | TEXT[] | **화면에 쓰는 사진 URL** 배열 (Storage `display.jpg` 공개 URL; 예전 data URL 호환) |
+| thumb_url | TEXT | 리스트용 작은 썸네일 (base64 data URL) |
 | is_favorite | BOOLEAN | 즐겨찾기 |
 | created_at, updated_at | TIMESTAMP | 생성/수정 시간 |
+
+### 사진: Storage + 원본 보관
+
+- **문제**: `photos`에 base64를 통째로 넣으면 행이 수 MB가 되어 `PATCH` 시 `statement timeout`이 날 수 있음.
+- **해결**: 작성 저장 시 `scripts/photo-storage.js`가 **같은 UUID 폴더**에  
+  - `{user_id}/{style_log_id}/{슬롯}/display.jpg` — 화면용(최대 변 1920px, JPEG)  
+  - `{user_id}/{style_log_id}/{슬롯}/original.*` — 갤러리에서 고른 **원본 파일**이 있으면 그 바이트, 없으면 고해상도 JPEG  
+  를 올리고, DB `photos`에는 **display의 HTTPS URL만** 저장합니다.
+- **Supabase 설정**: 리얼·테스트 DB 각각에서 [docs/supabase/style_log_photos_bucket.sql](docs/supabase/style_log_photos_bucket.sql) 실행 (버킷 `style-log-photos`, public 읽기 + 본인 폴더만 쓰기).
 
 ## 📱 기술 스택
 

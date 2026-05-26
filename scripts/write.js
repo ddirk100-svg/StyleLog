@@ -10,6 +10,8 @@ let selectedPhotos = [];
 let tags = [];
 let isEditMode = false; // 수정 모드 플래그
 let currentLog = null; // 수정할 로그 데이터
+/** 신규 저장 시 INSERT id 를 Storage 경로와 맞추기 위해 한 번 결정되는 UUID */
+let pendingNewStyleLogIdForUpload = null;
 let draggingPhotoIndex = null;
 let touchDragState = null;
 let lastInsertPosition = -1;
@@ -1833,21 +1835,8 @@ async function handleSubmit() {
     // 버튼 비활성화
     saveBtn.disabled = true;
     saveBtn.textContent = isEditMode ? '완료 중...' : '저장 중...';
-    
-    try {
-        // 사진 URL 배열 (실제로는 Supabase Storage에 업로드 필요)
-        // 지금은 data URL을 그대로 저장 (임시)
-        const photoUrls = selectedPhotos.map(photo => photo.dataUrl);
-        
-        // 리스트용 썸네일 생성 (첫 번째 사진만, 소형 base64)
-        let thumbUrl = null;
-        if (photoUrls.length > 0) {
-            thumbUrl = await createThumbnail(photoUrls[0]);
-        }
-        
-        const weatherFitInput = document.getElementById('weatherFitInput');
-        const weatherFit = weatherFitInput?.value || 'good';
 
+    try {
         sortOutfitItemsInPlace();
 
         const outfitDraftPending = outfitItems.some((row) => {
@@ -1864,6 +1853,52 @@ async function handleSubmit() {
             await showAlert('품목명을 수정한 줄은 입력 버튼으로 확정한 뒤 저장해 주세요.');
             return;
         }
+
+        const { data: authUserResp, error: authUserErr } = await supabaseClient.auth.getUser();
+        const userId = authUserResp && authUserResp.user && authUserResp.user.id;
+        if (authUserErr || !userId) {
+            throw new Error('로그인 정보를 확인할 수 없습니다. 다시 로그인 후 시도해 주세요.');
+        }
+
+        let uploadRowId =
+            isEditMode && currentLog && currentLog.id ? String(currentLog.id) : '';
+        if (!uploadRowId) {
+            if (!pendingNewStyleLogIdForUpload) {
+                pendingNewStyleLogIdForUpload =
+                    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+                        ? crypto.randomUUID()
+                        : (() => {
+                              const b = (n) => (Math.random() * n) | 0;
+                              return (
+                                  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                                      const r = b(16);
+                                      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+                                      return v.toString(16);
+                                  })
+                              );
+                          })();
+            }
+            uploadRowId = pendingNewStyleLogIdForUpload;
+        }
+
+        /** @type {string[]} */
+        let photoUrls = [];
+        if (selectedPhotos.length > 0) {
+            photoUrls = await publishStyleLogPhotosFromSelection(
+                supabaseClient,
+                userId,
+                uploadRowId,
+                selectedPhotos
+            );
+        }
+
+        let thumbUrl = null;
+        if (photoUrls.length > 0) {
+            thumbUrl = await createThumbnail(photoUrls[0]);
+        }
+
+        const weatherFitInput = document.getElementById('weatherFitInput');
+        const weatherFit = weatherFitInput?.value || 'good';
 
         const hadOutfitItemsToSave = outfitItemsForSave().length > 0;
 
@@ -1887,6 +1922,10 @@ async function handleSubmit() {
             })(),
             is_favorite: isEditMode ? currentLog.is_favorite : false // 수정 시에는 기존 값 유지, 신규는 false
         };
+
+        if (!isEditMode && pendingNewStyleLogIdForUpload) {
+            logData.id = pendingNewStyleLogIdForUpload;
+        }
         
         debugLog('📝 저장할 데이터:', logData);
         
