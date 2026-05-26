@@ -261,7 +261,7 @@ body {
     color: var(--color-text-secondary);
     font-size: 15px;
     line-height: 1.8;
-    margin-bottom: 32px;
+    margin-bottom: 0;
 }
 
 .content-body p {
@@ -272,7 +272,12 @@ body {
     margin-bottom: 0;
 }
 
-/* 태그 */
+/* 본문 ↔ 착장 품목 구분선 */
+.detail-content-outfit-divider {
+    border: none;
+    border-top: 1px solid var(--color-border-lighter);
+    margin: var(--spacing-xl) 0;
+}
 .tags {
     display: flex;
     flex-wrap: wrap;
@@ -468,6 +473,74 @@ body {
 
 .weather-option:hover {
     background-color: var(--color-bg-tertiary);
+}
+
+/* 착장 품목 (상세) */
+.outfit-items-detail {
+    margin-bottom: var(--spacing-xl);
+}
+
+.outfit-items-detail-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.outfit-items-detail-panel {
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.outfit-items-detail-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    line-height: 1.45;
+}
+
+.outfit-items-detail-chip {
+    flex-shrink: 0;
+    display: inline-block;
+    padding: 2px var(--spacing-sm);
+    border: 0.5px solid var(--color-border-light);
+    border-radius: 6px;
+    background-color: var(--color-bg-secondary);
+    font-size: var(--font-size-outfit-chip);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.outfit-items-detail-value {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.outfit-items-detail-empty p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+}
+
+.outfit-items-detail-db-hint {
+    margin-top: var(--spacing-md) !important;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
 }
 
 /* 반응형 */

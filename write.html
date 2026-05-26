@@ -95,6 +95,23 @@
                 </div>
             </div>
 
+            <!-- 섹션 구분선 (착장 품목) -->
+            <div class="form-section-divider-spacer" aria-hidden="true"></div>
+
+            <!-- 착장 품목 -->
+            <div class="form-section form-section--outfit-items">
+                <div class="form-label-row">
+                    <label class="form-label" for="outfitItemsAddBtn">착장 품목 <span class="form-label-optional">(선택)</span></label>
+                    <span class="outfit-items-count-badge" id="outfitItemsCountBadge" aria-live="polite">0개</span>
+                </div>
+                <p class="form-hint outfit-items-hint">구분 선택 후 과거 품목을 고르거나, 직접 입력한 다음 <strong>입력</strong>으로 확정해 주세요.</p>
+                <div class="outfit-items-list-region">
+                    <div class="outfit-items-list" id="outfitItemsList"></div>
+                </div>
+                <button type="button" class="outfit-item-add-btn" id="outfitItemsAddBtn">+ 품목 추가</button>
+                <input type="hidden" name="items_json" id="itemsJsonInput" value="[]">
+            </div>
+
             <!-- 제목 -->
             <div class="form-section">
                 <label class="form-label">제목 (선택)</label>
@@ -149,6 +166,17 @@
             <span class="bottom-nav-label">마이</span>
         </a>
     </nav>
+
+    <!-- 착장 품목 구분 선택 바텀시트 -->
+    <div class="outfit-category-sheet" id="outfitCategorySheet" aria-hidden="true">
+        <div class="outfit-category-sheet__overlay" id="outfitCategorySheetOverlay"></div>
+        <div class="outfit-category-sheet__panel" role="dialog" aria-labelledby="outfitCategorySheetTitle" aria-modal="true">
+            <div class="outfit-category-sheet__handle"></div>
+            <h2 class="outfit-category-sheet__title" id="outfitCategorySheetTitle">구분 선택</h2>
+            <div class="outfit-category-grid" id="outfitCategoryGrid"></div>
+            <button type="button" class="outfit-category-confirm-btn" id="outfitCategoryConfirmBtn">확인</button>
+        </div>
+    </div>
 
     <!-- 크롭 편집 모달 -->
     <div class="crop-modal" id="cropModal">

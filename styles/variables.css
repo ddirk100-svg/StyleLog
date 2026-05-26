@@ -185,6 +185,13 @@
     --menu-item-hover: var(--color-bg-secondary);
     --menu-item-active: #e8e8e8;
     
+    /* Outfit items (착장 품목) */
+    --color-outfit-category-active-bg: #1a1a1a;
+    --color-outfit-category-active-fg: #ffffff;
+    --font-size-outfit-chip: 11px;
+    --outfit-sheet-handle-width: 32px;
+    --outfit-sheet-handle-height: 3px;
+    
     /* Tag */
     --tag-padding: 6px var(--spacing-md);
     --tag-bg: var(--color-bg-secondary);

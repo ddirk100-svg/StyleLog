@@ -16,6 +16,160 @@ let lastInsertPosition = -1;
 let insertLineHideTimer = null;
 let dragGhostEl = null;
 
+/** 착장 품목 (v2): { category, value }[] — 구분 순서는 common.js OUTFIT_CATEGORY_SORT_ORDER */
+const OUTFIT_DEFAULT_CATEGORIES = OUTFIT_CATEGORY_SORT_ORDER;
+
+let outfitItems = [];
+let outfitCategorySheetRowIndex = null;
+/** 시트 닫힌 뒤 포커스를 돌려줄 구분 버튼(aria-hidden 경고 방지) */
+let outfitCategorySheetReturnEl = null;
+/** 바텀시트에서 선택 중인 구분 (확인 전) */
+let outfitCategoryPending = '';
+
+/** DB 및 현재 작성 중인 행까지 반영한 구분별 품목명 후보 (제안 패널) */
+let outfitSavedValuesByCategory = new Map();
+
+const OUTFIT_ITEM_VALUE_MAX_LEN = 200;
+/** 제안 패널에서 사용자가 제거한 품목명 — DB에 남아 있어도 목록에 안 나옴 */
+const LS_OUTFIT_SUGGESTION_BLOCKED = 'stylelog_outfit_suggestion_blocked_v1';
+/** 이름 변경 등으로 직접 추가한 품목명 — 새로고침 후에도 후보에 포함 */
+const LS_OUTFIT_SUGGESTION_EXTRAS = 'stylelog_outfit_suggestion_extras_v1';
+
+function normalizeOutfitCategoryKey(cat) {
+    return String(cat || '').trim();
+}
+
+function readOutfitSuggestionLsObject(key) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return {};
+        const o = JSON.parse(raw);
+        return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+    } catch (_) {
+        return {};
+    }
+}
+
+function writeOutfitSuggestionLsObject(key, obj) {
+    try {
+        localStorage.setItem(key, JSON.stringify(obj));
+    } catch (_) {
+        /* 용량·프라이빗 모드 등 */
+    }
+}
+
+function outfitSuggestionStringsForCategory(obj, cat) {
+    const k = normalizeOutfitCategoryKey(cat);
+    const arr = obj[k];
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
+}
+
+function getOutfitSuggestionBlockedSet(category) {
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
+    const next = new Set();
+    outfitSuggestionStringsForCategory(o, category).forEach((s) => {
+        const t = String(s || '').trim();
+        if (t) next.add(t);
+    });
+    return next;
+}
+
+function persistOutfitSuggestionBlocked(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
+    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
+    o[c] = list;
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
+}
+
+/** 이름 변경으로 예전 글자가 블록만 남았을 때 새 글자는 다시 허용 */
+function removeOutfitSuggestionBlockedValue(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
+    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
+    if (list.length > 0) o[c] = list;
+    else delete o[c];
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
+}
+
+function persistOutfitSuggestionExtra(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
+    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
+    o[c] = list;
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
+}
+
+function removeOutfitSuggestionExtraPersisted(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
+    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
+    if (list.length > 0) o[c] = list;
+    else delete o[c];
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
+}
+
+/** localStorage 에 저장된 "직접 추가" 품목을 후보 맵에 합침 */
+function hydrateOutfitSuggestionExtrasFromStorage() {
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
+    Object.keys(o).forEach((cat) => {
+        outfitSuggestionStringsForCategory(o, cat).forEach((v) => {
+            rememberOutfitValueSuggestion(cat, v);
+        });
+    });
+}
+
+/** 제안 목록에서 삭제: 이 기기에서만 숨김 + 기록에서 제거 */
+function removeOutfitSuggestionFromPicker(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    persistOutfitSuggestionBlocked(c, v);
+    removeOutfitSuggestionExtraPersisted(c, v);
+    const set = outfitSavedValuesByCategory.get(c);
+    if (set) set.delete(v);
+}
+
+/** 제안 목록에서 이름 변경: 옛 이름은 숨기고 새 이름을 후보로 유지 */
+function renameOutfitSuggestionInPicker(category, oldVal, newVal) {
+    const c = normalizeOutfitCategoryKey(category);
+    const oldV = String(oldVal || '').trim();
+    let newV = String(newVal || '').trim();
+    if (!c || !oldV) return { ok: false };
+    if (!newV) {
+        void showAlert('품목명을 입력해 주세요.');
+        return { ok: false };
+    }
+    if (newV.length > OUTFIT_ITEM_VALUE_MAX_LEN) {
+        void showAlert(`품목명은 ${OUTFIT_ITEM_VALUE_MAX_LEN}자 이하로 입력해 주세요.`);
+        return { ok: false };
+    }
+    if (oldV === newV) return { ok: true, newVal: newV };
+
+    persistOutfitSuggestionBlocked(c, oldV);
+    removeOutfitSuggestionExtraPersisted(c, oldV);
+    removeOutfitSuggestionBlockedValue(c, newV);
+
+    const set = outfitSavedValuesByCategory.get(c);
+    if (set) {
+        set.delete(oldV);
+        set.add(newV);
+    } else {
+        rememberOutfitValueSuggestion(c, newV);
+    }
+    persistOutfitSuggestionExtra(c, newV);
+
+    return { ok: true, newVal: newV };
+}
+
 // 페이지 초기화
 async function initPage() {
     debugLog('📝 write.html 초기화:', { 
@@ -43,6 +197,8 @@ async function initPage() {
         await initNewLog();
     }
     
+    await loadOutfitValueSuggestions();
+
     // 이벤트 리스너 등록
     attachEventListeners();
     
@@ -77,6 +233,15 @@ async function loadLogForEdit(logId) {
         
         currentLog = data;
         debugLog('✅ 로그 로드 완료:', currentLog);
+
+        if (
+            currentLog &&
+            typeof currentLog === 'object' &&
+            Object.prototype.hasOwnProperty.call(currentLog, 'items') &&
+            typeof StyleLogAPI.resetOutfitItemsColumnErrorState === 'function'
+        ) {
+            StyleLogAPI.resetOutfitItemsColumnErrorState();
+        }
         
         // 폼에 데이터 채우기
         const dateInput = document.getElementById('dateInput');
@@ -101,6 +266,9 @@ async function loadLogForEdit(logId) {
             tags = [...currentLog.tags];
             renderTags();
         }
+
+        // 착장 품목 로드
+        hydrateOutfitItemsFromLog(currentLog.items);
         
         // 날씨 정보 로드
         currentWeather = {
@@ -366,6 +534,776 @@ function attachEventListeners() {
 
     // 크롭 모달 초기화
     initCropModal();
+
+    initOutfitItemsUI();
+}
+
+/**
+ * DB items(jsonb) → 로컬 배열 (기본 6종 외 구분은 기존 저장값 표시용으로만 그리드에 포함)
+ */
+function hydrateOutfitItemsFromLog(itemsRaw) {
+    if (!itemsRaw) {
+        outfitItems = [];
+        return;
+    }
+    let arr = itemsRaw;
+    if (typeof itemsRaw === 'string') {
+        try {
+            arr = JSON.parse(itemsRaw);
+        } catch (_) {
+            arr = [];
+        }
+    }
+    if (!Array.isArray(arr)) {
+        outfitItems = [];
+        return;
+    }
+    outfitItems = arr.map((row) => {
+        const v = typeof row.value === 'string' ? row.value.trim() : '';
+        return {
+            category: typeof row.category === 'string' ? row.category.trim() : '',
+            value: v,
+            valueDraft: v
+        };
+    });
+    sortOutfitItemsInPlace();
+}
+
+/** 구분 순서(아우터→상의→…)에 맞춰 착장 품목 행 정렬 — 동일 구분은 기존 순서 유지 */
+function sortOutfitItemsInPlace() {
+    if (outfitItems.length < 2) return;
+    outfitItems.sort((a, b) => {
+        const ca = String(a.category || '').trim();
+        const cb = String(b.category || '').trim();
+        const ra = outfitCategorySortRank(ca);
+        const rb = outfitCategorySortRank(cb);
+        if (ra !== rb) return ra - rb;
+        if (ra === OUTFIT_CATEGORY_SORT_ORDER.length) {
+            return ca.localeCompare(cb, 'ko');
+        }
+        return 0;
+    });
+}
+
+async function loadOutfitValueSuggestions() {
+    try {
+        const excludeLogId =
+            isEditMode && currentLog && currentLog.id ? String(currentLog.id) : null;
+        const map = await StyleLogAPI.getOutfitItemValueSuggestions({ excludeLogId });
+        outfitSavedValuesByCategory = map instanceof Map ? map : new Map();
+    } catch (e) {
+        console.warn('착장 품목 후보 로드 실패:', e);
+        outfitSavedValuesByCategory = new Map();
+    }
+    hydrateOutfitSuggestionExtrasFromStorage();
+    mergeOutfitRowsIntoSuggestionMap();
+}
+
+/** 현재 폼의 outfitItems 품목명을 후보 맵에 합침 (같은 화면에서 입력한 것도 제안에 포함) */
+function mergeOutfitRowsIntoSuggestionMap() {
+    outfitItems.forEach((row) => {
+        rememberOutfitValueSuggestion(row.category, row.value);
+    });
+}
+
+function rememberOutfitValueSuggestion(category, value) {
+    const c = String(category || '').trim();
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    if (getOutfitSuggestionBlockedSet(c).has(v)) return;
+    if (!outfitSavedValuesByCategory.has(c)) outfitSavedValuesByCategory.set(c, new Set());
+    outfitSavedValuesByCategory.get(c).add(v);
+}
+
+/** 같은 구분에서 쓰인 과거 품목명 (제안 패널용 — 숨김 목록 제외) */
+function getOutfitSuggestionValuesForCategory(category) {
+    const cat = String(category || '').trim();
+    if (!cat) return [];
+    const set = outfitSavedValuesByCategory.get(cat);
+    if (!set || set.size === 0) return [];
+    const blocked = getOutfitSuggestionBlockedSet(cat);
+    return [...set]
+        .map((s) => String(s || '').trim())
+        .filter((s) => s.length > 0 && !blocked.has(s))
+        .sort((a, b) => a.localeCompare(b, 'ko'));
+}
+
+const outfitSuggestionPanelHideTimers = new WeakMap();
+
+function setOutfitSuggestionRowOpenState(panel, open) {
+    const rowEl = panel?.closest?.('.outfit-item-row');
+    if (rowEl) rowEl.classList.toggle('outfit-item-row--suggest-open', Boolean(open));
+}
+
+/** 다른 줄의 레이어·타이머가 남지 않도록 즉시 닫음 */
+function hideOtherOutfitSuggestionPanels(keepPanel) {
+    document.querySelectorAll('.outfit-value-suggestions').forEach((p) => {
+        if (p === keepPanel) return;
+        p.hidden = true;
+        setOutfitSuggestionRowOpenState(p, false);
+    });
+}
+
+function hideOutfitValueSuggestionSoon(panel) {
+    if (!panel) return;
+    const prev = outfitSuggestionPanelHideTimers.get(panel);
+    if (prev != null) window.clearTimeout(prev);
+    const t = window.setTimeout(() => {
+        if (panel.contains(document.activeElement)) {
+            outfitSuggestionPanelHideTimers.delete(panel);
+            return;
+        }
+        panel.hidden = true;
+        setOutfitSuggestionRowOpenState(panel, false);
+        outfitSuggestionPanelHideTimers.delete(panel);
+    }, 240);
+    outfitSuggestionPanelHideTimers.set(panel, t);
+}
+
+function cancelOutfitSuggestionHideForPanel(panel) {
+    if (!panel) return;
+    const t = outfitSuggestionPanelHideTimers.get(panel);
+    if (t != null) {
+        window.clearTimeout(t);
+        outfitSuggestionPanelHideTimers.delete(panel);
+    }
+}
+
+function cancelAllOutfitSuggestionHideTimers() {
+    document.querySelectorAll('.outfit-value-suggestions').forEach((p) => {
+        cancelOutfitSuggestionHideForPanel(p);
+    });
+}
+
+function hideAllOutfitValueSuggestionPanels() {
+    cancelAllOutfitSuggestionHideTimers();
+    document.querySelectorAll('.outfit-value-suggestions').forEach((p) => {
+        p.hidden = true;
+        setOutfitSuggestionRowOpenState(p, false);
+    });
+}
+
+/** @param {HTMLInputElement} inp @param {HTMLDivElement} panel */
+function attachOutfitValueSuggestionUI(inp, panel) {
+    const MAX_SUGGEST = 14;
+
+    const refresh = () => {
+        hideOtherOutfitSuggestionPanels(panel);
+        cancelOutfitSuggestionHideForPanel(panel);
+        const idx = parseInt(inp.getAttribute('data-outfit-value-index'), 10);
+        if (Number.isNaN(idx) || !outfitItems[idx]) {
+            panel.hidden = true;
+            setOutfitSuggestionRowOpenState(panel, false);
+            return;
+        }
+        const cat = String(outfitItems[idx].category || '').trim();
+        let values = getOutfitSuggestionValuesForCategory(cat);
+        const qTrim = (inp.value || '').trim();
+        const qLc = qTrim.toLowerCase();
+        if (qTrim.length > 0) {
+            values = values.filter((v) => v.toLowerCase().includes(qLc));
+        }
+        // 입력이 후보와 동일하면(이미 확정) 목록을 띄우지 않음 — 겹침·잔상 방지
+        if (qTrim.length > 0 && values.some((v) => v === qTrim)) {
+            panel.innerHTML = '';
+            panel.hidden = true;
+            setOutfitSuggestionRowOpenState(panel, false);
+            return;
+        }
+        panel.innerHTML = '';
+        if (values.length === 0) {
+            panel.hidden = true;
+            setOutfitSuggestionRowOpenState(panel, false);
+            return;
+        }
+
+        const head = document.createElement('div');
+        head.className = 'outfit-value-suggestions__head';
+        head.textContent = '최근 쓴 품목';
+        panel.appendChild(head);
+
+        const listEl = document.createElement('div');
+        listEl.className = 'outfit-value-suggestions__list';
+
+        const applyValueFromSuggestion = (v) => {
+            const t = String(v || '').trim();
+            inp.value = t;
+            outfitItems[idx].value = t;
+            outfitItems[idx].valueDraft = t;
+            syncOutfitItemsHiddenInput();
+            if (t.length > 0) {
+                removeOutfitSuggestionBlockedValue(cat, t);
+            }
+            rememberOutfitValueSuggestion(cat, t);
+            panel.hidden = true;
+            setOutfitSuggestionRowOpenState(panel, false);
+            inp.focus();
+            const cbtn = document.querySelector(
+                `[data-outfit-commit-index="${CSS.escape(String(idx))}"]`
+            );
+            refreshOutfitValueCommitBtn(cbtn, idx);
+        };
+
+        const ICON_PENCIL =
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+        const ICON_TRASH =
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';
+
+        values.slice(0, MAX_SUGGEST).forEach((val) => {
+            const row = document.createElement('div');
+            row.className = 'outfit-value-suggestion-row';
+
+            const selBtn = document.createElement('button');
+            selBtn.type = 'button';
+            selBtn.className = 'outfit-value-suggestion-select';
+            selBtn.textContent = val;
+            selBtn.title = val;
+
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'outfit-value-suggestion-action outfit-value-suggestion-action--edit';
+            editBtn.innerHTML = ICON_PENCIL;
+            editBtn.setAttribute('aria-label', `${val} 수정`);
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'outfit-value-suggestion-action outfit-value-suggestion-action--delete';
+            delBtn.innerHTML = ICON_TRASH;
+            delBtn.setAttribute('aria-label', `${val} 목록에서 제거`);
+
+            const openInlineEdit = () => {
+                cancelOutfitSuggestionHideForPanel(panel);
+                row.classList.add('outfit-value-suggestion-row--editing');
+                row.innerHTML = '';
+
+                const editInput = document.createElement('input');
+                editInput.type = 'text';
+                editInput.className = 'outfit-value-suggestion-edit-input';
+                editInput.maxLength = OUTFIT_ITEM_VALUE_MAX_LEN;
+                editInput.value = val;
+
+                const actions = document.createElement('div');
+                actions.className = 'outfit-value-suggestion-edit-actions';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.className =
+                    'outfit-value-suggestion-edit-foot outfit-value-suggestion-edit-foot--muted';
+                cancelBtn.textContent = '취소';
+
+                const okBtn = document.createElement('button');
+                okBtn.type = 'button';
+                okBtn.className =
+                    'outfit-value-suggestion-edit-foot outfit-value-suggestion-edit-foot--primary';
+                okBtn.textContent = '변경';
+
+                const closeEditAndRefresh = () => {
+                    refresh();
+                    cancelOutfitSuggestionHideForPanel(panel);
+                    setTimeout(() => inp.focus(), 0);
+                };
+
+                cancelBtn.addEventListener('mousedown', (e) => e.preventDefault());
+                okBtn.addEventListener('mousedown', (e) => e.preventDefault());
+
+                cancelBtn.addEventListener('click', () => closeEditAndRefresh());
+
+                okBtn.addEventListener('click', () => {
+                    const res = renameOutfitSuggestionInPicker(cat, val, editInput.value);
+                    if (!res.ok) return;
+                    if (String(outfitItems[idx].value || '').trim() === val) {
+                        applyValueFromSuggestion(res.newVal);
+                    } else {
+                        closeEditAndRefresh();
+                    }
+                });
+
+                editInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        closeEditAndRefresh();
+                    }
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        okBtn.click();
+                    }
+                });
+
+                actions.appendChild(cancelBtn);
+                actions.appendChild(okBtn);
+                row.appendChild(editInput);
+                row.appendChild(actions);
+                setTimeout(() => {
+                    editInput.focus();
+                    editInput.select();
+                }, 0);
+            };
+
+            selBtn.addEventListener('mousedown', (e) => e.preventDefault());
+            selBtn.addEventListener('click', () => applyValueFromSuggestion(val));
+
+            editBtn.addEventListener('mousedown', (e) => e.preventDefault());
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openInlineEdit();
+            });
+
+            delBtn.addEventListener('mousedown', (e) => e.preventDefault());
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeOutfitSuggestionFromPicker(cat, val);
+                if (String(outfitItems[idx].value || '').trim() === val) {
+                    inp.value = '';
+                    outfitItems[idx].value = '';
+                    outfitItems[idx].valueDraft = '';
+                    syncOutfitItemsHiddenInput();
+                    const cbtn = document.querySelector(
+                        `[data-outfit-commit-index="${CSS.escape(String(idx))}"]`
+                    );
+                    refreshOutfitValueCommitBtn(cbtn, idx);
+                }
+                refresh();
+                cancelOutfitSuggestionHideForPanel(panel);
+            });
+
+            row.appendChild(selBtn);
+            row.appendChild(editBtn);
+            row.appendChild(delBtn);
+            listEl.appendChild(row);
+        });
+
+        panel.appendChild(listEl);
+
+        panel.hidden = false;
+        setOutfitSuggestionRowOpenState(panel, true);
+    };
+
+    panel.addEventListener(
+        'pointerdown',
+        () => cancelOutfitSuggestionHideForPanel(panel),
+        true
+    );
+
+    inp.addEventListener('focus', () => {
+        cancelOutfitSuggestionHideForPanel(panel);
+        refresh();
+    });
+    inp.addEventListener('input', refresh);
+    inp.addEventListener('pointerdown', () => {
+        cancelOutfitSuggestionHideForPanel(panel);
+        setTimeout(refresh, 0);
+    });
+    inp.addEventListener('focusout', (e) => {
+        const rt = e.relatedTarget;
+        if (rt instanceof Node && panel.contains(rt)) {
+            cancelOutfitSuggestionHideForPanel(panel);
+            return;
+        }
+        hideOutfitValueSuggestionSoon(panel);
+
+        const idx = parseInt(inp.getAttribute('data-outfit-value-index'), 10);
+        window.setTimeout(() => {
+            if (!inp.isConnected) return;
+            if (document.activeElement === inp) return;
+            if (panel.contains(document.activeElement)) return;
+            if (Number.isNaN(idx) || !outfitItems[idx]) return;
+            const row = outfitItems[idx];
+            if (!String(row.category || '').trim()) return;
+            const draftTrim = inp.value.trim();
+            const valTrim = String(row.value || '').trim();
+            const hasTyped = draftTrim.length > 0;
+            const dirty = draftTrim !== valTrim;
+            if (!dirty && !hasTyped) return;
+            commitOutfitItemValue(idx);
+        }, 0);
+    });
+    inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            cancelOutfitSuggestionHideForPanel(panel);
+            panel.hidden = true;
+            setOutfitSuggestionRowOpenState(panel, false);
+        }
+    });
+}
+
+function mergeOutfitCategoryOptions() {
+    const ordered = [...OUTFIT_DEFAULT_CATEGORIES];
+    outfitItems.forEach((row) => {
+        const t = String(row.category || '').trim();
+        if (t && !ordered.includes(t)) ordered.push(t);
+    });
+    return ordered;
+}
+
+function getOutfitCategoryIconMarkup(categoryLabel) {
+    const key = String(categoryLabel || '').trim();
+    const svgs = {
+        아우터: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8l6-5 6 5v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z"></path><path d="M9 21V10l3-2.25L15 10v11"></path></svg>',
+        상의: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l3 3h6l3-3 2 2-3 7v11H7V13L4 6l2-2z"></path></svg>',
+        하의: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3l5 17H4l5-17V4z"></path><path d="M9 4h6"></path></svg>',
+        신발: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17c2-6 10-9 13-10l3 10H4z"></path><path d="M4 17h17v4H4z"></path></svg>',
+        액세서리: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 5v3M12 16v3M5 12h3M16 12h3M6.34 6.34l2.12 2.12M15.54 15.54l2.12 2.12M6.34 17.66l2.12-2.12M15.54 8.46l2.12-2.12"></path></svg>',
+        가방: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V9a4 4 0 1 1 8 0v2"></path><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M9 10V9a3 3 0 1 1 6 0v1"></path></svg>'
+    };
+    return svgs[key] || '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M9 9h6v6H9z"></path></svg>';
+}
+
+function updateOutfitItemsCountBadge() {
+    const badge = document.getElementById('outfitItemsCountBadge');
+    if (badge) {
+        badge.textContent = `${outfitItems.length}개`;
+    }
+}
+
+function syncOutfitItemsHiddenInput() {
+    const el = document.getElementById('itemsJsonInput');
+    if (el) {
+        const snapshot = outfitItems.map((r) => ({
+            category: String(r.category || '').trim(),
+            value: String(r.value || '').trim()
+        }));
+        el.value = JSON.stringify(snapshot);
+    }
+}
+
+/** 작성 중 필드 문자열 (= 확정 value 와 다를 수 있음) */
+function getOutfitItemDraftString(row) {
+    if (!row || typeof row !== 'object') return '';
+    return String(row.valueDraft !== undefined && row.valueDraft !== null ? row.valueDraft : row.value ?? '');
+}
+
+function refreshOutfitValueCommitBtn(btn, index) {
+    if (!btn || !outfitItems[index]) return;
+    const row = outfitItems[index];
+    const hasCat = String(row.category || '').trim().length > 0;
+    if (!hasCat) {
+        btn.disabled = true;
+        btn.classList.remove('outfit-item-value-commit--dirty');
+        return;
+    }
+    const draftTrim = String(getOutfitItemDraftString(row)).trim();
+    const valTrim = String(row.value || '').trim();
+    const dirty = draftTrim !== valTrim;
+    const hasTyped = draftTrim.length > 0;
+    /* 확정값과 글자가 같아도, 필드에 글자가 있으면 다시 확정할 수 있게 함(지웠다 같은 이름 재입력 등) */
+    const canCommit = dirty || hasTyped;
+    btn.disabled = !canCommit;
+    btn.classList.toggle('outfit-item-value-commit--dirty', dirty);
+}
+
+/** 품목명 확정 → 저장 스냅샷·최근 품목 후보 반영 */
+function commitOutfitItemValue(index) {
+    const row = outfitItems[index];
+    const inp = document.querySelector(
+        `.outfit-item-value-input[data-outfit-value-index="${CSS.escape(String(index))}"]`
+    );
+    if (!row || !inp) return;
+    const cat = String(row.category || '').trim();
+    if (!cat) return;
+    const next = inp.value.trim();
+    row.value = next;
+    row.valueDraft = next;
+    inp.value = next;
+    if (next.length > 0) {
+        removeOutfitSuggestionBlockedValue(cat, next);
+    }
+    rememberOutfitValueSuggestion(cat, next);
+    syncOutfitItemsHiddenInput();
+    const btn = document.querySelector(
+        `[data-outfit-commit-index="${CSS.escape(String(index))}"]`
+    );
+    refreshOutfitValueCommitBtn(btn, index);
+}
+
+/** 저장용: 구분·내용이 모두 비어 있지 않은 행만 */
+function outfitItemsForSave() {
+    return outfitItems
+        .map((r) => ({
+            category: String(r.category || '').trim(),
+            value: String(r.value || '').trim()
+        }))
+        .filter((r) => r.category.length > 0 && r.value.length > 0);
+}
+
+function renderOutfitItemRows() {
+    const list = document.getElementById('outfitItemsList');
+    if (!list) return;
+
+    list.innerHTML = '';
+    outfitItems.forEach((row, index) => {
+        const cat = String(row.category || '').trim();
+        const hasCat = cat.length > 0;
+
+        if (row.valueDraft === undefined) {
+            row.valueDraft = String(row.value || '');
+        }
+
+        const rowEl = document.createElement('div');
+        rowEl.className = 'outfit-item-row';
+
+        const catBtn = document.createElement('button');
+        catBtn.type = 'button';
+        catBtn.className =
+            'outfit-item-category-btn' + (hasCat ? '' : ' outfit-item-category-btn--placeholder');
+        catBtn.setAttribute('data-outfit-cat-index', String(index));
+        catBtn.setAttribute('aria-label', '구분 선택');
+
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'outfit-item-category-icon';
+        iconWrap.innerHTML = getOutfitCategoryIconMarkup(hasCat ? cat : '');
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'outfit-item-category-label';
+        labelSpan.textContent = hasCat ? cat : '구분';
+
+        catBtn.appendChild(iconWrap);
+        catBtn.appendChild(labelSpan);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'outfit-value-field';
+
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'outfit-item-value-input';
+        inp.setAttribute('data-outfit-value-index', String(index));
+        inp.placeholder = hasCat ? '직접 쓸 땐 입력으로 확정' : '먼저 구분 선택';
+        inp.maxLength = OUTFIT_ITEM_VALUE_MAX_LEN;
+        inp.autocomplete = 'off';
+        inp.value = getOutfitItemDraftString(row);
+
+        const sug = document.createElement('div');
+        sug.className = 'outfit-value-suggestions';
+        sug.hidden = true;
+        sug.setAttribute('role', 'listbox');
+        sug.setAttribute('aria-label', '최근 품목');
+
+        const commitBtn = document.createElement('button');
+        commitBtn.type = 'button';
+        commitBtn.className = 'outfit-item-value-commit';
+        commitBtn.textContent = '입력';
+        commitBtn.setAttribute('data-outfit-commit-index', String(index));
+        commitBtn.setAttribute('aria-label', '품목명 확정');
+        commitBtn.addEventListener('click', () => commitOutfitItemValue(index));
+
+        attachOutfitValueSuggestionUI(inp, sug);
+
+        inp.addEventListener('input', () => {
+            outfitItems[index].valueDraft = inp.value;
+            refreshOutfitValueCommitBtn(commitBtn, index);
+        });
+
+        inp.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (!commitBtn.disabled) commitOutfitItemValue(index);
+        });
+
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'outfit-item-remove';
+        rm.setAttribute('data-outfit-remove-index', String(index));
+        rm.setAttribute('aria-label', '이 품목 삭제');
+        rm.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>';
+
+        wrap.appendChild(inp);
+        wrap.appendChild(sug);
+        rowEl.appendChild(catBtn);
+        rowEl.appendChild(wrap);
+        rowEl.appendChild(commitBtn);
+        rowEl.appendChild(rm);
+        list.appendChild(rowEl);
+
+        refreshOutfitValueCommitBtn(commitBtn, index);
+    });
+
+    updateOutfitItemsCountBadge();
+    syncOutfitItemsHiddenInput();
+}
+
+function renderCategorySheetGrid() {
+    const grid = document.getElementById('outfitCategoryGrid');
+    if (!grid) return;
+    const options = mergeOutfitCategoryOptions();
+    grid.innerHTML = '';
+    options.forEach((cat) => {
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'outfit-category-pill';
+        pill.dataset.category = cat;
+        if (cat === outfitCategoryPending) pill.classList.add('active');
+
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'outfit-category-pill-icon';
+        iconWrap.innerHTML = getOutfitCategoryIconMarkup(cat);
+
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = cat;
+
+        pill.appendChild(iconWrap);
+        pill.appendChild(labelSpan);
+        grid.appendChild(pill);
+    });
+}
+
+function openOutfitCategorySheet(rowIndex) {
+    hideAllOutfitValueSuggestionPanels();
+    const sheet = document.getElementById('outfitCategorySheet');
+    if (!sheet) return;
+    outfitCategorySheetRowIndex = rowIndex;
+    const merged = mergeOutfitCategoryOptions();
+    const existing = (outfitItems[rowIndex]?.category || '').trim();
+    outfitCategoryPending = existing || (merged[0] || OUTFIT_DEFAULT_CATEGORIES[0]);
+    renderCategorySheetGrid();
+
+    const returnBtn = document.querySelector(
+        `[data-outfit-cat-index="${CSS.escape(String(rowIndex))}"]`
+    );
+    outfitCategorySheetReturnEl =
+        returnBtn && typeof returnBtn.focus === 'function' ? returnBtn : null;
+
+    sheet.classList.add('active');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeOutfitCategorySheet() {
+    const sheet = document.getElementById('outfitCategorySheet');
+    if (!sheet) return;
+
+    const active = document.activeElement;
+    if (
+        active &&
+        typeof active.blur === 'function' &&
+        sheet.contains(active)
+    ) {
+        active.blur();
+    }
+
+    sheet.classList.remove('active');
+    sheet.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    outfitCategorySheetRowIndex = null;
+
+    const back = outfitCategorySheetReturnEl;
+    outfitCategorySheetReturnEl = null;
+    if (back && document.body.contains(back) && typeof back.focus === 'function') {
+        try {
+            back.focus();
+        } catch (_) {
+            /* ignore */
+        }
+    }
+}
+
+function confirmOutfitCategorySheet() {
+    if (
+        outfitCategorySheetRowIndex == null ||
+        outfitCategorySheetRowIndex < 0 ||
+        outfitCategorySheetRowIndex >= outfitItems.length
+    ) {
+        closeOutfitCategorySheet();
+        return;
+    }
+    if (!mergeOutfitCategoryOptions().includes(outfitCategoryPending)) {
+        outfitCategoryPending =
+            mergeOutfitCategoryOptions()[0] || OUTFIT_DEFAULT_CATEGORIES[0];
+    }
+    outfitItems[outfitCategorySheetRowIndex].category = outfitCategoryPending;
+    sortOutfitItemsInPlace();
+    renderOutfitItemRows();
+    closeOutfitCategorySheet();
+}
+
+function addOutfitItemRow(openSheetAfter = false) {
+    outfitItems.push({ category: '', value: '', valueDraft: '' });
+    renderOutfitItemRows();
+    const newIndex = outfitItems.length - 1;
+    if (openSheetAfter) {
+        openOutfitCategorySheet(newIndex);
+    }
+}
+
+function removeOutfitItemRow(index) {
+    outfitItems.splice(index, 1);
+    if (outfitCategorySheetRowIndex === index) {
+        closeOutfitCategorySheet();
+    }
+    renderOutfitItemRows();
+}
+
+function initOutfitItemsUI() {
+    const list = document.getElementById('outfitItemsList');
+    const addBtn = document.getElementById('outfitItemsAddBtn');
+    const sheet = document.getElementById('outfitCategorySheet');
+    const overlay = document.getElementById('outfitCategorySheetOverlay');
+    const confirmBtn = document.getElementById('outfitCategoryConfirmBtn');
+    const grid = document.getElementById('outfitCategoryGrid');
+
+    if (!list || !addBtn || !sheet) return;
+
+    document.addEventListener(
+        'pointerdown',
+        (e) => {
+            const t = e.target;
+            if (
+                t.closest?.('.outfit-value-field') ||
+                t.closest?.('.outfit-item-value-commit')
+            ) {
+                return;
+            }
+            hideAllOutfitValueSuggestionPanels();
+        },
+        true
+    );
+    window.addEventListener('scroll', () => hideAllOutfitValueSuggestionPanels(), {
+        capture: true,
+        passive: true
+    });
+
+    renderOutfitItemRows();
+
+    addBtn.addEventListener('click', () => {
+        addOutfitItemRow(true);
+    });
+
+    list.addEventListener('click', (e) => {
+        const rm = e.target.closest('[data-outfit-remove-index]');
+        if (rm) {
+            const i = parseInt(rm.getAttribute('data-outfit-remove-index'), 10);
+            if (!Number.isNaN(i)) removeOutfitItemRow(i);
+            return;
+        }
+        const catBtn = e.target.closest('[data-outfit-cat-index]');
+        if (catBtn) {
+            const i = parseInt(catBtn.getAttribute('data-outfit-cat-index'), 10);
+            if (!Number.isNaN(i)) openOutfitCategorySheet(i);
+        }
+    });
+
+    overlay?.addEventListener('click', () => {
+        closeOutfitCategorySheet();
+    });
+
+    confirmBtn?.addEventListener('click', () => {
+        confirmOutfitCategorySheet();
+    });
+
+    grid?.addEventListener('click', (e) => {
+        const pill = e.target.closest('.outfit-category-pill');
+        if (!pill || !pill.dataset.category) return;
+        outfitCategoryPending = pill.dataset.category;
+        renderCategorySheetGrid();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (sheet.classList.contains('active')) {
+            closeOutfitCategorySheet();
+            return;
+        }
+        hideAllOutfitValueSuggestionPanels();
+    });
 }
 
 // 사진 선택 처리 (여러 장 선택 → FileList 순서 유지 → 드래그로 순서 변경 가능)
@@ -910,6 +1848,25 @@ async function handleSubmit() {
         const weatherFitInput = document.getElementById('weatherFitInput');
         const weatherFit = weatherFitInput?.value || 'good';
 
+        sortOutfitItemsInPlace();
+
+        const outfitDraftPending = outfitItems.some((row) => {
+            const cat = String(row.category || '').trim();
+            if (!cat) return false;
+            return (
+                String(getOutfitItemDraftString(row)).trim() !==
+                String(row.value || '').trim()
+            );
+        });
+        if (outfitDraftPending) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = isEditMode ? '완료' : '저장';
+            await showAlert('품목명을 수정한 줄은 입력 버튼으로 확정한 뒤 저장해 주세요.');
+            return;
+        }
+
+        const hadOutfitItemsToSave = outfitItemsForSave().length > 0;
+
         // 로그 데이터 생성
         const logData = {
             date: dateInput.value,
@@ -924,6 +1881,10 @@ async function handleSubmit() {
             photos: photoUrls.length > 0 ? photoUrls : null,
             thumb_url: thumbUrl,
             tags: tags.length > 0 ? tags : null,
+            items: (() => {
+                const savedItems = outfitItemsForSave();
+                return savedItems.length > 0 ? savedItems : null;
+            })(),
             is_favorite: isEditMode ? currentLog.is_favorite : false // 수정 시에는 기존 값 유지, 신규는 false
         };
         
@@ -934,14 +1895,55 @@ async function handleSubmit() {
             // 수정 모드
             result = await StyleLogAPI.update(currentLog.id, logData);
             debugLog('✅ 수정 성공:', result);
-            showAlert('수정되었습니다!');
         } else {
             // 새 로그 작성
             result = await StyleLogAPI.create(logData);
             debugLog('✅ 저장 성공:', result);
-            showAlert('저장되었습니다!');
         }
-        
+
+        /** api.js 에서 DB items 정상 반영 시 제거함 — 같은 키로 맞출 것 */
+        const SS_ITEMS_MIGRATION_MODAL_SHOWN = 'stylelog_items_migration_modal_shown';
+
+        const outfitItemsWereDropped =
+            hadOutfitItemsToSave &&
+            result &&
+            result.__stylelogItemsDropped;
+
+        if (result && Object.prototype.hasOwnProperty.call(result, '__stylelogItemsDropped')) {
+            delete result.__stylelogItemsDropped;
+        }
+
+        let doneMsg = isEditMode ? '수정되었습니다!' : '저장되었습니다!';
+        if (outfitItemsWereDropped) {
+            let migrationDetailedAlreadyShown = false;
+            try {
+                migrationDetailedAlreadyShown =
+                    sessionStorage.getItem(SS_ITEMS_MIGRATION_MODAL_SHOWN) === '1';
+            } catch (_) {
+                migrationDetailedAlreadyShown = false;
+            }
+
+            const longHelp =
+                '착장 품목은 데이터베이스에 style_logs.items 칼럼이 없어 저장되지 않았습니다.\n\n' +
+                'Supabase → SQL에서 docs/supabase/style_logs_add_items.sql 내용을 실행한 뒤, 같은 편집기에서 아래 한 줄도 실행하고 10~60초 정도 기다려 주세요.\n\n' +
+                "notify pgrst, 'reload schema';\n\n" +
+                '그다음 브라우저를 새로고침한 뒤 다시 수정·저장하면 착장 품목도 함께 저장됩니다.';
+
+            if (!migrationDetailedAlreadyShown) {
+                doneMsg += `\n\n${longHelp}`;
+                try {
+                    sessionStorage.setItem(SS_ITEMS_MIGRATION_MODAL_SHOWN, '1');
+                } catch (_) {
+                    /* private mode 등 */
+                }
+            } else {
+                doneMsg +=
+                    '\n\n착장 품목은 DB에 아직 반영되지 않았습니다. (마이그레이션 방법은 방금처럼 첫 저장 때 안내했어요)';
+            }
+        }
+
+        await showAlert(doneMsg);
+
         // 상세 페이지로 이동 (약간의 지연을 주어 DB 반영 시간 확보)
         // replace를 사용하여 히스토리에서 write.html을 대체 (뒤로가기 시 홈으로 이동)
         setTimeout(() => {

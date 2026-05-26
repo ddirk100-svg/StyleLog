@@ -11,6 +11,11 @@ const INFINITE_SCROLL_ROOT_MARGIN = 400;
 const WEATHER_API_DELAY_MS = 250;
 const CONTENT_PREVIEW_LENGTH = 100;
 
+const HOME_STYLE_LOG_SELECT_BASE =
+    'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at';
+const HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS = HOME_STYLE_LOG_SELECT_BASE;
+const HOME_STYLE_LOG_SELECT_WITH_ITEMS = `${HOME_STYLE_LOG_SELECT_BASE},items`;
+
 // URL 파라미터에서 연도 가져오기
 const urlParams = new URLSearchParams(window.location.search);
 let initialYear = parseInt(urlParams.get('year')) || new Date().getFullYear();
@@ -29,6 +34,10 @@ let filterYears = [];
 let filterMonths = [];
 let filterWeatherFit = [];
 let filterFavoritesOnly = false;
+/** 착장 필터 선택 키 (`["구분","품목명"]` JSON 문자열 배열 — OR 매칭) */
+let filterOutfitSelectionKeys = [];
+/** 목록 조회에 `items` 포함 (컬럼 없으면 API 오류 후 끔) */
+let homeListSelectIncludesItems = true;
 
 /** 로컬 저장: 홈에서 오늘 날씨 맞춤 보기 여부 (기본 on) */
 const RECOMMEND_MODE_STORAGE_KEY = 'stylelog_home_recommend_mode';
@@ -88,6 +97,169 @@ function getDayListContainer() {
     return document.getElementById('dayListContainer') || document.querySelector('.day-list-container');
 }
 
+function homeStyleLogSelectColumns() {
+    return homeListSelectIncludesItems ? HOME_STYLE_LOG_SELECT_WITH_ITEMS : HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS;
+}
+
+function syncHomeOutfitFilterTabVisibility() {
+    document
+        .querySelectorAll('.filter-category-chip[data-tab="outfit"], .filter-tab[data-tab="outfit"], #filterPanelOutfit')
+        .forEach((el) => {
+            el.hidden = !homeListSelectIncludesItems;
+        });
+}
+
+function outfitFilterPairKey(cat, val) {
+    const c = String(cat || '').trim();
+    const v = String(val || '').trim();
+    if (!c || !v) return '';
+    return JSON.stringify([c, v]);
+}
+
+/** 칩 표시용 짧은 문자열 */
+function outfitFilterKeyLabel(storageKey) {
+    try {
+        const a = JSON.parse(storageKey);
+        if (Array.isArray(a) && a.length === 2) {
+            const c = String(a[0] || '').trim();
+            const v = String(a[1] || '').trim();
+            if (c && v) return `${c}·${v}`;
+        }
+    } catch (_) {
+        /* ignore */
+    }
+    return '';
+}
+
+/** 착장 활성 칩: 짧은 라벨 + 전체는 title 툴팁 */
+function summarizeOutfitFilterKeysForChip(keys) {
+    const k = keys || [];
+    const list = k.map(outfitFilterKeyLabel).filter(Boolean);
+    const title = list.join(', ');
+    const n = k.length;
+    if (n === 0) return { label: '착장', title: '' };
+    if (n >= 2) return { label: `착장 ${n}개`, title };
+    return { label: `착장 · ${list[0] || '품목'}`, title };
+}
+
+function escapeFilterChipAttr(text) {
+    return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/** 홈 필터 활성 칩 HTML (착장은 말줄임·툴팁용 title) */
+function buildHomeFilterActiveChipHtml(c) {
+    const titleAttr = c.title ? ` title="${escapeFilterChipAttr(c.title)}"` : '';
+    const outfitCls = c.key === 'outfit' ? ' filter-active-chip--outfit' : '';
+    return `<span class="filter-active-chip${outfitCls}" data-key="${c.key}"${titleAttr}><span class="filter-active-chip-body">${escapeHtml(c.label)}</span><button type="button" class="filter-active-chip-remove" data-key="${c.key}" aria-label="조건 제거">×</button></span>`;
+}
+
+/** 로그의 items 필드에서 `{ category, value }` 쌍 목록 */
+function parseLogItemsPairs(itemsJson) {
+    let arr = itemsJson;
+    if (typeof arr === 'string') {
+        try {
+            arr = JSON.parse(arr);
+        } catch (_) {
+            return [];
+        }
+    }
+    if (!Array.isArray(arr)) return [];
+    const out = [];
+    arr.forEach((it) => {
+        if (!it || typeof it !== 'object') return;
+        const c = String(it.category || '').trim();
+        const v = String(it.value || '').trim();
+        if (c && v) out.push([c, v]);
+    });
+    return out;
+}
+
+function logPassesOutfitFilterKeys(log, keys) {
+    if (!keys || keys.length === 0) return true;
+    const pairs = parseLogItemsPairs(log.items);
+    if (pairs.length === 0) return false;
+    const set = new Set(keys);
+    return pairs.some(([c, v]) => {
+        const k = outfitFilterPairKey(c, v);
+        return k && set.has(k);
+    });
+}
+
+function sortedOutfitCategoriesFromValueMap(map) {
+    const cats = [...map.keys()];
+    cats.sort((a, b) => {
+        const ia = OUTFIT_CATEGORY_SORT_ORDER.indexOf(a);
+        const ib = OUTFIT_CATEGORY_SORT_ORDER.indexOf(b);
+        const ra = ia === -1 ? OUTFIT_CATEGORY_SORT_ORDER.length : ia;
+        const rb = ib === -1 ? OUTFIT_CATEGORY_SORT_ORDER.length : ib;
+        if (ra !== rb) return ra - rb;
+        return a.localeCompare(b, 'ko');
+    });
+    return cats;
+}
+
+/** 모달 「착장 품목」패널 옵션 재구성 (불러온 로그 기준) */
+function refreshHomeOutfitFilterPanelUI(containerEl) {
+    if (!containerEl) return;
+    if (!homeListSelectIncludesItems) {
+        containerEl.innerHTML = '';
+        return;
+    }
+    if (typeof mergeItemsJsonIntoCategoryValueMap !== 'function') {
+        containerEl.innerHTML =
+            '<p class="filter-outfit-empty">착장 품목 필터를 쓸 수 없습니다. 페이지를 새로고침 해 보세요.</p>';
+        return;
+    }
+    const map = new Map();
+    allLoadedLogs.forEach((log) => mergeItemsJsonIntoCategoryValueMap(log.items, map));
+    const cats = sortedOutfitCategoriesFromValueMap(map);
+    containerEl.innerHTML = '';
+    if (cats.length === 0) {
+        containerEl.innerHTML =
+            '<p class="filter-outfit-empty">불러온 기록에 착장 품목이 없습니다. 목록을 더 불러오거나 작성 화면에서 품목을 저장해 보세요.</p>';
+        return;
+    }
+    const hint = document.createElement('p');
+    hint.className = 'filter-outfit-hint';
+    hint.innerHTML =
+        '구분(아우터·상의 등)을 펼친 뒤 품목을 고릅니다.<br>여러 개를 고르면 그중 하나라도 포함된 기록만 보입니다.';
+    containerEl.appendChild(hint);
+
+    cats.forEach((cat, idx) => {
+        const vals = [...map.get(cat)].sort((a, b) => a.localeCompare(b, 'ko'));
+        const details = document.createElement('details');
+        details.className = 'filter-outfit-category';
+        details.open = idx === 0;
+
+        const sum = document.createElement('summary');
+        sum.className = 'filter-outfit-category-summary';
+        sum.textContent = `${cat} (${vals.length})`;
+
+        const inner = document.createElement('div');
+        inner.className = 'filter-outfit-values';
+
+        vals.forEach((val) => {
+            const key = outfitFilterPairKey(cat, val);
+            const label = document.createElement('label');
+            label.className = 'filter-option filter-outfit-value-option';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.name = 'filterOutfitPair';
+            cb.value = key;
+            cb.checked = filterOutfitSelectionKeys.includes(key);
+            const span = document.createElement('span');
+            span.textContent = val;
+            label.appendChild(cb);
+            label.appendChild(span);
+            inner.appendChild(label);
+        });
+
+        details.appendChild(sum);
+        details.appendChild(inner);
+        containerEl.appendChild(details);
+    });
+}
+
 function snapshotCurrentFilters() {
     return {
         weatherFilterLow,
@@ -95,7 +267,8 @@ function snapshotCurrentFilters() {
         filterYears: [...filterYears],
         filterMonths: [...filterMonths],
         filterWeatherFit: [...filterWeatherFit],
-        filterFavoritesOnly
+        filterFavoritesOnly,
+        filterOutfitSelectionKeys: [...filterOutfitSelectionKeys]
     };
 }
 
@@ -107,6 +280,9 @@ function restoreFiltersFromSnapshot(s) {
     filterMonths = [...s.filterMonths];
     filterWeatherFit = [...s.filterWeatherFit];
     filterFavoritesOnly = s.filterFavoritesOnly;
+    filterOutfitSelectionKeys = Array.isArray(s.filterOutfitSelectionKeys)
+        ? [...s.filterOutfitSelectionKeys]
+        : [];
 }
 
 async function applyTodayWeatherRecommendationFilters() {
@@ -125,6 +301,7 @@ async function applyTodayWeatherRecommendationFilters() {
             filterMonths = [];
             filterWeatherFit = [];
             filterFavoritesOnly = false;
+            filterOutfitSelectionKeys = [];
             if (window.__stylelogHomeApplyFilters) window.__stylelogHomeApplyFilters();
             else {
                 const filtered = getFilteredLogs();
@@ -155,6 +332,7 @@ async function setRecommendationMode(on) {
             filterMonths = [];
             filterWeatherFit = [];
             filterFavoritesOnly = false;
+            filterOutfitSelectionKeys = [];
         }
         if (window.__stylelogHomeApplyFilters) window.__stylelogHomeApplyFilters();
     }
@@ -330,13 +508,34 @@ async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
     try {
         debugLog(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${limit}`);
         
-        // 페이지네이션으로 데이터 가져오기 (photos 제외, thumb_url만 - statement timeout 방지)
-        const { data, error } = await supabaseClient
+        // 페이지네이션 (thumb_url, items — 착장 필터용)
+        let selectCols = homeStyleLogSelectColumns();
+        let queryRes = await supabaseClient
             .from('style_logs')
-            .select('id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at')
+            .select(selectCols)
             .order('date', { ascending: false })
             .range(currentOffset, currentOffset + limit - 1);
-        
+        let data = queryRes.data;
+        let error = queryRes.error;
+
+        if (
+            error &&
+            homeListSelectIncludesItems &&
+            typeof isStyleLogItemsColumnUnavailable === 'function' &&
+            isStyleLogItemsColumnUnavailable(error)
+        ) {
+            homeListSelectIncludesItems = false;
+            filterOutfitSelectionKeys = [];
+            syncHomeOutfitFilterTabVisibility();
+            queryRes = await supabaseClient
+                .from('style_logs')
+                .select(HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS)
+                .order('date', { ascending: false })
+                .range(currentOffset, currentOffset + limit - 1);
+            data = queryRes.data;
+            error = queryRes.error;
+        }
+
         if (error) throw error;
         
         debugLog(`✅ ${data ? data.length : 0}개 로드됨`);
@@ -861,6 +1060,7 @@ function passesWeatherFilter(log) {
         if (!filterWeatherFit.includes(fit)) return false;
     }
     if (filterFavoritesOnly && !log.is_favorite) return false;
+    if (!logPassesOutfitFilterKeys(log, filterOutfitSelectionKeys)) return false;
     return true;
 }
 
@@ -886,6 +1086,15 @@ function getActiveFilterChips() {
     }
     const isFullRange = weatherFilterLow <= TEMP_FILTER_MIN && weatherFilterHigh >= TEMP_FILTER_MAX;
     if (!isFullRange) chips.push({ key: 'temp', label: `${weatherFilterLow}°~${weatherFilterHigh}°`, value: 'temp' });
+    if (filterOutfitSelectionKeys.length > 0 && homeListSelectIncludesItems) {
+        const s = summarizeOutfitFilterKeysForChip(filterOutfitSelectionKeys);
+        chips.push({
+            key: 'outfit',
+            label: s.label,
+            title: s.title,
+            value: 'outfit'
+        });
+    }
     if (filterFavoritesOnly) chips.push({ key: 'fav', label: '즐겨찾기만', value: 'fav' });
     return chips;
 }
@@ -1026,6 +1235,7 @@ function initFilterModal() {
                 (tabId === 'month' && panelId === 'filterPanelMonth') ||
                 (tabId === 'weatherFit' && panelId === 'filterPanelWeatherFit') ||
                 (tabId === 'temp' && panelId === 'filterPanelTemp') ||
+                (tabId === 'outfit' && panelId === 'filterPanelOutfit') ||
                 (tabId === 'favorites' && panelId === 'filterPanelFavorites');
             p.classList.toggle('active', isActive);
         });
@@ -1064,11 +1274,15 @@ function initFilterModal() {
         const high = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         const favOnly = favChecked?.value === 'only';
-        return { years, months, weatherFit, low, high, favOnly };
+        const outfitKeys = [];
+        document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]:checked').forEach((cb) => {
+            if (cb.value) outfitKeys.push(cb.value);
+        });
+        return { years, months, weatherFit, low, high, favOnly, outfitKeys };
     }
 
     function passesFilterWithState(log, state) {
-        const { years, months, weatherFit, low, high, favOnly } = state;
+        const { years, months, weatherFit, low, high, favOnly, outfitKeys } = state;
         const isFullRange = low <= TEMP_FILTER_MIN && high >= TEMP_FILTER_MAX;
         if (!isFullRange) {
             if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
@@ -1087,6 +1301,7 @@ function initFilterModal() {
             if (!weatherFit.includes(fit)) return false;
         }
         if (favOnly && !log.is_favorite) return false;
+        if ((outfitKeys?.length ?? 0) > 0 && !logPassesOutfitFilterKeys(log, outfitKeys)) return false;
         return true;
     }
 
@@ -1101,7 +1316,8 @@ function initFilterModal() {
         if (!applyBtn) return;
         const state = getFilterStateFromModalUI();
         const hasSelection = state.years.length > 0 || state.months.length > 0 || state.weatherFit.length > 0 ||
-            state.low > TEMP_FILTER_MIN || state.high < TEMP_FILTER_MAX || state.favOnly;
+            state.low > TEMP_FILTER_MIN || state.high < TEMP_FILTER_MAX || state.favOnly ||
+            (state.outfitKeys && state.outfitKeys.length > 0);
 
         if (!hasSelection) {
             clearTimeout(_applyCountDebounce);
@@ -1150,6 +1366,12 @@ function initFilterModal() {
         if (low > TEMP_FILTER_MIN || high < TEMP_FILTER_MAX) chips.push({ key: 'temp', label: `${low}°~${high}°`, value: 'temp' });
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         if (favChecked?.value === 'only') chips.push({ key: 'fav', label: '즐겨찾기만', value: 'fav' });
+        const outfitChecked = document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]:checked');
+        if (outfitChecked.length > 0 && homeListSelectIncludesItems) {
+            const keysList = Array.from(outfitChecked).map((cb) => cb.value).filter(Boolean);
+            const s = summarizeOutfitFilterKeysForChip(keysList);
+            chips.push({ key: 'outfit', label: s.label, title: s.title, value: 'outfit' });
+        }
         return chips;
     }
 
@@ -1158,12 +1380,7 @@ function initFilterModal() {
         const chips = getChipsFromModalUI();
         filterModalEl?.classList.toggle('has-selection', chips.length > 0);
         updateApplyButtonCount();
-        const chipsHTML = chips.map(c => `
-            <span class="filter-active-chip" data-key="${c.key}">
-                ${c.label}
-                <button type="button" class="filter-active-chip-remove" data-key="${c.key}">×</button>
-            </span>
-        `).join('');
+        const chipsHTML = chips.map(c => buildHomeFilterActiveChipHtml(c)).join('');
         modalActiveChipsEl.innerHTML = chipsHTML;
         modalActiveChipsEl.querySelectorAll('.filter-active-chip, .filter-active-chip-remove').forEach(el => {
             el.addEventListener('click', (e) => {
@@ -1190,6 +1407,10 @@ function initFilterModal() {
             if (valueHigh) valueHigh.textContent = `${TEMP_FILTER_MAX}° 이하`;
             updateFilterTempLabelPositions();
             checkModalTempSlidersAgainstToday();
+        } else if (key === 'outfit') {
+            document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]').forEach((cb) => {
+                cb.checked = false;
+            });
         } else if (key === 'fav') {
             const allRadio = document.querySelector('input[name="filterFavorites"][value=""]');
             if (allRadio) allRadio.checked = true;
@@ -1218,6 +1439,7 @@ function initFilterModal() {
         document.querySelectorAll('input[name="filterFavorites"]').forEach(r => {
             r.checked = (r.value === 'only' && filterFavoritesOnly) || (r.value === '' && !filterFavoritesOnly);
         });
+        refreshHomeOutfitFilterPanelUI(document.getElementById('filterOutfitOptions'));
     }
 
     function syncStateFromModal() {
@@ -1237,6 +1459,10 @@ function initFilterModal() {
         });
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         filterFavoritesOnly = favChecked?.value === 'only';
+        filterOutfitSelectionKeys = [];
+        document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]:checked').forEach((cb) => {
+            if (cb.value) filterOutfitSelectionKeys.push(cb.value);
+        });
     }
 
     function renderYearOptions() {
@@ -1270,12 +1496,7 @@ function initFilterModal() {
 
     function renderActiveChips() {
         const chips = getActiveFilterChips();
-        const chipsHTML = chips.map(c => `
-            <span class="filter-active-chip" data-key="${c.key}">
-                ${c.label}
-                <button type="button" class="filter-active-chip-remove" data-key="${c.key}">×</button>
-            </span>
-        `).join('');
+        const chipsHTML = chips.map(c => buildHomeFilterActiveChipHtml(c)).join('');
         [activeChipsEl, modalActiveChipsEl].forEach(container => {
             if (!container) return;
             container.innerHTML = chipsHTML;
@@ -1293,7 +1514,14 @@ function initFilterModal() {
         const activeKeys = chips.map(c => c.key);
         categoryChips?.forEach(chip => {
             const tab = chip.dataset.tab;
-            const keyMap = { year: 'year', month: 'months', weatherFit: 'weatherFit', temp: 'temp', favorites: 'fav' };
+            const keyMap = {
+                year: 'year',
+                month: 'months',
+                weatherFit: 'weatherFit',
+                temp: 'temp',
+                outfit: 'outfit',
+                favorites: 'fav'
+            };
             chip.classList.toggle('has-filter', keyMap[tab] && activeKeys.includes(keyMap[tab]));
         });
     }
@@ -1308,6 +1536,7 @@ function initFilterModal() {
             if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
             if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         }
+        else if (key === 'outfit') filterOutfitSelectionKeys = [];
         else if (key === 'fav') filterFavoritesOnly = false;
         syncModalFromState();
         renderActiveChips();
@@ -1393,6 +1622,9 @@ function initFilterModal() {
         updateFilterTempLabelPositions();
         const allRadio = document.querySelector('input[name="filterFavorites"][value=""]');
         if (allRadio) allRadio.checked = true;
+        document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]').forEach((cb) => {
+            cb.checked = false;
+        });
         updateModalChipsFromUI();
         checkModalTempSlidersAgainstToday();
     }
@@ -1408,6 +1640,7 @@ function initFilterModal() {
         weatherFilterLow = TEMP_FILTER_MIN;
         weatherFilterHigh = TEMP_FILTER_MAX;
         filterFavoritesOnly = false;
+        filterOutfitSelectionKeys = [];
         if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
         if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         syncModalFromState();
@@ -1552,7 +1785,11 @@ function initFilterModal() {
     });
 
     modal?.addEventListener('change', (e) => {
-        if (e.target.matches('#filterYearOptions input, #filterMonthOptions input, #filterWeatherFitOptions input, input[name="filterFavorites"]')) {
+        if (
+            e.target.matches(
+                '#filterYearOptions input, #filterMonthOptions input, #filterWeatherFitOptions input, input[name="filterFavorites"], #filterOutfitOptions input[name="filterOutfitPair"]'
+            )
+        ) {
             updateModalChipsFromUI();
         }
     });
@@ -1587,6 +1824,8 @@ function initFilterModal() {
 
     renderActiveChips();
     refreshAllFilterFades();
+
+    syncHomeOutfitFilterTabVisibility();
 
     // URL 파라미터 ?filter=fav → 즐겨찾기 필터 적용 (마이페이지 "즐겨찾기 보기" 링크용)
     if (new URLSearchParams(location.search).get('filter') === 'fav') {

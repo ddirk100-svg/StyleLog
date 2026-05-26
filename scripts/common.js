@@ -1,6 +1,41 @@
 // 공통 함수들
 const WEATHER_FIT_LABELS = { cold: 'cold', good: 'good', hot: 'hot' };
 
+/** 착장 품목 구분 표시·저장 정렬 순 (아우터 → 상의 → …) */
+const OUTFIT_CATEGORY_SORT_ORDER = Object.freeze([
+    '아우터',
+    '상의',
+    '하의',
+    '신발',
+    '액세서리',
+    '가방'
+]);
+
+/** 정렬 키: 미선택은 맨 아래, 기본 외 구분은 가방 뒤에서 가나다 2차 정렬 */
+function outfitCategorySortRank(category) {
+    const c = String(category || '').trim();
+    if (!c) return 1e9;
+    const idx = OUTFIT_CATEGORY_SORT_ORDER.indexOf(c);
+    if (idx !== -1) return idx;
+    return OUTFIT_CATEGORY_SORT_ORDER.length;
+}
+
+/** 착장 품목 배열을 구분 순으로 정렬한 새 배열 (안정 정렬: 같은 구분 내 입력 순 유지) */
+function sortOutfitItemsByCategory(items) {
+    if (!Array.isArray(items) || items.length < 2) return items ? [...items] : [];
+    return [...items].sort((a, b) => {
+        const ca = String(a.category || '').trim();
+        const cb = String(b.category || '').trim();
+        const ra = outfitCategorySortRank(ca);
+        const rb = outfitCategorySortRank(cb);
+        if (ra !== rb) return ra - rb;
+        if (ra === OUTFIT_CATEGORY_SORT_ORDER.length) {
+            return ca.localeCompare(cb, 'ko');
+        }
+        return 0;
+    });
+}
+
 // 다이얼로그 CSS 로드 (한 번만)
 (function loadDialogStyles() {
     if (document.getElementById('stylelog-dialog-styles')) return;

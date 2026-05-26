@@ -1239,12 +1239,26 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     flex-shrink: 0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
+.filter-active-chip-body {
+    min-width: 0;
+}
+/* 착장: 한 줄 요약 · 길면 말줄임 · 전체는 hover title */
+.filter-active-chip--outfit {
+    max-width: min(200px, 46vw);
+    flex-shrink: 1;
+}
+.filter-active-chip--outfit .filter-active-chip-body {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .filter-active-chip:hover {
     background: var(--color-bg-hover);
     border-color: var(--color-primary);
     color: var(--color-primary);
 }
 .filter-active-chip-remove {
+    flex-shrink: 0;
     background: none;
     border: none;
     padding: 0;
@@ -1254,6 +1268,9 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     line-height: 1;
     font-size: 14px;
     opacity: 0.8;
+}
+.filter-active-chip-remove:hover {
+    opacity: 1;
 }
 
 /* 필터 모달 */
@@ -1475,6 +1492,76 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 .filter-option-full {
     width: 100%;
 }
+
+/* 필터 모달 · 착장 품목 (구분 → 펼치기 depth) */
+.filter-outfit-options-root {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 120px;
+}
+.filter-outfit-hint {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-text-tertiary);
+    margin: 0 0 4px;
+}
+.filter-outfit-empty {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    padding: 8px 0;
+}
+.filter-outfit-category {
+    border: 1px solid var(--color-border-mid);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--color-bg-primary);
+}
+.filter-outfit-category-summary {
+    list-style: none;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--color-bg-muted);
+}
+.filter-outfit-category-summary::-webkit-details-marker {
+    display: none;
+}
+.filter-outfit-category-summary::after {
+    content: '';
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--color-text-tertiary);
+    border-bottom: 2px solid var(--color-text-tertiary);
+    transform: rotate(45deg);
+    transition: transform 0.15s ease;
+    margin-left: 8px;
+}
+.filter-outfit-category[open] > .filter-outfit-category-summary::after {
+    transform: rotate(-135deg);
+}
+.filter-outfit-values {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--color-border-lighter);
+    max-height: min(240px, 40vh);
+    overflow-y: auto;
+}
+.filter-outfit-value-option {
+    width: 100%;
+    align-items: flex-start;
+}
+
 /* 기온 필터 - 단일 축 (최저/최고 통합) */
 .filter-temp-unified {
     padding: 36px 0 32px;

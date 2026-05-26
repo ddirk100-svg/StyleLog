@@ -6,6 +6,9 @@ const idParam = urlParams.get('id'); // ID로 조회 (우선)
 const dateParam = urlParams.get('date'); // YYYY-MM-DD 형식 (하위 호환)
 let currentLog = null;
 
+/** api.js / write 저장 시 DB items 미지원이면 sessionStorage 에 설정되는 키와 동일 */
+const SS_ITEMS_COLUMN_UNAVAILABLE = 'stylelog_style_logs_items_column_unavailable';
+
 // 페이지 초기화
 async function initPage() {
     if (!idParam && !dateParam) {
@@ -36,6 +39,19 @@ async function initPage() {
         // ID로 조회한 경우 날짜 표시 업데이트
         if (idParam) {
             updateDateDisplay(currentLog.date);
+        }
+        
+        // REST 응답에 items 키가 있으면 API 가 컬럼을 노출 중 — 상세 노란 안내 플래그 제거
+        if (
+            currentLog &&
+            typeof currentLog === 'object' &&
+            Object.prototype.hasOwnProperty.call(currentLog, 'items')
+        ) {
+            try {
+                sessionStorage.removeItem(SS_ITEMS_COLUMN_UNAVAILABLE);
+            } catch (_) {
+                /* ignore */
+            }
         }
         
         // 최저/최고 기온이 없으면 날씨 API에서 가져와서 업데이트
@@ -186,6 +202,8 @@ function renderLogDetail(log) {
             weatherInfo.innerHTML += `<span class="day-weather-fit-chip day-weather-fit-chip--${weatherFitVal}">${weatherFitVal}</span>`;
         }
     }
+
+    renderOutfitItemsDetail(log);
     
     // 본문
     const contentBody = document.querySelector('.content-body');
@@ -208,6 +226,89 @@ function renderLogDetail(log) {
             tagsContainer.innerHTML = '';
         }
     }
+}
+
+/** items(jsonb): 비어있으면 상세 섹션에서 숨김 */
+function normalizeOutfitItemsFromLog(itemsRaw) {
+    if (!itemsRaw) return [];
+    let arr = itemsRaw;
+    if (typeof itemsRaw === 'string') {
+        try {
+            arr = JSON.parse(itemsRaw);
+        } catch (_) {
+            return [];
+        }
+    }
+    if (!Array.isArray(arr)) return [];
+    const list = arr
+        .filter((row) => row && typeof row === 'object')
+        .map((row) => ({
+            category: typeof row.category === 'string' ? row.category.trim() : '',
+            value: typeof row.value === 'string' ? row.value.trim() : ''
+        }))
+        .filter((row) => row.category.length > 0 && row.value.length > 0);
+    return sortOutfitItemsByCategory(list);
+}
+
+function renderOutfitItemsDetail(log) {
+    const section = document.getElementById('outfitItemsDetailSection');
+    if (!section) return;
+
+    const items = normalizeOutfitItemsFromLog(log.items);
+    section.removeAttribute('hidden');
+    section.innerHTML = '';
+
+    const heading = document.createElement('h3');
+    heading.className = 'outfit-items-detail-title';
+    heading.textContent = '착장 품목';
+
+    const panel = document.createElement('div');
+    panel.className = 'outfit-items-detail-panel';
+
+    if (items.length > 0) {
+        items.forEach(({ category, value }) => {
+            const row = document.createElement('div');
+            row.className = 'outfit-items-detail-row';
+
+            const chip = document.createElement('span');
+            chip.className = 'outfit-items-detail-chip';
+            chip.textContent = `[${category}]`;
+
+            const text = document.createElement('span');
+            text.className = 'outfit-items-detail-value';
+            text.textContent = value;
+
+            row.appendChild(chip);
+            row.appendChild(text);
+            panel.appendChild(row);
+        });
+    } else {
+        const empty = document.createElement('div');
+        empty.className = 'outfit-items-detail-empty';
+        const p1 = document.createElement('p');
+        p1.innerHTML =
+            '지금은 착장 품목이 없어요.<br>메뉴에서 수정 후 저장하면 여기에 표시돼요.';
+        empty.appendChild(p1);
+
+        let dbHint = false;
+        try {
+            dbHint = sessionStorage.getItem(SS_ITEMS_COLUMN_UNAVAILABLE) === '1';
+        } catch (_) {
+            dbHint = false;
+        }
+        if (dbHint) {
+            const warn = document.createElement('p');
+            warn.className = 'outfit-items-detail-db-hint';
+            warn.textContent =
+                '참고: 저장 API가 아직 items 칼럼을 알지 못하는 상태일 수 있어요. Supabase에서 스키마 리로드(notify 또는 프로젝트 재개) 후 다시 저장해 주세요.';
+            empty.appendChild(warn);
+        }
+
+        panel.appendChild(empty);
+    }
+
+    section.appendChild(heading);
+    section.appendChild(panel);
 }
 
 // 사진 스와이프 초기화
@@ -537,7 +638,8 @@ function attachEventListeners() {
     if (editBtn) {
         editBtn.addEventListener('click', () => {
             if (currentLog && currentLog.id) {
-                window.location.href = `write.html?id=${currentLog.id}&date=${dateParam}`;
+                const dateForWrite = dateParam || currentLog.date || '';
+                window.location.href = `write.html?id=${currentLog.id}&date=${encodeURIComponent(dateForWrite)}`;
             } else {
                 showAlert('로그 정보를 찾을 수 없습니다.');
             }
