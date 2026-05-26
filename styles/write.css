@@ -22,7 +22,7 @@ body {
 }
 
 /* 헤더 */
-/* 작성 화면 상단 툴바: 제안 패널(920x)·하단 네비(1000)보다 위, 크롭/구분 시트/알림 다이얼로그(99xx~10000)보다 아래 */
+/* 작성 화면 상단 툴바: 착장 품목 포커스 행(~50)·하단 네비(1000)보다 위, 크롭/구분 시트/알림 다이얼로그(99xx~10000)보다 아래 */
 .write-header {
     display: flex;
     justify-content: space-between;
@@ -881,11 +881,11 @@ input.form-input[readonly] {
     z-index: 1;
 }
 
-/* 패널이 열린 동안에도 포커스가 다른 줄로 옮겨가도 이 줄이 위에 오도록 (겹침 방지)
-   단, sticky 헤더(9300)보다는 낮게 — 스크롤 시 툴바가 항상 위 */
+/* 패널이 열린 동안에도 포커스가 다른 줄로 옮겨가면 이 줄이 형제 줄보다 위 (겹침 방지).
+   하단 고정 네비(--z-index-modal 1000)보다 낮아야 입력을 잡고 스크롤해도 네비에 가려짐 */
 .outfit-item-row:focus-within,
 .outfit-item-row--suggest-open {
-    z-index: 9200;
+    z-index: 50;
 }
 
 .outfit-value-field {
@@ -977,7 +977,8 @@ input.form-input[readonly] {
     left: 0;
     right: auto;
     width: min(max(100%, 300px), calc(100vw - 32px));
-    z-index: 9201;
+    /* 값 입력칸 형제 레이어망 안에서만 사용(행 z-index가 네비보다 낮아도 패널 내부 정렬용) */
+    z-index: 60;
     max-height: min(55vh, 420px);
     overflow: hidden;
     display: flex;

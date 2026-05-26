@@ -71,15 +71,21 @@ const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 // 90일 이전 과거 날씨용 Archive API (재분석 데이터, 1940년~)
 const WEATHER_ARCHIVE_API_URL = 'https://archive-api.open-meteo.com/v1/archive';
 
-/** 브라우저·네트워크 순간 장애(net::ERR_CONNECTION_CLOSED 등) 대비 */
-const OPEN_METEO_FETCH_RETRIES = 3;
-/** 너무 길면 사용자 대기만 늘리므로 타임아웃은 과하지 않게 */
-const OPEN_METEO_FETCH_TIMEOUT_MS = 14000;
-/** 연속 요청 간 백오프(기본값에 약간 랜덤) ms */
-const OPEN_METEO_FETCH_BACKOFF_BASE_MS = 350;
-/** 직전 성공 결과 — Open-Meteo 단절 시 UI가 완전 공백이 되지 않게 */
+/**
+ * 브라우저·네트워크 순간 장애 대비 (502/연결 종료 등)
+ * 참고: 엣지/게이트웨이 오류 시 응답에 ACAO 헤더가 없으면 크롬이 "CORS로 차단"처럼 보고할 수 있음(실상은 업스트림 5xx).
+ */
+const OPEN_METEO_MAX_ATTEMPTS = 6;
+/** 시도당 상한 — 과거엔 너무 짧아 502·지연 구간에서 abort만 반복되는 경우가 있었음 */
+const OPEN_METEO_FETCH_TIMEOUT_MS = 10000;
+/** 연속 시도 간 백오프(기본값 + 랜덤) ms */
+const OPEN_METEO_FETCH_BACKOFF_BASE_MS = 450;
+/** 직전 성공 결과 — Open-Meteo 단절 시 UI가 완전 공백이 되지 않게 (탭 종료까지) */
 const WEATHER_SNAPSHOT_SS_KEY = 'stylelog_openmeteo_current_v1';
-const WEATHER_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48h
+/** 같은 좌표 — 브라우저 종료 후에도 잠깐이라도 표시 가능하도록 로컬(더 긴 TTL) */
+const WEATHER_SNAPSHOT_LS_KEY = 'stylelog_openmeteo_current_v1_ls';
+const WEATHER_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48h session
+const WEATHER_SNAPSHOT_LS_MAX_AGE_MS = 96 * 60 * 60 * 1000; // 96h localStorage
 
 async function delayWeather(ms) {
     await new Promise((resolve) => {
@@ -87,12 +93,20 @@ async function delayWeather(ms) {
     });
 }
 
+/** 중간 프록시/디스크 캐시에 낡은 오류 응답이 붙는 경우 완화 */
+function bustOpenMeteoUrl(fullUrl, attemptIndex) {
+    if (attemptIndex < 2) return fullUrl;
+    const sep = fullUrl.includes('?') ? '&' : '?';
+    return `${fullUrl}${sep}_cb=${Date.now()}&try=${attemptIndex}`;
+}
+
 function fetchWithTimeoutMs(url, timeoutMs) {
     const controller = new AbortController();
-    const id = window.setTimeout(() => controller.abort(), timeoutMs);
+    const id = window.setTimeout(() => controller.abort(new Error('timeout')), timeoutMs);
     return fetch(url, {
         credentials: 'omit',
         referrerPolicy: 'no-referrer',
+        cache: 'no-store',
         headers: { Accept: 'application/json' },
         signal: controller.signal
     }).finally(() => window.clearTimeout(id));
@@ -101,14 +115,15 @@ function fetchWithTimeoutMs(url, timeoutMs) {
 async function fetchOpenMeteoJsonWithRetry(fullUrl, { label = '', timeoutMs } = {}) {
     const t = typeof timeoutMs === 'number' ? timeoutMs : OPEN_METEO_FETCH_TIMEOUT_MS;
     let lastErr;
-    for (let attempt = 0; attempt < OPEN_METEO_FETCH_RETRIES; attempt++) {
+    for (let attempt = 0; attempt < OPEN_METEO_MAX_ATTEMPTS; attempt++) {
         try {
             if (attempt > 0) {
-                const jitter = Math.floor(Math.random() * 180);
+                const jitter = Math.floor(Math.random() * 280);
                 const backoff = OPEN_METEO_FETCH_BACKOFF_BASE_MS * 2 ** (attempt - 1) + jitter;
                 await delayWeather(backoff);
             }
-            const response = await fetchWithTimeoutMs(fullUrl, t);
+            const tryUrl = bustOpenMeteoUrl(fullUrl, attempt);
+            const response = await fetchWithTimeoutMs(tryUrl, t);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
@@ -117,7 +132,7 @@ async function fetchOpenMeteoJsonWithRetry(fullUrl, { label = '', timeoutMs } = 
             lastErr = e;
             if (isTestEnvironment) {
                 console.warn(
-                    `[날씨] 재시도 ${attempt + 1}/${OPEN_METEO_FETCH_RETRIES} 실패 (${label})`,
+                    `[날씨] 재시도 ${attempt + 1}/${OPEN_METEO_MAX_ATTEMPTS} 실패 (${label})`,
                     e && e.message ? e.message : e
                 );
             }
@@ -126,25 +141,37 @@ async function fetchOpenMeteoJsonWithRetry(fullUrl, { label = '', timeoutMs } = 
     throw lastErr || new Error('날씨 요청 실패');
 }
 
+function parseWeatherSnapshot(raw, lat, lon, maxAgeMs) {
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== 'object') return null;
+    const latK = typeof obj.lat === 'number' ? obj.lat.toFixed(2) : '';
+    const lonK = typeof obj.lon === 'number' ? obj.lon.toFixed(2) : '';
+    if (
+        latK !== Number(lat).toFixed(2) ||
+        lonK !== Number(lon).toFixed(2)
+    ) {
+        return null;
+    }
+    const ts = typeof obj.ts === 'number' ? obj.ts : 0;
+    if (!ts || Date.now() - ts > maxAgeMs) return null;
+    const payload = obj.payload && typeof obj.payload === 'object' ? obj.payload : null;
+    if (!payload || payload.weather == null) return null;
+    return payload;
+}
+
 function readCachedCurrentWeatherSnapshot(lat, lon) {
     try {
-        const raw = sessionStorage.getItem(WEATHER_SNAPSHOT_SS_KEY);
-        if (!raw) return null;
-        const obj = JSON.parse(raw);
-        if (!obj || typeof obj !== 'object') return null;
-        const latK = typeof obj.lat === 'number' ? obj.lat.toFixed(2) : '';
-        const lonK = typeof obj.lon === 'number' ? obj.lon.toFixed(2) : '';
-        if (
-            latK !== Number(lat).toFixed(2) ||
-            lonK !== Number(lon).toFixed(2)
-        ) {
-            return null;
+        const rawSs = sessionStorage.getItem(WEATHER_SNAPSHOT_SS_KEY);
+        if (rawSs) {
+            const fromSs = parseWeatherSnapshot(rawSs, lat, lon, WEATHER_SNAPSHOT_MAX_AGE_MS);
+            if (fromSs) return fromSs;
         }
-        const ts = typeof obj.ts === 'number' ? obj.ts : 0;
-        if (!ts || Date.now() - ts > WEATHER_SNAPSHOT_MAX_AGE_MS) return null;
-        const payload = obj.payload && typeof obj.payload === 'object' ? obj.payload : null;
-        if (!payload || payload.weather == null) return null;
-        return payload;
+        const rawLs = localStorage.getItem(WEATHER_SNAPSHOT_LS_KEY);
+        if (rawLs) {
+            return parseWeatherSnapshot(rawLs, lat, lon, WEATHER_SNAPSHOT_LS_MAX_AGE_MS);
+        }
+        return null;
     } catch (_) {
         return null;
     }
@@ -158,7 +185,9 @@ function rememberCurrentWeatherSnapshot(lat, lon, payload) {
             ts: Date.now(),
             payload
         };
-        sessionStorage.setItem(WEATHER_SNAPSHOT_SS_KEY, JSON.stringify(rec));
+        const json = JSON.stringify(rec);
+        sessionStorage.setItem(WEATHER_SNAPSHOT_SS_KEY, json);
+        localStorage.setItem(WEATHER_SNAPSHOT_LS_KEY, json);
     } catch (_) {
         /* private mode 등 */
     }
@@ -249,14 +278,56 @@ function normalizeOpenMeteoCurrentPayload(data) {
     };
 }
 
+/** `current=` 엔드포인트 502 등으로 깨질 때 `hourly` 첫 시간으로 대체 (동일 원본·일별 min/max 유지) */
+function normalizeOpenMeteoCurrentFromHourly(data) {
+    if (!data || !data.daily || data.daily.temperature_2m_max == null || data.daily.temperature_2m_min == null) {
+        throw new Error('날씨(hourly) 응답 형식 오류');
+    }
+    const max0 = data.daily.temperature_2m_max[0];
+    const min0 = data.daily.temperature_2m_min[0];
+    if (max0 == null || min0 == null) throw new Error('날씨 응답에 일별 기온이 없음');
+    const temps = data.hourly && Array.isArray(data.hourly.temperature_2m) ? data.hourly.temperature_2m : null;
+    const codes = data.hourly && Array.isArray(data.hourly.weathercode) ? data.hourly.weathercode : null;
+    if (!temps || !codes || temps.length === 0 || codes.length === 0) {
+        throw new Error('날씨 hourly 시간열이 비어 있음');
+    }
+    const weatherCode = codes[0];
+    const temp = temps[0];
+    if (weatherCode == null || temp == null) throw new Error('날씨 hourly 값 없음');
+    return {
+        weather: WEATHER_MAPPING[weatherCode] || 'cloudy',
+        temp,
+        tempMax: max0,
+        tempMin: min0,
+        description: getWeatherDescription(weatherCode),
+        weatherCode
+    };
+}
+
 // 날씨 정보 가져오기 (서울 기준)
 async function getWeatherByCoords(lat, lon) {
-    const url = `${WEATHER_API_URL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul&forecast_days=1`;
+    const baseDaily = `latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=1`;
+    const urlCurrent = `${WEATHER_API_URL}?${baseDaily}&current=temperature_2m,weathercode`;
+    /** 짧은 hourly만 받아 패킷·파싱 부담 최소화 (`current=` 경로 장애 시 대체) */
+    const urlHourly = `${WEATHER_API_URL}?${baseDaily}&hourly=temperature_2m,weathercode&forecast_hours=48`;
 
     try {
-        const data = await fetchOpenMeteoJsonWithRetry(url, { label: 'forecast-current' });
+        let data;
+        try {
+            data = await fetchOpenMeteoJsonWithRetry(urlCurrent, { label: 'forecast-current' });
+        } catch (e1) {
+            if (isTestEnvironment) {
+                console.warn('[날씨] current 요청 일괄 실패 → hourly 폴백 시도', e1 && e1.message ? e1.message : e1);
+            }
+            data = await fetchOpenMeteoJsonWithRetry(urlHourly, { label: 'forecast-hourly-fallback' });
+        }
 
-        const out = normalizeOpenMeteoCurrentPayload(data);
+        let out;
+        try {
+            out = normalizeOpenMeteoCurrentPayload(data);
+        } catch (_) {
+            out = normalizeOpenMeteoCurrentFromHourly(data);
+        }
         rememberCurrentWeatherSnapshot(lat, lon, out);
         return out;
     } catch (error) {
@@ -336,10 +407,22 @@ async function getWeatherByDate(date) {
     return await getWeatherByDateAndCoords(37.5665, 126.9780, date);
 }
 
+/** 같은 탭에서 getCurrentWeather 동시 호출 시 Open-Meteo 재요청 폭주 방지 */
+let __pendingSeoulCurrentWeather = null;
+
 // 현재 날씨 가져오기 (서울 고정)
 async function getCurrentWeather() {
+    if (__pendingSeoulCurrentWeather) return __pendingSeoulCurrentWeather;
+
     console.log('📍 서울 현재 날씨 조회');
-    return await getWeatherByCoords(37.5665, 126.9780);
+    __pendingSeoulCurrentWeather = (async () => {
+        try {
+            return await getWeatherByCoords(37.5665, 126.9780);
+        } finally {
+            __pendingSeoulCurrentWeather = null;
+        }
+    })();
+    return __pendingSeoulCurrentWeather;
 }
 
 // 유틸리티 함수들

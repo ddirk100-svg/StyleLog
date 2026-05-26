@@ -489,6 +489,8 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     background: transparent;
     border-radius: 0;
     box-shadow: none;
+    position: relative;
+    z-index: 1; /* 착장 품목 포함 필터 행보다 위로 (탭/스크롤 겹침 방지) */
 }
 
 /* 일별 리스트 - gap을 margin으로 처리 */
@@ -1017,6 +1019,8 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     overflow: visible;
     flex-shrink: 0;
+    /* 필터 칩 행 vs 일별 리스트 z-index 충돌을 이 블록 안에서만 해결 (상단 코디 모음 등과 레이어 섞임 방지) */
+    isolation: isolate;
 }
 
 /* 필터 바 */
@@ -1031,6 +1035,8 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     box-shadow: none;
     overflow: hidden;
     flex-shrink: 0;
+    position: relative;
+    z-index: 0; /* 하단 day-list-view보다 아래 (겹침 시 일별 카드·스티키 레이블 우선) */
 }
 .filter-row {
     display: flex;

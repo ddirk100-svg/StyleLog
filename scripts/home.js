@@ -360,7 +360,10 @@ async function initPage() {
     if (new URLSearchParams(location.search).get('filter') === 'fav') {
         recommendationModeEnabled = false;
     }
-    await refreshCachedTodayTemps();
+    /** Open-Meteo 지연 시 로그 목록까지 막히지 않도록 비차단 — 완료 후 토글만 동기화 */
+    void refreshCachedTodayTemps().then(() => {
+        syncWeatherRecommendToggleUI();
+    });
     syncWeatherRecommendToggleUI();
 
     await loadYearsWithData();
@@ -2125,7 +2128,8 @@ window.addEventListener('scroll', _handleHeaderScroll, { passive: true });
 window.addEventListener('load', async () => {
     updateMenuUserInfo();
     await initPage();
-    await updateTodayInfo();
+    /** 헤더 날짜 영역과 경쟁하지 않도록 위젯은 백그라운드 업데이트 */
+    void updateTodayInfo();
 });
 
 // 오늘 날짜와 날씨 정보 업데이트 (Danble 스타일 위젯)
