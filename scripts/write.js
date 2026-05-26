@@ -741,15 +741,26 @@ function attachOutfitValueSuggestionUI(inp, panel) {
         let values = getOutfitSuggestionValuesForCategory(cat);
         const qTrim = (inp.value || '').trim();
         const qLc = qTrim.toLowerCase();
-        if (qTrim.length > 0) {
-            values = values.filter((v) => v.toLowerCase().includes(qLc));
+
+        /** '수정' 탭 후 한 번만: 검색 필터·동일 문자열 접기 없이 최근 목록 전체 표시 */
+        const forceFullSuggest = Boolean(inp._outfitShowFullSuggestionsOnce);
+        if (inp._outfitShowFullSuggestionsOnce) {
+            inp._outfitShowFullSuggestionsOnce = false;
         }
-        // 입력이 후보와 동일하면(이미 확정) 목록을 띄우지 않음 — 겹침·잔상 방지
-        if (qTrim.length > 0 && values.some((v) => v === qTrim)) {
-            panel.innerHTML = '';
-            panel.hidden = true;
-            setOutfitSuggestionRowOpenState(panel, false);
-            return;
+
+        if (!forceFullSuggest) {
+            if (qTrim.length > 0) {
+                values = values.filter((v) => v.toLowerCase().includes(qLc));
+            }
+            const bypassHideUntil = Number(inp._outfitBypassSuggestExactHideUntil) || 0;
+            const canExactHide = performance.now() >= bypassHideUntil;
+            // 입력이 후보와 동일하면(이미 확정) 목록을 띄우지 않음 — 겹침·잔상 방지 ('수정' 직후·강제 열림은 제외)
+            if (canExactHide && qTrim.length > 0 && values.some((v) => v === qTrim)) {
+                panel.innerHTML = '';
+                panel.hidden = true;
+                setOutfitSuggestionRowOpenState(panel, false);
+                return;
+            }
         }
         panel.innerHTML = '';
         if (values.length === 0) {
@@ -1110,12 +1121,44 @@ function getOutfitItemDraftString(row) {
     return String(row.valueDraft !== undefined && row.valueDraft !== null ? row.valueDraft : row.value ?? '');
 }
 
+/** 저장된 확정값이 있고, 입력 초안과 같을 때(= 수정 모드 레이블) */
+function isOutfitRowCommittedClean(index) {
+    const row = outfitItems[index];
+    if (!row) return false;
+    if (!String(row.category || '').trim()) return false;
+    const draftTrim = String(getOutfitItemDraftString(row)).trim();
+    const valTrim = String(row.value || '').trim();
+    if (!valTrim) return false;
+    return draftTrim === valTrim;
+}
+
+/** 확정값이 채워진 행에서 '수정'과 같이 목록 재오픈 (전체 후보 표시 후 포커스) */
+function beginEditingOutfitValueWithSuggestions(index) {
+    const inp = document.querySelector(
+        `.outfit-item-value-input[data-outfit-value-index="${CSS.escape(String(index))}"]`
+    );
+    const field = inp?.closest?.('.outfit-value-field');
+    const panel = field?.querySelector?.('.outfit-value-suggestions');
+    if (!(inp instanceof HTMLInputElement) || !(panel instanceof HTMLElement)) return;
+
+    inp._outfitShowFullSuggestionsOnce = true;
+    /* 수정 직후 pointerdown 등으로 인한 즉시 refresh 가 다시 패널을 접지 않도록 */
+    inp._outfitBypassSuggestExactHideUntil = performance.now() + 1400;
+
+    hideOtherOutfitSuggestionPanels(panel);
+    cancelOutfitSuggestionHideForPanel(panel);
+
+    inp.focus({ preventScroll: false });
+}
+
 function refreshOutfitValueCommitBtn(btn, index) {
     if (!btn || !outfitItems[index]) return;
     const row = outfitItems[index];
     const hasCat = String(row.category || '').trim().length > 0;
     if (!hasCat) {
         btn.disabled = true;
+        btn.textContent = '입력';
+        btn.setAttribute('aria-label', '품목명 확정');
         btn.classList.remove('outfit-item-value-commit--dirty');
         return;
     }
@@ -1123,6 +1166,18 @@ function refreshOutfitValueCommitBtn(btn, index) {
     const valTrim = String(row.value || '').trim();
     const dirty = draftTrim !== valTrim;
     const hasTyped = draftTrim.length > 0;
+
+    if (valTrim.length > 0 && !dirty) {
+        btn.disabled = false;
+        btn.textContent = '수정';
+        btn.setAttribute('aria-label', '품목명 수정 — 최근 품목에서 다시 고르기');
+        btn.classList.remove('outfit-item-value-commit--dirty');
+        return;
+    }
+
+    btn.textContent = '입력';
+    btn.setAttribute('aria-label', '품목명 확정');
+
     /* 확정값과 글자가 같아도, 필드에 글자가 있으면 다시 확정할 수 있게 함(지웠다 같은 이름 재입력 등) */
     const canCommit = dirty || hasTyped;
     btn.disabled = !canCommit;
@@ -1233,7 +1288,9 @@ function renderOutfitItemRows() {
         inp.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
             e.preventDefault();
-            if (!commitBtn.disabled) commitOutfitItemValue(index);
+            if (commitBtn.disabled) return;
+            if (isOutfitRowCommittedClean(index)) beginEditingOutfitValueWithSuggestions(index);
+            else commitOutfitItemValue(index);
         });
 
         const rm = document.createElement('button');

@@ -71,6 +71,99 @@ const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 // 90일 이전 과거 날씨용 Archive API (재분석 데이터, 1940년~)
 const WEATHER_ARCHIVE_API_URL = 'https://archive-api.open-meteo.com/v1/archive';
 
+/** 브라우저·네트워크 순간 장애(net::ERR_CONNECTION_CLOSED 등) 대비 */
+const OPEN_METEO_FETCH_RETRIES = 3;
+/** 너무 길면 사용자 대기만 늘리므로 타임아웃은 과하지 않게 */
+const OPEN_METEO_FETCH_TIMEOUT_MS = 14000;
+/** 연속 요청 간 백오프(기본값에 약간 랜덤) ms */
+const OPEN_METEO_FETCH_BACKOFF_BASE_MS = 350;
+/** 직전 성공 결과 — Open-Meteo 단절 시 UI가 완전 공백이 되지 않게 */
+const WEATHER_SNAPSHOT_SS_KEY = 'stylelog_openmeteo_current_v1';
+const WEATHER_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48h
+
+async function delayWeather(ms) {
+    await new Promise((resolve) => {
+        window.setTimeout(resolve, ms);
+    });
+}
+
+function fetchWithTimeoutMs(url, timeoutMs) {
+    const controller = new AbortController();
+    const id = window.setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, {
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        headers: { Accept: 'application/json' },
+        signal: controller.signal
+    }).finally(() => window.clearTimeout(id));
+}
+
+async function fetchOpenMeteoJsonWithRetry(fullUrl, { label = '', timeoutMs } = {}) {
+    const t = typeof timeoutMs === 'number' ? timeoutMs : OPEN_METEO_FETCH_TIMEOUT_MS;
+    let lastErr;
+    for (let attempt = 0; attempt < OPEN_METEO_FETCH_RETRIES; attempt++) {
+        try {
+            if (attempt > 0) {
+                const jitter = Math.floor(Math.random() * 180);
+                const backoff = OPEN_METEO_FETCH_BACKOFF_BASE_MS * 2 ** (attempt - 1) + jitter;
+                await delayWeather(backoff);
+            }
+            const response = await fetchWithTimeoutMs(fullUrl, t);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+        } catch (e) {
+            lastErr = e;
+            if (isTestEnvironment) {
+                console.warn(
+                    `[날씨] 재시도 ${attempt + 1}/${OPEN_METEO_FETCH_RETRIES} 실패 (${label})`,
+                    e && e.message ? e.message : e
+                );
+            }
+        }
+    }
+    throw lastErr || new Error('날씨 요청 실패');
+}
+
+function readCachedCurrentWeatherSnapshot(lat, lon) {
+    try {
+        const raw = sessionStorage.getItem(WEATHER_SNAPSHOT_SS_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || typeof obj !== 'object') return null;
+        const latK = typeof obj.lat === 'number' ? obj.lat.toFixed(2) : '';
+        const lonK = typeof obj.lon === 'number' ? obj.lon.toFixed(2) : '';
+        if (
+            latK !== Number(lat).toFixed(2) ||
+            lonK !== Number(lon).toFixed(2)
+        ) {
+            return null;
+        }
+        const ts = typeof obj.ts === 'number' ? obj.ts : 0;
+        if (!ts || Date.now() - ts > WEATHER_SNAPSHOT_MAX_AGE_MS) return null;
+        const payload = obj.payload && typeof obj.payload === 'object' ? obj.payload : null;
+        if (!payload || payload.weather == null) return null;
+        return payload;
+    } catch (_) {
+        return null;
+    }
+}
+
+function rememberCurrentWeatherSnapshot(lat, lon, payload) {
+    try {
+        const rec = {
+            lat: typeof lat === 'number' ? lat : Number(lat),
+            lon: typeof lon === 'number' ? lon : Number(lon),
+            ts: Date.now(),
+            payload
+        };
+        sessionStorage.setItem(WEATHER_SNAPSHOT_SS_KEY, JSON.stringify(rec));
+    } catch (_) {
+        /* private mode 등 */
+    }
+}
+
 // 날씨 코드 매핑 (WMO Weather codes → 우리 시스템)
 const WEATHER_MAPPING = {
     0: 'clear',        // Clear sky
@@ -98,34 +191,6 @@ const WEATHER_MAPPING = {
     96: 'lightning',   // Thunderstorm with slight hail
     99: 'lightning'    // Thunderstorm with heavy hail
 };
-
-// 날씨 정보 가져오기 (서울 기준)
-async function getWeatherByCoords(lat, lon) {
-    try {
-        const response = await fetch(
-            `${WEATHER_API_URL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul&forecast_days=1`
-        );
-        
-        if (!response.ok) {
-            throw new Error('날씨 정보를 가져올 수 없습니다');
-        }
-        
-        const data = await response.json();
-        const weatherCode = data.current.weathercode;
-        
-        return {
-            weather: WEATHER_MAPPING[weatherCode] || 'cloudy',
-            temp: data.current.temperature_2m,
-            tempMax: data.daily.temperature_2m_max[0],
-            tempMin: data.daily.temperature_2m_min[0],
-            description: getWeatherDescription(weatherCode),
-            weatherCode: weatherCode
-        };
-    } catch (error) {
-        console.error('날씨 API 오류:', error);
-        return null;
-    }
-}
 
 // 날씨 설명 가져오기
 function getWeatherDescription(code) {
@@ -156,6 +221,53 @@ function getWeatherDescription(code) {
         99: '강한 우박을 동반한 천둥번개'
     };
     return descriptions[code] || '흐림';
+}
+
+function normalizeOpenMeteoCurrentPayload(data) {
+    if (
+        !data ||
+        !data.current ||
+        data.current.weathercode == null ||
+        data.current.temperature_2m == null ||
+        !data.daily ||
+        data.daily.temperature_2m_max == null ||
+        data.daily.temperature_2m_min == null
+    ) {
+        throw new Error('날씨 응답 형식 오류');
+    }
+    const max0 = data.daily.temperature_2m_max[0];
+    const min0 = data.daily.temperature_2m_min[0];
+    if (max0 == null || min0 == null) throw new Error('날씨 응답에 일별 기온이 없음');
+    const weatherCode = data.current.weathercode;
+    return {
+        weather: WEATHER_MAPPING[weatherCode] || 'cloudy',
+        temp: data.current.temperature_2m,
+        tempMax: max0,
+        tempMin: min0,
+        description: getWeatherDescription(weatherCode),
+        weatherCode: weatherCode
+    };
+}
+
+// 날씨 정보 가져오기 (서울 기준)
+async function getWeatherByCoords(lat, lon) {
+    const url = `${WEATHER_API_URL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul&forecast_days=1`;
+
+    try {
+        const data = await fetchOpenMeteoJsonWithRetry(url, { label: 'forecast-current' });
+
+        const out = normalizeOpenMeteoCurrentPayload(data);
+        rememberCurrentWeatherSnapshot(lat, lon, out);
+        return out;
+    } catch (error) {
+        console.warn('날씨 API 오류:', error && error.message ? error.message : error);
+        const snap = readCachedCurrentWeatherSnapshot(lat, lon);
+        if (snap) {
+            debugLog('[날씨] Open-Meteo 단절 — 직전 성공 결과(캐시) 사용');
+            return snap;
+        }
+        return null;
+    }
 }
 
 // 특정 날짜의 날씨 정보 가져오기 (서울 기준)
@@ -189,17 +301,12 @@ async function getWeatherByDateAndCoords(lat, lon, date) {
         const useArchiveApi = requestDate < today;
         const apiUrl = useArchiveApi ? WEATHER_ARCHIVE_API_URL : WEATHER_API_URL;
         
-        const response = await fetch(
-            `${apiUrl}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Seoul`
-        );
-        
-        if (!response.ok) {
-            console.log(`⚠️ 날씨 API 응답 오류 (${response.status}): ${date}`);
-            return null;
-        }
-        
-        const data = await response.json();
-        
+        const fullUrl = `${apiUrl}?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Seoul`;
+
+        const data = await fetchOpenMeteoJsonWithRetry(fullUrl, {
+            label: useArchiveApi ? `archive:${date}` : `forecast-history:${date}`
+        });
+
         const weatherCode = data.daily?.weathercode?.[0];
         const tempMax = data.daily?.temperature_2m_max?.[0];
         const tempMin = data.daily?.temperature_2m_min?.[0];
