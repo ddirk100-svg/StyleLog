@@ -16,6 +16,16 @@ const HOME_STYLE_LOG_SELECT_BASE =
 const HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS = HOME_STYLE_LOG_SELECT_BASE;
 const HOME_STYLE_LOG_SELECT_WITH_ITEMS = `${HOME_STYLE_LOG_SELECT_BASE},items`;
 
+/** 필터 모달 탭 id ↔ 패널 id (switchTab 중복 제거) */
+const HOME_FILTER_PANEL_ID_BY_TAB = Object.freeze({
+    year: 'filterPanelYear',
+    month: 'filterPanelMonth',
+    weatherFit: 'filterPanelWeatherFit',
+    temp: 'filterPanelTemp',
+    outfit: 'filterPanelOutfit',
+    favorites: 'filterPanelFavorites'
+});
+
 // URL 파라미터에서 연도 가져오기
 const urlParams = new URLSearchParams(window.location.search);
 let initialYear = parseInt(urlParams.get('year')) || new Date().getFullYear();
@@ -186,16 +196,12 @@ function logPassesOutfitFilterKeys(log, keys) {
 }
 
 function sortedOutfitCategoriesFromValueMap(map) {
-    const cats = [...map.keys()];
-    cats.sort((a, b) => {
-        const ia = OUTFIT_CATEGORY_SORT_ORDER.indexOf(a);
-        const ib = OUTFIT_CATEGORY_SORT_ORDER.indexOf(b);
-        const ra = ia === -1 ? OUTFIT_CATEGORY_SORT_ORDER.length : ia;
-        const rb = ib === -1 ? OUTFIT_CATEGORY_SORT_ORDER.length : ib;
+    return [...map.keys()].sort((a, b) => {
+        const ra = outfitCategorySortRank(a);
+        const rb = outfitCategorySortRank(b);
         if (ra !== rb) return ra - rb;
         return a.localeCompare(b, 'ko');
     });
-    return cats;
 }
 
 /** 모달 「착장 품목」패널 옵션 재구성 (불러온 로그 기준) */
@@ -644,34 +650,34 @@ function showEndMessage() {
 
 // 날씨 데이터를 백그라운드에서 업데이트 (UI 렌더링을 차단하지 않음)
 async function updateWeatherDataInBackground(logs) {
-    const logsNeedingWeather = logs.filter(log => 
-        (log.weather_temp_min === null || log.weather_temp_min === undefined) &&
-        (log.weather_temp_max === null || log.weather_temp_max === undefined)
+    const logsNeedingWeather = logs.filter(
+        (log) =>
+            (log.weather_temp_min === null || log.weather_temp_min === undefined) &&
+            (log.weather_temp_max === null || log.weather_temp_max === undefined)
     );
-    
+
     if (logsNeedingWeather.length === 0) return;
-    
-    // 순차 처리로 API 제한 회피 (동시 요청 시 일부 실패함)
+
     (async () => {
         for (const log of logsNeedingWeather) {
             try {
-            const weatherData = await getWeatherByDate(log.date);
+                const weatherData = await getWeatherByDate(log.date);
                 if (weatherData?.unavailable && weatherData?.reason === 'future') continue;
                 if (weatherData?.tempMin != null && weatherData?.tempMax != null) {
-                await StyleLogAPI.update(log.id, {
-                    weather_temp_min: weatherData.tempMin,
-                    weather_temp_max: weatherData.tempMax,
-                    weather_temp: weatherData.temp
-                });
-                log.weather_temp_min = weatherData.tempMin;
-                log.weather_temp_max = weatherData.tempMax;
-                log.weather_temp = weatherData.temp;
-                updateDayItemWeather(log.id, weatherData);
+                    await StyleLogAPI.update(log.id, {
+                        weather_temp_min: weatherData.tempMin,
+                        weather_temp_max: weatherData.tempMax,
+                        weather_temp: weatherData.temp
+                    });
+                    log.weather_temp_min = weatherData.tempMin;
+                    log.weather_temp_max = weatherData.tempMax;
+                    log.weather_temp = weatherData.temp;
+                    updateDayItemWeather(log.id, weatherData);
+                }
+                await new Promise((r) => setTimeout(r, WEATHER_API_DELAY_MS));
+            } catch (error) {
+                console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
             }
-                await new Promise(r => setTimeout(r, 250));
-        } catch (error) {
-            console.error(`❌ ${log.date} 날씨 업데이트 실패:`, error);
-        }
         }
     })();
 }
@@ -697,44 +703,22 @@ function updateDayItemWeather(logId, weatherData) {
 async function renderDayList(logs) {
     const container = getDayListContainer();
     if (!container) return;
-    
-    let previousYear = null;
-    let previousMonth = null;
+
     const allYearLabels = container.querySelectorAll('.year-label-day-view');
     const allMonthLabels = container.querySelectorAll('.month-label-day-view');
-    
+
+    const fragment = document.createDocumentFragment();
+    const continuation = {
+        previousYear: null,
+        previousMonth: null
+    };
     if (allYearLabels.length > 0) {
-        previousYear = parseInt(allYearLabels[allYearLabels.length - 1].textContent);
+        continuation.previousYear = parseInt(allYearLabels[allYearLabels.length - 1].textContent, 10);
     }
     if (allMonthLabels.length > 0) {
-        previousMonth = parseInt(allMonthLabels[allMonthLabels.length - 1].textContent);
+        continuation.previousMonth = parseInt(allMonthLabels[allMonthLabels.length - 1].textContent, 10);
     }
-    
-    const fragment = document.createDocumentFragment();
-    logs.forEach(log => {
-        const date = new Date(log.date);
-        const currentYear = date.getFullYear();
-        const currentMonth = date.getMonth() + 1;
-        
-        if (previousYear !== currentYear) {
-            const yearLabel = document.createElement('div');
-            yearLabel.className = 'year-label-day-view';
-            yearLabel.textContent = `${currentYear}년`;
-            fragment.appendChild(yearLabel);
-            previousYear = currentYear;
-            previousMonth = null;
-        }
-        
-        if (previousMonth !== currentMonth) {
-            const monthLabel = document.createElement('div');
-            monthLabel.className = 'month-label-day-view';
-            monthLabel.textContent = `${currentMonth}월`;
-            fragment.appendChild(monthLabel);
-            previousMonth = currentMonth;
-        }
-        
-        fragment.appendChild(createDayItemForHome(log));
-    });
+    appendDayListChunksToFragment(fragment, logs, continuation);
     
     const sentinel = document.getElementById('infinite-scroll-sentinel');
     if (sentinel) container.insertBefore(fragment, sentinel);
@@ -822,6 +806,29 @@ function initInfiniteScroll() {
 }
 
 // 일별 아이템 생성 (home.js용)
+function dayListFavoriteToggleHtml(isFavorite) {
+    const fav = !!isFavorite;
+    return `
+                <button class="favorite-toggle-btn ${fav ? 'active' : ''}" title="${fav ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${fav ? 'var(--color-favorite)' : 'none'}" stroke="${fav ? 'var(--color-favorite)' : 'var(--color-icon-default)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>`;
+}
+
+function syncFavoriteToggleBtnUI(btn, isFavorite) {
+    if (!btn) return;
+    const fav = !!isFavorite;
+    btn.classList.toggle('active', fav);
+    btn.setAttribute('data-is-favorite', fav.toString());
+    btn.setAttribute('title', fav ? '즐겨찾기 해제' : '즐겨찾기 추가');
+    const svg = btn.querySelector('svg');
+    if (svg) {
+        svg.setAttribute('fill', fav ? 'var(--color-favorite)' : 'none');
+        svg.setAttribute('stroke', fav ? 'var(--color-favorite)' : 'var(--color-icon-default)');
+    }
+}
+
 function createDayItemForHome(log) {
     const date = new Date(log.date);
     const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -852,11 +859,7 @@ function createDayItemForHome(log) {
             </div>
             <div class="day-content photo">
                 <img src="${log.thumb_url}" alt="착장" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
-                <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? 'var(--color-favorite)' : 'none'}" stroke="${log.is_favorite ? 'var(--color-favorite)' : 'var(--color-icon-default)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
+                ${dayListFavoriteToggleHtml(log.is_favorite)}
                 <button type="button" class="item-menu-btn" aria-label="메뉴">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="5" r="1.5"></circle>
@@ -893,11 +896,7 @@ function createDayItemForHome(log) {
                     <p>${contentPreview}</p>
                 </div>
                 <div class="quote-mark">"</div>
-                <button class="favorite-toggle-btn ${log.is_favorite ? 'active' : ''}" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="${log.is_favorite ? 'var(--color-favorite)' : 'none'}" stroke="${log.is_favorite ? 'var(--color-favorite)' : 'var(--color-icon-default)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
+                ${dayListFavoriteToggleHtml(log.is_favorite)}
                 <button type="button" class="item-menu-btn" aria-label="메뉴">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="5" r="1.5"></circle>
@@ -928,6 +927,41 @@ function createDayItemForHome(log) {
     }
     
     return dayItem;
+}
+
+/**
+ * 연·월 스티키 레이블과 day-item 을 fragment 에 추가합니다.
+ * @param {{ previousYear: number|null, previousMonth: number|null }} continuation
+ */
+function appendDayListChunksToFragment(fragment, logs, continuation) {
+    let previousYear = continuation.previousYear;
+    let previousMonth = continuation.previousMonth;
+    logs.forEach((log) => {
+        const date = new Date(log.date);
+        const currentYear = date.getFullYear();
+        const currentMonth = date.getMonth() + 1;
+
+        if (previousYear !== currentYear) {
+            const yearLabel = document.createElement('div');
+            yearLabel.className = 'year-label-day-view';
+            yearLabel.textContent = `${currentYear}년`;
+            fragment.appendChild(yearLabel);
+            previousYear = currentYear;
+            previousMonth = null;
+        }
+
+        if (previousMonth !== currentMonth) {
+            const monthLabel = document.createElement('div');
+            monthLabel.className = 'month-label-day-view';
+            monthLabel.textContent = `${currentMonth}월`;
+            fragment.appendChild(monthLabel);
+            previousMonth = currentMonth;
+        }
+
+        fragment.appendChild(createDayItemForHome(log));
+    });
+    continuation.previousYear = previousYear;
+    continuation.previousMonth = previousMonth;
 }
 
 // 일별 리스트 이벤트 위임 (단일 리스너로 모든 day-item 처리)
@@ -997,24 +1031,11 @@ function attachDayListEventListeners() {
                 favBtn.removeEventListener('animationend', removePop);
             }, { once: true });
             const newFavorite = !isFavorite;
-            favBtn.classList.toggle('active', newFavorite);
-            favBtn.setAttribute('data-is-favorite', newFavorite.toString());
-            favBtn.setAttribute('title', newFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가');
-            const svg = favBtn.querySelector('svg');
-            if (svg) {
-                svg.setAttribute('fill', newFavorite ? 'var(--color-favorite)' : 'none');
-                svg.setAttribute('stroke', newFavorite ? 'var(--color-favorite)' : 'var(--color-icon-default)');
-            }
+            syncFavoriteToggleBtnUI(favBtn, newFavorite);
             try {
                 await StyleLogAPI.update(logId, { is_favorite: newFavorite });
             } catch (err) {
-                favBtn.classList.toggle('active', isFavorite);
-                favBtn.setAttribute('data-is-favorite', isFavorite.toString());
-                favBtn.setAttribute('title', isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가');
-                if (svg) {
-                    svg.setAttribute('fill', isFavorite ? 'var(--color-favorite)' : 'none');
-                    svg.setAttribute('stroke', isFavorite ? 'var(--color-favorite)' : 'var(--color-icon-default)');
-                }
+                syncFavoriteToggleBtnUI(favBtn, isFavorite);
                 showAlert('즐겨찾기 변경에 실패했습니다.');
             }
             return;
@@ -1040,28 +1061,48 @@ function attachDayListEventListeners() {
     });
 }
 
-// 날씨 필터: 해당 날의 최저 ≥ low 이고 최고 ≤ high 인 기록만
-function passesWeatherFilter(log) {
-    const isFullRange = weatherFilterLow <= TEMP_FILTER_MIN && weatherFilterHigh >= TEMP_FILTER_MAX;
+/** 홈 목록 필터 (전역 상태·모달 미리보기 state 공통) */
+function logPassesHomeFilters(log, c) {
+    const years = c.years ?? [];
+    const months = c.months ?? [];
+    const weatherFit = c.weatherFit ?? [];
+    const low = c.low ?? TEMP_FILTER_MIN;
+    const high = c.high ?? TEMP_FILTER_MAX;
+    const favOnly = !!c.favOnly;
+    const outfitKeys = c.outfitKeys ?? [];
+
+    const isFullRange = low <= TEMP_FILTER_MIN && high >= TEMP_FILTER_MAX;
     if (!isFullRange) {
         if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
-        if (log.weather_temp_min < weatherFilterLow || log.weather_temp_max > weatherFilterHigh) return false;
+        if (log.weather_temp_min < low || log.weather_temp_max > high) return false;
     }
-    if (filterYears.length > 0) {
+    if (years.length > 0) {
         const y = new Date(log.date).getFullYear();
-        if (!filterYears.includes(y)) return false;
+        if (!years.includes(y)) return false;
     }
-    if (filterMonths.length > 0) {
+    if (months.length > 0) {
         const m = new Date(log.date).getMonth() + 1;
-        if (!filterMonths.includes(m)) return false;
+        if (!months.includes(m)) return false;
     }
-    if (filterWeatherFit.length > 0) {
+    if (weatherFit.length > 0) {
         const fit = log.weather_fit || 'good';
-        if (!filterWeatherFit.includes(fit)) return false;
+        if (!weatherFit.includes(fit)) return false;
     }
-    if (filterFavoritesOnly && !log.is_favorite) return false;
-    if (!logPassesOutfitFilterKeys(log, filterOutfitSelectionKeys)) return false;
-    return true;
+    if (favOnly && !log.is_favorite) return false;
+    return logPassesOutfitFilterKeys(log, outfitKeys);
+}
+
+// 날씨 필터: 해당 날의 최저 ≥ low 이고 최고 ≤ high 인 기록만
+function passesWeatherFilter(log) {
+    return logPassesHomeFilters(log, {
+        years: filterYears,
+        months: filterMonths,
+        weatherFit: filterWeatherFit,
+        low: weatherFilterLow,
+        high: weatherFilterHigh,
+        favOnly: filterFavoritesOnly,
+        outfitKeys: filterOutfitSelectionKeys
+    });
 }
 
 // 필터 적용된 로그 목록
@@ -1112,35 +1153,10 @@ function renderFullDayList(logs) {
         return;
     }
     
-    let previousYear = null;
-    let previousMonth = null;
     const fragment = document.createDocumentFragment();
-    
-    logs.forEach(log => {
-        const date = new Date(log.date);
-        const currentYear = date.getFullYear();
-        const currentMonth = date.getMonth() + 1;
-        
-        if (previousYear !== currentYear) {
-            const yearLabel = document.createElement('div');
-            yearLabel.className = 'year-label-day-view';
-            yearLabel.textContent = `${currentYear}년`;
-            fragment.appendChild(yearLabel);
-            previousYear = currentYear;
-            previousMonth = null;
-        }
-        
-        if (previousMonth !== currentMonth) {
-            const monthLabel = document.createElement('div');
-            monthLabel.className = 'month-label-day-view';
-            monthLabel.textContent = `${currentMonth}월`;
-            fragment.appendChild(monthLabel);
-            previousMonth = currentMonth;
-        }
-        
-        fragment.appendChild(createDayItemForHome(log));
-    });
-    
+    const continuation = { previousYear: null, previousMonth: null };
+    appendDayListChunksToFragment(fragment, logs, continuation);
+
     container.appendChild(fragment);
     attachDayListEventListeners();
     if (container.classList.contains('day-list-view')) initInfiniteScroll();
@@ -1226,18 +1242,12 @@ function initFilterModal() {
     const categoryChips = document.querySelectorAll('.filter-category-chip');
 
     function switchTab(tabId) {
-        tabs?.forEach(t => {
+        const panelId = HOME_FILTER_PANEL_ID_BY_TAB[tabId];
+        tabs?.forEach((t) => {
             t.classList.toggle('active', t.dataset.tab === tabId);
         });
-        panels?.forEach(p => {
-            const panelId = p.id;
-            const isActive = (tabId === 'year' && panelId === 'filterPanelYear') ||
-                (tabId === 'month' && panelId === 'filterPanelMonth') ||
-                (tabId === 'weatherFit' && panelId === 'filterPanelWeatherFit') ||
-                (tabId === 'temp' && panelId === 'filterPanelTemp') ||
-                (tabId === 'outfit' && panelId === 'filterPanelOutfit') ||
-                (tabId === 'favorites' && panelId === 'filterPanelFavorites');
-            p.classList.toggle('active', isActive);
+        panels?.forEach((p) => {
+            p.classList.toggle('active', panelId != null && p.id === panelId);
         });
         if (tabId === 'temp') {
             requestAnimationFrame(() => updateFilterTempLabelPositions());
@@ -1282,27 +1292,15 @@ function initFilterModal() {
     }
 
     function passesFilterWithState(log, state) {
-        const { years, months, weatherFit, low, high, favOnly, outfitKeys } = state;
-        const isFullRange = low <= TEMP_FILTER_MIN && high >= TEMP_FILTER_MAX;
-        if (!isFullRange) {
-            if (log.weather_temp_min == null || log.weather_temp_max == null) return false;
-            if (log.weather_temp_min < low || log.weather_temp_max > high) return false;
-        }
-        if (years.length > 0) {
-            const y = new Date(log.date).getFullYear();
-            if (!years.includes(y)) return false;
-        }
-        if (months.length > 0) {
-            const m = new Date(log.date).getMonth() + 1;
-            if (!months.includes(m)) return false;
-        }
-        if (weatherFit.length > 0) {
-            const fit = log.weather_fit || 'good';
-            if (!weatherFit.includes(fit)) return false;
-        }
-        if (favOnly && !log.is_favorite) return false;
-        if ((outfitKeys?.length ?? 0) > 0 && !logPassesOutfitFilterKeys(log, outfitKeys)) return false;
-        return true;
+        return logPassesHomeFilters(log, {
+            years: state.years,
+            months: state.months,
+            weatherFit: state.weatherFit,
+            low: state.low,
+            high: state.high,
+            favOnly: state.favOnly,
+            outfitKeys: state.outfitKeys ?? []
+        });
     }
 
     function getFilteredCountFromModalUI() {
