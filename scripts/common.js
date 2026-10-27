@@ -71,62 +71,68 @@ function outfitSuggestionStringsForCategory(obj, cat) {
     return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
 }
 
-function getOutfitSuggestionBlockedSet(category) {
+function upsertOutfitSuggestionLsValue(storageKey, category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(storageKey);
+    o[c] = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
+    writeOutfitSuggestionLsObject(storageKey, o);
+}
+
+function removeOutfitSuggestionLsValue(storageKey, category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(storageKey);
+    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
+    if (list.length > 0) o[c] = list;
+    else delete o[c];
+    writeOutfitSuggestionLsObject(storageKey, o);
+}
+
+function getOutfitSuggestionBlockedMap() {
     const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
-    const next = new Set();
-    outfitSuggestionStringsForCategory(o, category).forEach((s) => {
-        const t = String(s || '').trim();
-        if (t) next.add(t);
+    const map = new Map();
+    Object.keys(o).forEach((cat) => {
+        const set = new Set();
+        outfitSuggestionStringsForCategory(o, cat).forEach((s) => {
+            const t = String(s || '').trim();
+            if (t) set.add(t);
+        });
+        if (set.size) map.set(normalizeOutfitCategoryKey(cat), set);
     });
-    return next;
+    return map;
+}
+
+function getOutfitSuggestionBlockedSet(category) {
+    return getOutfitSuggestionBlockedMap().get(normalizeOutfitCategoryKey(category)) || new Set();
 }
 
 function persistOutfitSuggestionBlocked(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
-    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
-    o[c] = list;
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
+    upsertOutfitSuggestionLsValue(LS_OUTFIT_SUGGESTION_BLOCKED, category, value);
 }
 
 function removeOutfitSuggestionBlockedValue(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
-    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
-    if (list.length > 0) o[c] = list;
-    else delete o[c];
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
+    removeOutfitSuggestionLsValue(LS_OUTFIT_SUGGESTION_BLOCKED, category, value);
 }
 
 function persistOutfitSuggestionExtra(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
-    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
-    o[c] = list;
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
+    upsertOutfitSuggestionLsValue(LS_OUTFIT_SUGGESTION_EXTRAS, category, value);
 }
 
 function removeOutfitSuggestionExtraPersisted(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
+    removeOutfitSuggestionLsValue(LS_OUTFIT_SUGGESTION_EXTRAS, category, value);
+}
+
+function isOutfitItemHiddenInMap(blockedMap, category, value) {
     const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
-    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
-    if (list.length > 0) o[c] = list;
-    else delete o[c];
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
+    if (!v) return false;
+    return blockedMap.get(normalizeOutfitCategoryKey(category))?.has(v) === true;
 }
 
 function isOutfitItemHiddenFromWardrobe(category, value) {
-    const v = String(value || '').trim();
-    if (!v) return false;
-    return getOutfitSuggestionBlockedSet(category).has(v);
+    return isOutfitItemHiddenInMap(getOutfitSuggestionBlockedMap(), category, value);
 }
 
 function getOutfitCategoryIconMarkup(categoryLabel) {
@@ -176,8 +182,9 @@ function mergeWardrobeCatalogWithExtras(catalog) {
 }
 
 function countActiveWardrobeItems(catalog) {
+    const blocked = getOutfitSuggestionBlockedMap();
     return mergeWardrobeCatalogWithExtras(catalog)
-        .filter((it) => !isOutfitItemHiddenFromWardrobe(it.category, it.value)).length;
+        .filter((it) => !isOutfitItemHiddenInMap(blocked, it.category, it.value)).length;
 }
 
 // 다이얼로그 CSS 로드 (한 번만)

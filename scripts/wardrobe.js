@@ -4,28 +4,22 @@ let wardrobeMode = 'closet';
 let wardrobeBusy = false;
 let wardrobeAddCat = '상의';
 
-const WARDROBE_ICON_ALL =
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"></rect><path d="M12 3.5v17"></path><circle cx="9.3" cy="12.5" r="1"></circle><circle cx="14.7" cy="12.5" r="1"></circle></svg>';
-
-function formatWardrobeDate(ymd) {
-    const s = String(ymd || '').trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
-    const [y, m, d] = s.split('-');
-    return `${y}.${Number(m)}.${Number(d)}`;
-}
-
 function formatWardrobeLastWorn(ymd) {
     const s = String(ymd || '').trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return { label: '', title: '' };
     const [y, m, d] = s.split('-');
-    return `최근 착장일: ${y.slice(2)}.${m}.${d}`;
+    return {
+        label: `최근 착장일: ${y.slice(2)}.${m}.${d}`,
+        title: `최근 착장일 ${y}.${m}.${d}`
+    };
 }
 
 function splitWardrobeCatalog(list) {
+    const blocked = getOutfitSuggestionBlockedMap();
     const active = [];
     const hidden = [];
     (list || []).forEach((it) => {
-        if (isOutfitItemHiddenFromWardrobe(it.category, it.value)) hidden.push(it);
+        if (isOutfitItemHiddenInMap(blocked, it.category, it.value)) hidden.push(it);
         else active.push(it);
     });
     const byCatThenName = (a, b) => {
@@ -55,10 +49,7 @@ function groupedByCategory(items) {
 }
 
 function categoryIconHtml(cat) {
-    if (typeof getOutfitCategoryIconMarkup === 'function') {
-        return getOutfitCategoryIconMarkup(cat);
-    }
-    return WARDROBE_ICON_ALL;
+    return getOutfitCategoryIconMarkup(cat);
 }
 
 function appendChip(wrap, label, catKey, iconHtml) {
@@ -95,7 +86,7 @@ function renderWardrobeChips(sourceItems) {
         }
     });
     wrap.innerHTML = '';
-    appendChip(wrap, '전체', '', WARDROBE_ICON_ALL);
+    appendChip(wrap, '전체', '', categoryIconHtml(''));
     cats.forEach((c) => appendChip(wrap, c, c, categoryIconHtml(c)));
 }
 
@@ -138,10 +129,9 @@ function createWardrobeCard(it, { hidden }) {
     last.className = 'wardrobe-card-last';
     if (it.wearCount > 0) {
         wear.textContent = `${it.wearCount}회 착용`;
-        const lastLabel = formatWardrobeLastWorn(it.lastWorn);
-        const lastFull = formatWardrobeDate(it.lastWorn);
-        last.textContent = lastLabel;
-        if (lastFull) last.title = `최근 입은 날 ${lastFull}`;
+        const worn = formatWardrobeLastWorn(it.lastWorn);
+        last.textContent = worn.label;
+        if (worn.title) last.title = worn.title;
     } else {
         wear.textContent = '아직 안 입음';
     }
@@ -164,8 +154,8 @@ function createWardrobeCard(it, { hidden }) {
             );
         }
         actions.appendChild(
-            makeTextAction('옷장에 넣기', 'wardrobe-action-btn--primary', (btn) => {
-                restoreWardrobeItem(it, btn);
+            makeTextAction('옷장에 넣기', 'wardrobe-action-btn--primary', () => {
+                restoreWardrobeItem(it);
             })
         );
     } else {
@@ -182,8 +172,8 @@ function createWardrobeCard(it, { hidden }) {
             );
         }
         actions.appendChild(
-            makeTextAction('옷 빼기', 'wardrobe-action-btn--danger', (btn) => {
-                hideWardrobeItem(it, btn);
+            makeTextAction('옷 빼기', 'wardrobe-action-btn--danger', () => {
+                hideWardrobeItem(it);
             })
         );
     }
@@ -247,34 +237,34 @@ function renderWardrobe() {
     const listEl = document.getElementById('wardrobeActiveList');
     const emptyEl = document.getElementById('wardrobeEmpty');
     const addBtn = document.getElementById('wardrobeAddBtn');
-    listEl.innerHTML = '';
+    if (listEl) listEl.innerHTML = '';
     if (addBtn) addBtn.hidden = wardrobeMode !== 'closet';
 
     if (filtered.length === 0) {
-        emptyEl.hidden = false;
-        if (wardrobeMode === 'aside') {
-            emptyEl.textContent = hidden.length === 0
-                ? '빼 둔 옷이 없어요.'
-                : '이 구분에 빼 둔 옷이 없어요.';
-        } else if (active.length === 0) {
-            emptyEl.textContent = '아직 옷이 없어요.';
-        } else {
-            emptyEl.textContent = '이 구분에 옷이 없어요.';
+        if (emptyEl) {
+            emptyEl.hidden = false;
+            if (wardrobeMode === 'aside') {
+                emptyEl.textContent = hidden.length === 0
+                    ? '빼 둔 옷이 없어요.'
+                    : '이 구분에 빼 둔 옷이 없어요.';
+            } else if (active.length === 0) {
+                emptyEl.textContent = '아직 옷이 없어요.';
+            } else {
+                emptyEl.textContent = '이 구분에 옷이 없어요.';
+            }
         }
         return;
     }
 
-    emptyEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = true;
+    if (!listEl) return;
     groupedByCategory(filtered).forEach((group) => {
         appendCategorySection(listEl, group, wardrobeMode === 'aside');
     });
 }
 
 async function reloadWardrobeCatalog() {
-    const fromDb = await StyleLogAPI.getWardrobeCatalog();
-    wardrobeCatalog = typeof mergeWardrobeCatalogWithExtras === 'function'
-        ? mergeWardrobeCatalogWithExtras(fromDb)
-        : fromDb;
+    wardrobeCatalog = mergeWardrobeCatalogWithExtras(await StyleLogAPI.getWardrobeCatalog());
     renderWardrobe();
 }
 
@@ -315,8 +305,7 @@ async function renameWardrobeItem(it, btn) {
     }
 }
 
-async function hideWardrobeItem(it, btn) {
-    if (wardrobeBusy) return;
+async function hideWardrobeItem(it) {
     const ok = await showConfirm(
         '옷장과 품목 후보에서만 빼요. 지난 기록에서는 사라지지 않아요.',
         { confirmText: '빼기', cancelText: '취소' }
@@ -331,8 +320,7 @@ async function hideWardrobeItem(it, btn) {
     renderWardrobe();
 }
 
-async function restoreWardrobeItem(it, btn) {
-    if (wardrobeBusy) return;
+function restoreWardrobeItem(it) {
     removeOutfitSuggestionBlockedValue(it.category, it.value);
     if (it.wearCount === 0) persistOutfitSuggestionExtra(it.category, it.value);
     renderWardrobe();
@@ -347,26 +335,27 @@ function setWardrobeMode(mode) {
     renderWardrobe();
 }
 
-function renderWardrobeAddGrid() {
+function syncWardrobeAddGrid() {
     const grid = document.getElementById('wardrobeAddGrid');
     if (!grid) return;
-    grid.innerHTML = '';
-    OUTFIT_CATEGORY_SORT_ORDER.forEach((cat) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'outfit-category-pill' + (wardrobeAddCat === cat ? ' active' : '');
-        const icon = document.createElement('span');
-        icon.className = 'outfit-category-pill-icon';
-        icon.innerHTML = categoryIconHtml(cat);
-        const label = document.createElement('span');
-        label.textContent = cat;
-        btn.appendChild(icon);
-        btn.appendChild(label);
-        btn.addEventListener('click', () => {
-            wardrobeAddCat = cat;
-            renderWardrobeAddGrid();
+    if (!grid.childElementCount) {
+        OUTFIT_CATEGORY_SORT_ORDER.forEach((cat) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'outfit-category-pill';
+            btn.dataset.category = cat;
+            const icon = document.createElement('span');
+            icon.className = 'outfit-category-pill-icon';
+            icon.innerHTML = categoryIconHtml(cat);
+            const label = document.createElement('span');
+            label.textContent = cat;
+            btn.appendChild(icon);
+            btn.appendChild(label);
+            grid.appendChild(btn);
         });
-        grid.appendChild(btn);
+    }
+    grid.querySelectorAll('.outfit-category-pill').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.category === wardrobeAddCat);
     });
 }
 
@@ -380,7 +369,7 @@ function openWardrobeAddSheet() {
     const sheet = document.getElementById('wardrobeAddSheet');
     const input = document.getElementById('wardrobeAddName');
     if (!sheet) return;
-    renderWardrobeAddGrid();
+    syncWardrobeAddGrid();
     if (input) input.value = '';
     sheet.classList.add('active');
     sheet.setAttribute('aria-hidden', 'false');
@@ -440,6 +429,12 @@ async function initPage() {
     });
     document.getElementById('wardrobeAddBtn')?.addEventListener('click', openWardrobeAddSheet);
     document.getElementById('wardrobeAddSheetOverlay')?.addEventListener('click', closeWardrobeAddSheet);
+    document.getElementById('wardrobeAddGrid')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.outfit-category-pill');
+        if (!btn?.dataset.category) return;
+        wardrobeAddCat = btn.dataset.category;
+        syncWardrobeAddGrid();
+    });
     document.getElementById('wardrobeAddSubmit')?.addEventListener('click', () => {
         submitWardrobeAdd();
     });

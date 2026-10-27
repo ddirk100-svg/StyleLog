@@ -356,8 +356,7 @@ async function initRecommendModeOnLoad() {
 }
 
 // 페이지 초기화
-function outfitFilterKeyFromUrl() {
-    const params = new URLSearchParams(location.search);
+function outfitFilterKeyFromUrl(params = new URLSearchParams(location.search)) {
     const cat = String(params.get('outfitCat') || '').trim();
     const val = String(params.get('outfitVal') || '').trim();
     if (!cat || !val) return '';
@@ -366,7 +365,7 @@ function outfitFilterKeyFromUrl() {
 
 async function initPage() {
     const params = new URLSearchParams(location.search);
-    const outfitFromUrl = outfitFilterKeyFromUrl();
+    const outfitFromUrl = outfitFilterKeyFromUrl(params);
     if (params.get('filter') === 'fav' || outfitFromUrl) {
         recommendationModeEnabled = false;
     }
@@ -1843,7 +1842,7 @@ function initFilterModal() {
 
     // URL 파라미터 ?filter=fav → 즐겨찾기, ?outfitCat=&outfitVal= → 착장 품목 (옷장 "입은 기록 보기")
     const homeUrlParams = new URLSearchParams(location.search);
-    const outfitUrlKey = outfitFilterKeyFromUrl();
+    const outfitUrlKey = outfitFilterKeyFromUrl(homeUrlParams);
     if (homeUrlParams.get('filter') === 'fav') {
         filterFavoritesOnly = true;
         syncModalFromState();

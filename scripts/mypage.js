@@ -94,12 +94,7 @@ async function loadStats() {
         if (wardrobeEl && typeof StyleLogAPI?.getWardrobeCatalog === 'function') {
             try {
                 const catalog = await StyleLogAPI.getWardrobeCatalog();
-                const n = typeof countActiveWardrobeItems === 'function'
-                    ? countActiveWardrobeItems(catalog)
-                    : (catalog || []).filter(
-                        (it) => !isOutfitItemHiddenFromWardrobe(it.category, it.value)
-                    ).length;
-                wardrobeEl.textContent = formatStatCount(n);
+                wardrobeEl.textContent = formatStatCount(countActiveWardrobeItems(catalog));
             } catch (_) {
                 wardrobeEl.textContent = formatStatCount(null);
             }
