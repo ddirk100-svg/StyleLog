@@ -799,6 +799,85 @@ const StyleLogAPI = {
     },
 
     /**
+     * 내 기록 items 를 구분·품목명별로 집계 (입은 횟수·최근 착용일).
+     * @param {{ maxRows?: number }} options
+     * @returns {Promise<{ category: string, value: string, wearCount: number, lastWorn: string }[]>}
+     */
+    async getWardrobeCatalog(options = {}) {
+        const maxRows = typeof options.maxRows === 'number' ? options.maxRows : 1000;
+        const { data: { user }, error: userErr } = await supabaseClient.auth.getUser();
+        if (userErr || !user) return [];
+
+        if (
+            styleLogItemsSuggestionsQueryDisabled ||
+            readItemsColumnUnavailableFlag()
+        ) {
+            return [];
+        }
+
+        const { data, error } = await supabaseClient
+            .from('style_logs')
+            .select('id,date,items')
+            .eq('user_id', user.id)
+            .not('items', 'is', null)
+            .order('date', { ascending: false })
+            .limit(Math.min(Math.max(maxRows, 1), 1000));
+
+        if (error) {
+            if (isStyleLogItemsColumnUnavailable(error)) {
+                styleLogItemsSuggestionsQueryDisabled = true;
+                persistItemsColumnUnavailableFlag();
+                return [];
+            }
+            console.error('옷장 집계 오류:', error);
+            throw error;
+        }
+
+        styleLogItemsSuggestionsQueryDisabled = false;
+        clearItemsColumnUnavailableFlag();
+
+        const stats = new Map();
+        (data || []).forEach((row) => {
+            let arr = row.items;
+            if (typeof arr === 'string') {
+                try {
+                    arr = JSON.parse(arr);
+                } catch (_) {
+                    return;
+                }
+            }
+            if (!Array.isArray(arr)) return;
+            const date = typeof row.date === 'string' ? row.date : '';
+            const seen = new Set();
+            arr.forEach((it) => {
+                if (!it || typeof it !== 'object') return;
+                const c = typeof it.category === 'string' ? it.category.trim() : '';
+                const v = typeof it.value === 'string' ? it.value.trim() : '';
+                if (!c || !v) return;
+                const k = JSON.stringify([c, v]);
+                if (seen.has(k)) return;
+                seen.add(k);
+                const prev = stats.get(k);
+                if (!prev) {
+                    stats.set(k, {
+                        category: c,
+                        value: v,
+                        wearCount: 1,
+                        lastWorn: date
+                    });
+                    return;
+                }
+                prev.wearCount += 1;
+                if (date && (!prev.lastWorn || date > prev.lastWorn)) {
+                    prev.lastWorn = date;
+                }
+            });
+        });
+
+        return [...stats.values()];
+    },
+
+    /**
      * 내 모든 style_logs rows 에서 해당 구분·품목명을 새 이름으로 일괄 변경합니다(PATCH).
      * @param {{ category: string, oldValue: string, newValue: string }} args
      * @returns {Promise<{ updated?: number, skipped?: boolean }>}

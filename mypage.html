@@ -21,10 +21,10 @@
     <link rel="stylesheet" href="styles/require-birthdate.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="scripts/config.js?v=5"></script>
-    <script src="scripts/api.js"></script>
+    <script src="scripts/api.js?v=7"></script>
     <script src="scripts/require-birthdate.js"></script>
     <script src="scripts/auth.js"></script>
-    <script src="scripts/common.js"></script>
+    <script src="scripts/common.js?v=7"></script>
     <script src="scripts/feedback.js"></script>
 </head>
 <body class="has-bottom-nav">
@@ -50,9 +50,18 @@
                 <span class="stat-value" id="statFavoriteCount">-</span>
                 <span class="stat-label">즐겨찾기</span>
             </a>
+            <a href="wardrobe.html" class="stat-item stat-item-link">
+                <span class="stat-value" id="statWardrobeCount">-</span>
+                <span class="stat-label">옷</span>
+            </a>
         </section>
 
         <section class="mypage-menu">
+            <a href="wardrobe.html" class="menu-item">
+                <span class="menu-icon">👕</span>
+                <span class="menu-label">내 옷장</span>
+                <span class="menu-arrow">›</span>
+            </a>
             <a href="edit-profile.html" class="menu-item">
                 <span class="menu-icon">👤</span>
                 <span class="menu-label">내 정보 수정</span>
@@ -101,7 +110,7 @@
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
             </div>
-            <span class="bottom-nav-label">작성</span>
+            <span class="bottom-nav-label">코디 추가</span>
         </a>
         <a href="mypage.html" class="bottom-nav-item active">
             <div class="bottom-nav-icon">

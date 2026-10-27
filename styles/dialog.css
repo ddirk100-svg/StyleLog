@@ -64,6 +64,32 @@
     margin: 0;
 }
 
+.stylelog-dialog-hint {
+    margin: 10px 0 0;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+}
+
+.stylelog-dialog-input {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--color-text-primary);
+    box-sizing: border-box;
+}
+
+.stylelog-dialog-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
 .stylelog-dialog-actions {
     display: flex;
     gap: var(--spacing-md);

@@ -36,6 +36,150 @@ function sortOutfitItemsByCategory(items) {
     });
 }
 
+const OUTFIT_ITEM_VALUE_MAX_LEN = 200;
+/** 옷장·작성 후보에서 뺀 품목명 (기록 DB는 그대로) */
+const LS_OUTFIT_SUGGESTION_BLOCKED = 'stylelog_outfit_suggestion_blocked_v1';
+/** 이름 변경 등으로 직접 추가한 품목명 */
+const LS_OUTFIT_SUGGESTION_EXTRAS = 'stylelog_outfit_suggestion_extras_v1';
+
+function normalizeOutfitCategoryKey(cat) {
+    return String(cat || '').trim();
+}
+
+function readOutfitSuggestionLsObject(key) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return {};
+        const o = JSON.parse(raw);
+        return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+    } catch (_) {
+        return {};
+    }
+}
+
+function writeOutfitSuggestionLsObject(key, obj) {
+    try {
+        localStorage.setItem(key, JSON.stringify(obj));
+    } catch (_) {
+        /* 용량·프라이빗 모드 등 */
+    }
+}
+
+function outfitSuggestionStringsForCategory(obj, cat) {
+    const k = normalizeOutfitCategoryKey(cat);
+    const arr = obj[k];
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
+}
+
+function getOutfitSuggestionBlockedSet(category) {
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
+    const next = new Set();
+    outfitSuggestionStringsForCategory(o, category).forEach((s) => {
+        const t = String(s || '').trim();
+        if (t) next.add(t);
+    });
+    return next;
+}
+
+function persistOutfitSuggestionBlocked(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
+    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
+    o[c] = list;
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
+}
+
+function removeOutfitSuggestionBlockedValue(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
+    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
+    if (list.length > 0) o[c] = list;
+    else delete o[c];
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
+}
+
+function persistOutfitSuggestionExtra(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
+    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
+    o[c] = list;
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
+}
+
+function removeOutfitSuggestionExtraPersisted(category, value) {
+    const c = normalizeOutfitCategoryKey(category);
+    const v = String(value || '').trim();
+    if (!c || !v) return;
+    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
+    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
+    if (list.length > 0) o[c] = list;
+    else delete o[c];
+    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
+}
+
+function isOutfitItemHiddenFromWardrobe(category, value) {
+    const v = String(value || '').trim();
+    if (!v) return false;
+    return getOutfitSuggestionBlockedSet(category).has(v);
+}
+
+function getOutfitCategoryIconMarkup(categoryLabel) {
+    const key = String(categoryLabel || '').trim();
+    const svgs = {
+        아우터: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 8.5c0-3.4 7.6-3.4 7.6 0"></path><path d="M8.2 8.5h7.6V21H8.2V8.5z"></path><path d="M8.2 9.2L3.6 12.2v5.2l3.2.8 1.4-3.4"></path><path d="M15.8 9.2l4.6 3v5.2l-3.2.8-1.4-3.4"></path><path d="M12 8.5v12.5"></path></svg>',
+        상의: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6L3 9.5 5.5 13 8 11.2V20h8V11.2L18.5 13 21 9.5 16 6H8z"></path></svg>',
+        하의: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.6" y="3.5" width="6.8" height="17" rx="1.2"></rect><rect x="13.6" y="3.5" width="6.8" height="17" rx="1.2"></rect><path d="M10.4 3.5h3.2"></path></svg>',
+        신발: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.2V13.5h7.2c1.2 0 2.2-3.6 6-3.6h3.6L22 18.2"></path><path d="M3 18.2h19"></path><path d="M3 18.2v2.4h19v-2.4"></path><path d="M10.2 13.5h3.4"></path></svg>',
+        액세서리: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.2" width="6" height="3.6" rx="1"></rect><circle cx="12" cy="12" r="5"></circle><rect x="9" y="18.2" width="6" height="3.6" rx="1"></rect><path d="M12 9.8v2.4l1.6 1"></path></svg>',
+        가방: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="8" width="12" height="13" rx="1.5"></rect><path d="M9 8V6.2A3 3 0 0 1 15 6.2V8"></path></svg>'
+    };
+    return svgs[key] || '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"></rect><path d="M12 3.5v17"></path><circle cx="9.3" cy="12.5" r="1"></circle><circle cx="14.7" cy="12.5" r="1"></circle></svg>';
+}
+
+/** 기록 집계 + 직접 추가한 품목을 옷장 목록으로 합칩니다. */
+function mergeWardrobeCatalogWithExtras(catalog) {
+    const list = [];
+    const seen = new Set();
+    (catalog || []).forEach((it) => {
+        const c = String(it?.category || '').trim();
+        const v = String(it?.value || '').trim();
+        if (!c || !v) return;
+        const k = `${c}\0${v}`;
+        if (seen.has(k)) return;
+        seen.add(k);
+        list.push({
+            category: c,
+            value: v,
+            wearCount: Number(it.wearCount) || 0,
+            lastWorn: typeof it.lastWorn === 'string' ? it.lastWorn : ''
+        });
+    });
+    const extras = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
+    Object.keys(extras).forEach((cat) => {
+        outfitSuggestionStringsForCategory(extras, cat).forEach((raw) => {
+            const c = normalizeOutfitCategoryKey(cat);
+            const v = String(raw || '').trim();
+            if (!c || !v) return;
+            const k = `${c}\0${v}`;
+            if (seen.has(k)) return;
+            seen.add(k);
+            list.push({ category: c, value: v, wearCount: 0, lastWorn: '' });
+        });
+    });
+    return list;
+}
+
+function countActiveWardrobeItems(catalog) {
+    return mergeWardrobeCatalogWithExtras(catalog)
+        .filter((it) => !isOutfitItemHiddenFromWardrobe(it.category, it.value)).length;
+}
+
 // 다이얼로그 CSS 로드 (한 번만)
 (function loadDialogStyles() {
     if (document.getElementById('stylelog-dialog-styles')) return;
@@ -116,6 +260,66 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/** 입력 대화상자 — 확인 시 문자열, 취소 시 null */
+function showPrompt(message, options = {}) {
+    const {
+        defaultValue = '',
+        confirmText = '확인',
+        cancelText = '취소',
+        maxLength = OUTFIT_ITEM_VALUE_MAX_LEN,
+        hint = ''
+    } = options;
+    return new Promise((resolve) => {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'stylelog-dialog-backdrop';
+        const hintHtml = hint
+            ? `<p class="stylelog-dialog-hint">${escapeHtml(hint)}</p>`
+            : '';
+        backdrop.innerHTML = `
+            <div class="stylelog-dialog" role="dialog" aria-modal="true" aria-labelledby="stylelog-dialog-msg">
+                <div class="stylelog-dialog-body">
+                    <p class="stylelog-dialog-message" id="stylelog-dialog-msg">${escapeHtml(message)}</p>
+                    ${hintHtml}
+                    <input type="text" class="stylelog-dialog-input" maxlength="${Number(maxLength) || 200}" autocomplete="off">
+                </div>
+                <div class="stylelog-dialog-actions">
+                    <button type="button" class="stylelog-dialog-btn stylelog-dialog-btn-cancel">${escapeHtml(cancelText)}</button>
+                    <button type="button" class="stylelog-dialog-btn stylelog-dialog-btn-confirm">${escapeHtml(confirmText)}</button>
+                </div>
+            </div>
+        `;
+        const input = backdrop.querySelector('.stylelog-dialog-input');
+        const [cancelBtn, confirmBtn] = backdrop.querySelectorAll('button');
+        input.value = String(defaultValue || '');
+        const close = (result) => {
+            document.removeEventListener('keydown', onKey);
+            backdrop.remove();
+            document.body.style.overflow = '';
+            resolve(result);
+        };
+        const submit = () => close(input.value);
+        const onKey = (e) => {
+            if (e.key === 'Escape') close(null);
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submit();
+            }
+        };
+        cancelBtn.addEventListener('click', () => close(null));
+        confirmBtn.addEventListener('click', submit);
+        backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) close(null);
+        });
+        document.addEventListener('keydown', onKey);
+        document.body.style.overflow = 'hidden';
+        document.body.appendChild(backdrop);
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 0);
+    });
 }
 
 /** support_inquiries 테이블 없음·스키마 캐시 오류 등 (다른 DB 오류와 구분) */

@@ -23,101 +23,15 @@ const OUTFIT_DEFAULT_CATEGORIES = OUTFIT_CATEGORY_SORT_ORDER;
 
 let outfitItems = [];
 let outfitCategorySheetRowIndex = null;
+/** add = 다중 선택 후 행 추가, edit = 기존 행 구분 변경 */
+let outfitCategorySheetMode = 'add';
 /** 시트 닫힌 뒤 포커스를 돌려줄 구분 버튼(aria-hidden 경고 방지) */
 let outfitCategorySheetReturnEl = null;
-/** 바텀시트에서 선택 중인 구분 (확인 전) */
-let outfitCategoryPending = '';
+/** 바텀시트에서 선택 중인 구분들 (확인 전) */
+let outfitCategoryPending = new Set();
 
 /** DB 및 현재 작성 중인 행까지 반영한 구분별 품목명 후보 (제안 패널) */
 let outfitSavedValuesByCategory = new Map();
-
-const OUTFIT_ITEM_VALUE_MAX_LEN = 200;
-/** 제안 패널에서 사용자가 제거한 품목명 — DB에 남아 있어도 목록에 안 나옴 */
-const LS_OUTFIT_SUGGESTION_BLOCKED = 'stylelog_outfit_suggestion_blocked_v1';
-/** 이름 변경 등으로 직접 추가한 품목명 — 새로고침 후에도 후보에 포함 */
-const LS_OUTFIT_SUGGESTION_EXTRAS = 'stylelog_outfit_suggestion_extras_v1';
-
-function normalizeOutfitCategoryKey(cat) {
-    return String(cat || '').trim();
-}
-
-function readOutfitSuggestionLsObject(key) {
-    try {
-        const raw = localStorage.getItem(key);
-        if (!raw) return {};
-        const o = JSON.parse(raw);
-        return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
-    } catch (_) {
-        return {};
-    }
-}
-
-function writeOutfitSuggestionLsObject(key, obj) {
-    try {
-        localStorage.setItem(key, JSON.stringify(obj));
-    } catch (_) {
-        /* 용량·프라이빗 모드 등 */
-    }
-}
-
-function outfitSuggestionStringsForCategory(obj, cat) {
-    const k = normalizeOutfitCategoryKey(cat);
-    const arr = obj[k];
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
-}
-
-function getOutfitSuggestionBlockedSet(category) {
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
-    const next = new Set();
-    outfitSuggestionStringsForCategory(o, category).forEach((s) => {
-        const t = String(s || '').trim();
-        if (t) next.add(t);
-    });
-    return next;
-}
-
-function persistOutfitSuggestionBlocked(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
-    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
-    o[c] = list;
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
-}
-
-/** 이름 변경으로 예전 글자가 블록만 남았을 때 새 글자는 다시 허용 */
-function removeOutfitSuggestionBlockedValue(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED);
-    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
-    if (list.length > 0) o[c] = list;
-    else delete o[c];
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_BLOCKED, o);
-}
-
-function persistOutfitSuggestionExtra(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
-    const list = [...new Set([...outfitSuggestionStringsForCategory(o, c), v])];
-    o[c] = list;
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
-}
-
-function removeOutfitSuggestionExtraPersisted(category, value) {
-    const c = normalizeOutfitCategoryKey(category);
-    const v = String(value || '').trim();
-    if (!c || !v) return;
-    const o = readOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS);
-    const list = outfitSuggestionStringsForCategory(o, c).filter((x) => String(x).trim() !== v);
-    if (list.length > 0) o[c] = list;
-    else delete o[c];
-    writeOutfitSuggestionLsObject(LS_OUTFIT_SUGGESTION_EXTRAS, o);
-}
 
 /** localStorage 에 저장된 "직접 추가" 품목을 후보 맵에 합침 */
 function hydrateOutfitSuggestionExtrasFromStorage() {
@@ -1084,19 +998,6 @@ function mergeOutfitCategoryOptions() {
     return ordered;
 }
 
-function getOutfitCategoryIconMarkup(categoryLabel) {
-    const key = String(categoryLabel || '').trim();
-    const svgs = {
-        아우터: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8l6-5 6 5v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z"></path><path d="M9 21V10l3-2.25L15 10v11"></path></svg>',
-        상의: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l3 3h6l3-3 2 2-3 7v11H7V13L4 6l2-2z"></path></svg>',
-        하의: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3l5 17H4l5-17V4z"></path><path d="M9 4h6"></path></svg>',
-        신발: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17c2-6 10-9 13-10l3 10H4z"></path><path d="M4 17h17v4H4z"></path></svg>',
-        액세서리: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 5v3M12 16v3M5 12h3M16 12h3M6.34 6.34l2.12 2.12M15.54 15.54l2.12 2.12M6.34 17.66l2.12-2.12M15.54 8.46l2.12-2.12"></path></svg>',
-        가방: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V9a4 4 0 1 1 8 0v2"></path><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M9 10V9a3 3 0 1 1 6 0v1"></path></svg>'
-    };
-    return svgs[key] || '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M9 9h6v6H9z"></path></svg>';
-}
-
 function updateOutfitItemsCountBadge() {
     const badge = document.getElementById('outfitItemsCountBadge');
     if (badge) {
@@ -1321,12 +1222,17 @@ function renderCategorySheetGrid() {
     if (!grid) return;
     const options = mergeOutfitCategoryOptions();
     grid.innerHTML = '';
+    grid.setAttribute(
+        'aria-multiselectable',
+        outfitCategorySheetMode === 'add' ? 'true' : 'false'
+    );
     options.forEach((cat) => {
+        const selected = outfitCategoryPending.has(cat);
         const pill = document.createElement('button');
         pill.type = 'button';
-        pill.className = 'outfit-category-pill';
+        pill.className = 'outfit-category-pill' + (selected ? ' active' : '');
         pill.dataset.category = cat;
-        if (cat === outfitCategoryPending) pill.classList.add('active');
+        pill.setAttribute('aria-pressed', selected ? 'true' : 'false');
 
         const iconWrap = document.createElement('span');
         iconWrap.className = 'outfit-category-pill-icon';
@@ -1341,25 +1247,74 @@ function renderCategorySheetGrid() {
     });
 }
 
+function refreshCategorySheetConfirmBtn() {
+    const confirmBtn = document.getElementById('outfitCategoryConfirmBtn');
+    if (!confirmBtn) return;
+    const n = outfitCategoryPending.size;
+    confirmBtn.disabled = n === 0;
+    if (outfitCategorySheetMode === 'add') {
+        confirmBtn.textContent = n > 0 ? `${n}개 추가` : '확인';
+    } else {
+        confirmBtn.textContent = '확인';
+    }
+}
+
+function updateCategorySheetCopy() {
+    const title = document.getElementById('outfitCategorySheetTitle');
+    const hint = document.getElementById('outfitCategorySheetHint');
+    if (title) {
+        title.textContent = outfitCategorySheetMode === 'edit' ? '구분 변경' : '구분 선택';
+    }
+    if (hint) {
+        if (outfitCategorySheetMode === 'add') {
+            hint.hidden = false;
+            hint.textContent = '여러 개를 고른 뒤 확인하면 행이 한꺼번에 추가됩니다.';
+        } else {
+            hint.hidden = true;
+            hint.textContent = '';
+        }
+    }
+    refreshCategorySheetConfirmBtn();
+}
+
+function showOutfitCategorySheet() {
+    const sheet = document.getElementById('outfitCategorySheet');
+    if (!sheet) return;
+    updateCategorySheetCopy();
+    renderCategorySheetGrid();
+    sheet.classList.add('active');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function openOutfitCategorySheetForAdd() {
+    hideAllOutfitValueSuggestionPanels();
+    const sheet = document.getElementById('outfitCategorySheet');
+    if (!sheet) return;
+    outfitCategorySheetMode = 'add';
+    outfitCategorySheetRowIndex = null;
+    outfitCategoryPending = new Set();
+    const addBtn = document.getElementById('outfitItemsAddBtn');
+    outfitCategorySheetReturnEl =
+        addBtn && typeof addBtn.focus === 'function' ? addBtn : null;
+    showOutfitCategorySheet();
+}
+
 function openOutfitCategorySheet(rowIndex) {
     hideAllOutfitValueSuggestionPanels();
     const sheet = document.getElementById('outfitCategorySheet');
     if (!sheet) return;
+    outfitCategorySheetMode = 'edit';
     outfitCategorySheetRowIndex = rowIndex;
-    const merged = mergeOutfitCategoryOptions();
     const existing = (outfitItems[rowIndex]?.category || '').trim();
-    outfitCategoryPending = existing || (merged[0] || OUTFIT_DEFAULT_CATEGORIES[0]);
-    renderCategorySheetGrid();
-
+    outfitCategoryPending = new Set();
+    if (existing) outfitCategoryPending.add(existing);
     const returnBtn = document.querySelector(
         `[data-outfit-cat-index="${CSS.escape(String(rowIndex))}"]`
     );
     outfitCategorySheetReturnEl =
         returnBtn && typeof returnBtn.focus === 'function' ? returnBtn : null;
-
-    sheet.classList.add('active');
-    sheet.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+    showOutfitCategorySheet();
 }
 
 function closeOutfitCategorySheet() {
@@ -1379,6 +1334,7 @@ function closeOutfitCategorySheet() {
     sheet.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     outfitCategorySheetRowIndex = null;
+    outfitCategoryPending = new Set();
 
     const back = outfitCategorySheetReturnEl;
     outfitCategorySheetReturnEl = null;
@@ -1392,6 +1348,19 @@ function closeOutfitCategorySheet() {
 }
 
 function confirmOutfitCategorySheet() {
+    const ordered = mergeOutfitCategoryOptions().filter((c) => outfitCategoryPending.has(c));
+    if (ordered.length === 0) return;
+
+    if (outfitCategorySheetMode === 'add') {
+        ordered.forEach((cat) => {
+            outfitItems.push({ category: cat, value: '', valueDraft: '' });
+        });
+        sortOutfitItemsInPlace();
+        renderOutfitItemRows();
+        closeOutfitCategorySheet();
+        return;
+    }
+
     if (
         outfitCategorySheetRowIndex == null ||
         outfitCategorySheetRowIndex < 0 ||
@@ -1400,23 +1369,19 @@ function confirmOutfitCategorySheet() {
         closeOutfitCategorySheet();
         return;
     }
-    if (!mergeOutfitCategoryOptions().includes(outfitCategoryPending)) {
-        outfitCategoryPending =
-            mergeOutfitCategoryOptions()[0] || OUTFIT_DEFAULT_CATEGORIES[0];
-    }
-    outfitItems[outfitCategorySheetRowIndex].category = outfitCategoryPending;
+    outfitItems[outfitCategorySheetRowIndex].category = ordered[0];
     sortOutfitItemsInPlace();
     renderOutfitItemRows();
     closeOutfitCategorySheet();
 }
 
 function addOutfitItemRow(openSheetAfter = false) {
+    if (openSheetAfter) {
+        openOutfitCategorySheetForAdd();
+        return;
+    }
     outfitItems.push({ category: '', value: '', valueDraft: '' });
     renderOutfitItemRows();
-    const newIndex = outfitItems.length - 1;
-    if (openSheetAfter) {
-        openOutfitCategorySheet(newIndex);
-    }
 }
 
 function removeOutfitItemRow(index) {
@@ -1493,8 +1458,15 @@ function initOutfitItemsUI() {
     grid?.addEventListener('click', (e) => {
         const pill = e.target.closest('.outfit-category-pill');
         if (!pill || !pill.dataset.category) return;
-        outfitCategoryPending = pill.dataset.category;
+        const cat = pill.dataset.category;
+        if (outfitCategorySheetMode === 'add') {
+            if (outfitCategoryPending.has(cat)) outfitCategoryPending.delete(cat);
+            else outfitCategoryPending.add(cat);
+        } else {
+            outfitCategoryPending = new Set([cat]);
+        }
         renderCategorySheetGrid();
+        refreshCategorySheetConfirmBtn();
     });
 
     document.addEventListener('keydown', (e) => {

@@ -41,13 +41,16 @@ function formatStatCount(n) {
 async function loadStats() {
     const totalEl = document.getElementById('statTotalCount');
     const favEl = document.getElementById('statFavoriteCount');
+    const wardrobeEl = document.getElementById('statWardrobeCount');
     if (totalEl) totalEl.textContent = '-';
     if (favEl) favEl.textContent = '-';
+    if (wardrobeEl) wardrobeEl.textContent = '-';
     try {
         const user = await getCurrentUser();
         if (!user?.id) {
             if (totalEl) totalEl.textContent = '0';
             if (favEl) favEl.textContent = '0';
+            if (wardrobeEl) wardrobeEl.textContent = '0';
             return;
         }
 
@@ -87,10 +90,25 @@ async function loadStats() {
 
         totalEl.textContent = formatStatCount(totalCount);
         favEl.textContent = formatStatCount(favCount);
+
+        if (wardrobeEl && typeof StyleLogAPI?.getWardrobeCatalog === 'function') {
+            try {
+                const catalog = await StyleLogAPI.getWardrobeCatalog();
+                const n = typeof countActiveWardrobeItems === 'function'
+                    ? countActiveWardrobeItems(catalog)
+                    : (catalog || []).filter(
+                        (it) => !isOutfitItemHiddenFromWardrobe(it.category, it.value)
+                    ).length;
+                wardrobeEl.textContent = formatStatCount(n);
+            } catch (_) {
+                wardrobeEl.textContent = formatStatCount(null);
+            }
+        }
     } catch (error) {
         console.error('통계 로드 오류:', error);
         totalEl.textContent = formatStatCount(null);
         favEl.textContent = formatStatCount(null);
+        if (wardrobeEl) wardrobeEl.textContent = formatStatCount(null);
     }
 }
 

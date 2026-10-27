@@ -356,9 +356,22 @@ async function initRecommendModeOnLoad() {
 }
 
 // 페이지 초기화
+function outfitFilterKeyFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const cat = String(params.get('outfitCat') || '').trim();
+    const val = String(params.get('outfitVal') || '').trim();
+    if (!cat || !val) return '';
+    return outfitFilterPairKey(cat, val);
+}
+
 async function initPage() {
-    if (new URLSearchParams(location.search).get('filter') === 'fav') {
+    const params = new URLSearchParams(location.search);
+    const outfitFromUrl = outfitFilterKeyFromUrl();
+    if (params.get('filter') === 'fav' || outfitFromUrl) {
         recommendationModeEnabled = false;
+    }
+    if (outfitFromUrl) {
+        filterOutfitSelectionKeys = [outfitFromUrl];
     }
     /** Open-Meteo 지연 시 로그 목록까지 막히지 않도록 비차단 — 완료 후 토글만 동기화 */
     void refreshCachedTodayTemps().then(() => {
@@ -1828,9 +1841,16 @@ function initFilterModal() {
 
     syncHomeOutfitFilterTabVisibility();
 
-    // URL 파라미터 ?filter=fav → 즐겨찾기 필터 적용 (마이페이지 "즐겨찾기 보기" 링크용)
-    if (new URLSearchParams(location.search).get('filter') === 'fav') {
+    // URL 파라미터 ?filter=fav → 즐겨찾기, ?outfitCat=&outfitVal= → 착장 품목 (옷장 "입은 기록 보기")
+    const homeUrlParams = new URLSearchParams(location.search);
+    const outfitUrlKey = outfitFilterKeyFromUrl();
+    if (homeUrlParams.get('filter') === 'fav') {
         filterFavoritesOnly = true;
+        syncModalFromState();
+        renderActiveChips();
+        applyFilterAndRender();
+    } else if (outfitUrlKey) {
+        filterOutfitSelectionKeys = [outfitUrlKey];
         syncModalFromState();
         renderActiveChips();
         applyFilterAndRender();
