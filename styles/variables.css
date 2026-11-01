@@ -17,10 +17,10 @@
     --color-favorite: #ff6b6b;
     --color-favorite-light: rgba(255, 107, 107, 0.15);
     
-    /* Text Colors */
-    --color-text-primary: #333;
-    --color-text-secondary: #666;
-    --color-text-tertiary: #999;
+    /* Text Colors (neutral — Notion/Apple 계열) */
+    --color-text-primary: #171717;
+    --color-text-secondary: #525252;
+    --color-text-tertiary: #a3a3a3;
     --color-text-disabled: #ccc;
     --color-text-inverse: #fff;
     
@@ -30,12 +30,13 @@
     --color-bg-page: #ebebeb;
     --color-bg-tertiary: #fafafa;
     --color-bg-subtle: #eef2f7;
-    --color-bg-muted: #f5f6f8;
-    --color-bg-hover: #eff6ff;
+    --color-bg-muted: #f4f4f5;
+    --color-bg-canvas: #fafafa;
+    --color-bg-hover: #f4f4f5;
     
     /* Border Colors */
-    --color-border-light: #e0e0e0;
-    --color-border-mid: #e0e3e8;
+    --color-border-light: #e5e5e5;
+    --color-border-mid: #d4d4d4;
     --color-border-lighter: #f0f0f0;
     --color-border-focus: var(--color-primary);
     
@@ -60,6 +61,9 @@
     --color-shadow-md: rgba(0, 0, 0, 0.1);
     --color-shadow-lg: rgba(0, 0, 0, 0.15);
     --color-shadow-xl: rgba(0, 0, 0, 0.2);
+    /* 표면·카드 (얇은 테두리 우선, 그림자는 최소) */
+    --shadow-surface-hover: 0 6px 20px rgba(15, 23, 42, 0.07);
+    --shadow-inset-divider: inset 0 -1px 0 var(--color-border-lighter);
     
     /* Overlay Colors */
     --color-overlay: rgba(0, 0, 0, 0.5);
@@ -83,8 +87,20 @@
     
     /* Button / Primary 강조용 */
     --color-primary-shadow: rgba(37, 99, 235, 0.4);
+
+    /* 버튼 (filled · outline · 텍스트 링크) */
+    --color-btn-solid-bg: var(--color-text-primary);
+    --color-btn-solid-hover: #262626;
+    --color-btn-solid-fg: var(--color-text-inverse);
+    --color-btn-accent-bg: var(--color-primary);
+    --color-btn-accent-hover: var(--color-primary-dark);
+    --color-btn-outline-border: var(--color-border-light);
+    --color-link-action: var(--color-primary);
+    --btn-height-md: 44px;
+    --btn-padding-y: var(--spacing-md);
+    --btn-padding-x: var(--spacing-xl);
     
-    /* Spacing */
+    /* Spacing — 4px 그리드 (직접 px 금지, 시맨틱 alias 사용) */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 12px;
@@ -93,13 +109,41 @@
     --spacing-2xl: 24px;
     --spacing-3xl: 32px;
     --spacing-4xl: 40px;
+    --spacing-5xl: 48px;
+
+    /* Spacing — 레이아웃 (DESIGN_SYSTEM.md §15) */
+    --page-inset-x: var(--spacing-lg);
+    --section-gap-y: var(--spacing-2xl);
+    --block-gap-y: var(--spacing-lg);
+    --stack-gap-y: var(--spacing-md);
+    --feed-item-gap: var(--spacing-2xl);
+    --surface-padding: var(--spacing-xl);
+    --surface-padding-lg: var(--spacing-2xl);
+    --form-section-gap: var(--spacing-3xl);
+    --form-field-gap: var(--spacing-md);
+    --header-padding-y: var(--spacing-md);
+    --header-padding-x: var(--page-inset-x);
+    --chip-padding-y: var(--spacing-sm);
+    --chip-padding-x: var(--spacing-md);
     
-    /* Border Radius */
+    /* Border Radius — 스케일 (px 직접 지정 금지, 시맨틱 alias 사용) */
+    --radius-xs: 6px;
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 20px;
     --radius-full: 50%;
+    --radius-pill: 9999px;
+
+    /* Radius — 역할별 (DESIGN_SYSTEM.md §14) */
+    --btn-radius: var(--radius-md);
+    --btn-radius-compact: var(--radius-sm);
+    --chip-radius: var(--radius-pill);
+    --input-radius: var(--radius-sm);
+    --surface-radius: var(--radius-lg);
+    --photo-radius: var(--radius-md);
+    --badge-radius: var(--radius-xs);
+    --modal-sheet-top-radius: var(--radius-xl);
     
     /* Font Sizes */
     --font-size-xs: 12px;
@@ -117,6 +161,47 @@
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
+
+    /* Typography — 역할 (DESIGN_SYSTEM.md §16) */
+    --type-body-size: var(--font-size-base);
+    --type-body-weight: var(--font-weight-normal);
+    --type-body-color: var(--color-text-primary);
+    --type-body-line: 1.5;
+    --type-caption-size: var(--font-size-sm);
+    --type-caption-color: var(--color-text-secondary);
+    --type-caption-line: 1.45;
+    --type-label-size: var(--font-size-base);
+    --type-label-weight: var(--font-weight-semibold);
+    --type-input-size: var(--font-size-md);
+    --type-section-title-size: var(--font-size-xl);
+    --type-section-title-weight: var(--font-weight-semibold);
+    --type-section-title-line: 1.25;
+    --type-section-desc-size: var(--font-size-sm);
+    --type-section-desc-color: var(--color-text-tertiary);
+    --type-page-title-size: var(--font-size-xl);
+    --type-page-title-weight: var(--font-weight-semibold);
+    --type-detail-title-size: var(--font-size-3xl);
+    --type-detail-title-weight: var(--font-weight-bold);
+    --type-detail-title-line: 1.35;
+    --type-display-size: var(--font-size-4xl);
+    --type-weather-display-size: 56px;
+    --type-weather-display-weight: 200;
+    --type-eyebrow-size: var(--font-size-xs);
+    --type-eyebrow-weight: var(--font-weight-medium);
+    --type-eyebrow-color: var(--color-text-tertiary);
+    --type-letter-tight: -0.04em;
+    --type-letter-body: -0.02em;
+
+    /* 필터·기온 칩 (pill) */
+    --chip-border: 1px solid transparent;
+    --chip-idle-bg: var(--color-bg-muted);
+    --chip-idle-color: var(--color-text-secondary);
+    --chip-active-bg: var(--color-text-primary);
+    --chip-active-fg: var(--color-text-inverse);
+    --chip-active-border: transparent;
+
+    --home-inset-x: var(--page-inset-x);
+    --home-surface-radius: var(--surface-radius);
     
     /* Transitions */
     --transition-fast: 0.2s;
@@ -129,11 +214,13 @@
     --z-index-dropdown: 100;
     --z-index-sticky: 100;
     --z-index-modal: 1000;
+    /** 필터·상세 날씨 등 앱 바텀시트 (하단 탭 위, 작성 시트·다이얼로그 아래) */
+    --z-index-app-sheet: 9600;
     --z-index-popup: 9999;
     
     /* Container */
     --container-max-width: 428px;
-    --container-padding: 20px;
+    --container-padding: var(--page-inset-x);
     
     /* Bottom Navigation */
     --bottom-nav-height: 60px;
@@ -144,6 +231,10 @@
     --bottom-nav-icon-svg-size-mobile: 22px;
     --bottom-nav-label-size: 11px;
     --bottom-nav-label-size-mobile: 10px;
+
+    --page-padding-bottom-nav: calc(
+        var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-2xl)
+    );
     
     /* Modal & Bottom Sheet */
     --modal-overlay: rgba(0, 0, 0, 0.5);
@@ -191,6 +282,12 @@
     --font-size-outfit-chip: 11px;
     --outfit-sheet-handle-width: 32px;
     --outfit-sheet-handle-height: 3px;
+
+    /* 코디 사진 (전신 룩 — 세로 3:4 기본, 업로드 시 동일 비율 크롭) */
+    --outfit-photo-aspect: 3 / 4;
+    --outfit-photo-bg: var(--color-bg-subtle);
+    --outfit-photo-list-width: min(38vw, 168px);
+    --outfit-photo-max-height-detail: min(82vh, 620px);
     
     /* Tag */
     --tag-padding: 6px var(--spacing-md);
@@ -199,9 +296,13 @@
     --tag-radius: 16px;
 }
 
-/* 전역 타이포그래피 (랜딩/로그인과 결 맞춤) */
+/* 전역 타이포·간격 기본 (앱 페이지 공통) */
 body {
     font-family: var(--font-sans);
-    letter-spacing: -0.02em;
+    font-size: var(--type-body-size);
+    font-weight: var(--type-body-weight);
+    line-height: var(--type-body-line);
+    color: var(--type-body-color);
+    letter-spacing: var(--type-letter-body);
 }
 

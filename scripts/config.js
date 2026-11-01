@@ -438,17 +438,14 @@ const utils = {
     
     // 날짜 표시 포맷
     formatDateDisplay(date) {
+        if (typeof formatStyleLogDate === 'function') {
+            return formatStyleLogDate(date, 'detail');
+        }
         const d = new Date(date);
-        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-        const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-                       'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
-        
-        const dayName = days[d.getDay()];
-        const monthName = months[d.getMonth()];
-        const dayNum = d.getDate();
-        const year = d.getFullYear();
-        
-        return `${dayName}. ${monthName} ${dayNum} / ${year}`;
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}.${m}.${day}`;
     },
     
     // 로딩 표시

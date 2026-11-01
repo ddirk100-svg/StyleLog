@@ -165,15 +165,121 @@ StyleLog_1.1V/
 
 ## 6. 버튼 유형
 
-| 클래스 | 용도 | 예시 |
-|--------|------|------|
-| `.icon-btn` | 아이콘만 있는 버튼 | 뒤로가기, 메뉴 |
-| `.text-btn` | 텍스트 버튼 (헤더 액션) | 저장, 완료 |
-| `.cancel-btn` | 뒤로가기/취소 (icon-btn과 함께) | write-header 좌측 |
-| `.save-btn` | 저장/완료 (text-btn과 함께) | write-header 우측 |
-| `.auth-btn.primary` | 풀폭 주요 액션 | 로그인, 저장하기 |
-| `.logout-btn` | 로그아웃 (마이페이지) | — |
-| `.inquiry-write-btn` | 아웃라인 스타일 링크 | 문의 작성하기 |
+| 클래스 | 용도 | radius |
+|--------|------|--------|
+| `.sl-btn-solid` / `.util-btn-primary` / `.auth-btn.primary` / `.btn-primary` | 풀폭·주요 액션 | `--btn-radius` |
+| `.sl-btn-outline` / `.util-btn-secondary` / `.logout-btn` | 보조·아웃라인 | `--btn-radius` |
+| `.text-btn` | 헤더 텍스트 액션 (저장) | 없음 (텍스트만) |
+| `.icon-btn` | 아이콘만 | 없음 또는 원형 `--radius-full` |
+| `.filter-category-chip` / `.weather-fit-btn` | pill 선택 | `--chip-radius` |
+| `.stylelog-dialog-btn` | 확인·취소 | `--btn-radius` |
+
+색상: filled → `--color-btn-solid-*`, 링크형 텍스트 → `--color-link-action`.  
+상세 토큰은 `variables.css` 「버튼」·「필터·기온 칩」 블록 참고.
+
+---
+
+## 14. Border radius (모서리 — 통일 규칙)
+
+**단일 소스:** `styles/variables.css`  
+**전역 보강:** `styles/utils.css` 의 「Radius contract」 선택자
+
+| 역할 | CSS 변수 | 값 | 적용 예 |
+|------|-----------|-----|---------|
+| 액션 버튼 | `--btn-radius` | 12px (`--radius-md`) | 로그인, 필터 적용, 작성 저장, 다이얼로그 |
+| Pill 칩 | `--chip-radius` | 9999px | 홈 필터, 기온 칩, 체감, 옷장 카테고리 |
+| 입력 | `--input-radius` | 8px | `.form-input`, `.form-textarea` |
+| 표면 카드 | `--surface-radius` | 16px | 홈 날씨·기온 가이드 카드 |
+| 사진 | `--photo-radius` | 12px | 피드·상세 코디 사진 |
+| 뱃지 | `--badge-radius` | 6px | 상태 뱃지 (버튼 아님) |
+| 바텀시트 상단 | `--modal-sheet-top-radius` | 20px | 필터 모달·메뉴 시트 |
+| 원형만 | `--radius-full` | 50% | FAB, 즐겨찾기, 아바타 |
+
+**금지:** 버튼·칩에 `border-radius: 8px` / `10px` / `999px` 등 **직접 숫자** — 반드시 위 변수 사용.
+
+---
+
+## 15. Spacing (패딩·마진 — 4px 그리드)
+
+**단일 소스:** `variables.css` (`--spacing-*` + 시맨틱 alias)  
+**보강:** `utils.css` (폼·헤더·칩·empty state)
+
+| 변수 | 값 | 용도 |
+|------|-----|------|
+| `--page-inset-x` | 16px | 화면 좌우 기본 여백 (피드·폼·헤더) |
+| `--section-gap-y` | 24px | 섹션 사이 (코디 모음 ↔ 필터 등) |
+| `--block-gap-y` | 16px | 블록 내부 덩어리 (상세 날짜 ↔ 제목) |
+| `--stack-gap-y` | 12px | 한 줄 요소 간격 |
+| `--feed-item-gap` | 24px | 홈 코디 카드 간격 |
+| `--surface-padding` | 20px | 카드 내부 |
+| `--surface-padding-lg` | 24px | 날씨 등 큰 카드 |
+| `--form-section-gap` | 32px | 작성 폼 섹션 간 |
+| `--form-field-gap` | 12px | 레이블 ↔ 입력 |
+| `--page-padding-bottom-nav` | calc | 하단 탭 + safe-area + 24px |
+| `--chip-padding-y/x` | 8 / 12 | pill 칩 |
+
+**금지:** `padding: 20px`, `margin-bottom: 32px` 등 임의 px — `--spacing-*` 또는 위 alias.
+
+---
+
+## 16. Typography (폰트)
+
+| 역할 | 변수 | 크기 |
+|------|------|------|
+| 본문 | `--type-body-*` | 14px / line 1.5 |
+| 캡션·날짜(피드) | `--type-caption-*` | 13px |
+| 폼 레이블 | `--type-label-*` | 14px semibold |
+| 입력 | `--type-input-size` | 15px |
+| 섹션·페이지 제목 | `--type-section-title-*`, `--type-page-title-*` | 18px |
+| 상세 제목 | `--type-detail-title-*` | 24px |
+| 날씨 숫자 | `--type-weather-display-*` | 56px / weight 200 |
+
+유틸 클래스: `.sl-section-title`, `.sl-type-caption`, `.sl-label`, `.sl-date` (`utils.css`)  
+전역 `body`는 `--type-body-*` 적용.
+
+---
+
+## 17. Date & time (날짜·시간 표기)
+
+**단일 함수:** `formatStyleLogDate(input, style)` — `scripts/common.js`  
+**스타일 클래스:** `.sl-date`, `.sl-date--detail`, `.sl-date--datetime` — `utils.css`
+
+| style | 형식 | 쓰는 곳 | 통일 여부 |
+|-------|------|---------|-----------|
+| `card` | 올해 `MM.DD 요일` / 그 외 `YYYY.MM.DD 요일` | 홈 코디 카드, **오늘 날씨** 보조 줄 | ✅ 코디·위젯 동일 |
+| `detail` | `YYYY.MM.DD 요일` (짧은 요일 `월`~`일`) | 상세 `.date-label` | ✅ 항상 연도 |
+| `datetime` | `YYYY.MM.DD HH:mm` (24시간, 요일 없음) | 고객센터 접수·답변 시각 | ✅ 이벤트 시각 전용 |
+| `iso` | `YYYY-MM-DD` | DB·URL·`<input type="date">` value | 저장 전용 |
+
+**의도적으로 다른 표기 (바꾸지 않음)**
+
+| 맥락 | 예 | 이유 |
+|------|-----|------|
+| 피드 **연·월 스티키** | `2025년`, `3월` | 타임라인 뼈대 — 코디 “그날” 라벨과 역할 다름 |
+| **필터 칩** | `2024년`, `3, 4월` | 선택 상태 요약 |
+| **작성 `<input type="date">`** | OS/브라우저 로케일 | 네이티브 피커 — value만 `iso` |
+| **약관 시행일** | `2026년 5월 26일` | 법무 문장형 |
+| **관리자 콘솔** | `toLocaleString('ko-KR')` | 운영 도구 — 앱 UI와 분리 |
+
+**금지:** 코디/피드/상세에서 `2월 17일 화요일`, `2026. 2. 13.`, `금요일` 전체 표기, `toLocaleDateString` 임의 사용.
+
+---
+
+## 18. Overlays · bottom sheets · dialogs
+
+| 레이어 | z-index | 스타일 |
+|--------|---------|--------|
+| 하단 탭 | `--z-index-modal` (1000) | `bottom-nav.css` |
+| **앱 시트** (필터, 상세 날씨, 햄버거 메뉴*) | `--z-index-app-sheet` (9600) | 상단 radius `--modal-sheet-top-radius`, dim `--modal-overlay` |
+| 작성 착장 시트 / 크롭 | 9935–9945 | `write.css` |
+| **다이얼로그** (alert·confirm·피드백) | 10000 | `dialog.css` · `--btn-radius` |
+| 생년월일 필수 | 100002 | `require-birthdate.css` |
+
+\*홈 햄버거는 `home.css`에서 **우측 드로어**로 재정의 — 토큰(여백·타이포)은 동일.
+
+**공통 contract (`utils.css`):** `.sl-sheet-title`, `.sl-sheet-footer` — 시트 제목·푸터 safe-area.
+
+**UX:** 시트 열릴 때 `body` 스크롤 잠금 · **Esc**로 필터·메뉴 닫기 · 푸터 `env(safe-area-inset-bottom)`.
 
 ---
 

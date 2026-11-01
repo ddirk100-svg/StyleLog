@@ -27,7 +27,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--header-padding-y) var(--header-padding-x);
     position: sticky;
     top: 0;
     background-color: var(--color-bg-primary);
@@ -42,13 +42,34 @@ body {
     justify-content: center;
 }
 
+.write-form-lede-block {
+    margin: 0 var(--page-inset-x) var(--block-gap-y);
+    padding-top: var(--stack-gap-y);
+}
+
+.write-form-lede {
+    margin: 0 0 var(--spacing-xs);
+    font-size: var(--type-body-size);
+    font-weight: var(--type-label-weight);
+    line-height: var(--type-caption-line);
+    color: var(--type-caption-color);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.write-form-lede-sub {
+    margin: 0;
+    font-size: var(--type-caption-size);
+    line-height: var(--type-caption-line);
+    color: var(--type-section-desc-color);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
 .write-header .header-title {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
 }
 
 .icon-btn {
@@ -74,7 +95,7 @@ body {
     border: none;
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-semibold);
-    color: var(--color-accent);
+    color: var(--color-link-action);
     cursor: pointer;
     padding: var(--spacing-sm) var(--spacing-lg);
     transition: opacity var(--transition-fast);
@@ -91,27 +112,20 @@ body {
 
 /* 폼 */
 .write-form {
-    padding: 24px 20px calc(60px + env(safe-area-inset-bottom, 0px) + 24px);
+    padding: var(--spacing-2xl) var(--page-inset-x) var(--page-padding-bottom-nav);
 }
 
 .form-section {
-    margin-bottom: 32px;
+    margin-bottom: var(--form-section-gap);
 }
 
-.form-label {
-    display: block;
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-md);
+.form-section:last-child {
+    margin-bottom: 0;
 }
 
 .form-input {
     width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
     border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-md);
     color: var(--color-text-primary);
     transition: border-color var(--transition-fast);
 }
@@ -129,25 +143,26 @@ body {
 }
 
 .weather-fit-btn {
-    padding: 10px 18px;
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-sm);
-    background: var(--color-bg-primary);
-    font-size: var(--font-size-md);
-    color: var(--color-text-secondary);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: var(--chip-border);
+    border-radius: var(--chip-radius);
+    background: var(--chip-idle-bg);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--chip-idle-color);
     cursor: pointer;
-    transition: background, border-color, color 0.2s;
+    transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .weather-fit-btn:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
 }
 
 .weather-fit-btn.active {
-    border-color: var(--color-accent);
-    background: var(--color-accent);
-    color: white;
+    border-color: transparent;
+    background: var(--chip-active-bg);
+    color: var(--chip-active-fg);
 }
 
 /* 날씨 표시 */
@@ -208,12 +223,8 @@ body {
 
 .form-textarea {
     width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
     border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-md);
     color: var(--color-text-primary);
-    line-height: 1.6;
     resize: vertical;
     font-family: inherit;
     transition: border-color var(--transition-fast);
@@ -226,8 +237,26 @@ body {
 
 .form-hint {
     margin-top: var(--spacing-sm);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.form-hint + .form-hint {
+    margin-top: 4px;
+}
+
+.form-hint-list {
+    margin: var(--spacing-sm) 0 0;
+    padding-left: 1.1em;
     font-size: var(--font-size-xs);
+    line-height: 1.55;
     color: var(--color-text-tertiary);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.form-hint-list li + li {
+    margin-top: 4px;
 }
 
 .form-input[readonly],
@@ -239,19 +268,21 @@ input.form-input[readonly] {
 /* 풀폭 주요 버튼 (폼 제출 등) */
 .btn-primary {
     width: 100%;
-    padding: 14px var(--spacing-xl);
+    min-height: var(--btn-height-md);
+    padding: var(--spacing-md) var(--spacing-xl);
     border: none;
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-lg);
+    border-radius: var(--btn-radius);
+    font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
-    background: var(--color-accent);
-    color: var(--color-text-inverse);
+    letter-spacing: -0.02em;
+    background: var(--color-btn-solid-bg);
+    color: var(--color-btn-solid-fg);
     cursor: pointer;
-    transition: opacity var(--transition-fast);
+    transition: background var(--transition-fast);
 }
 
 .btn-primary:hover:not(:disabled) {
-    opacity: 0.9;
+    background: var(--color-btn-solid-hover);
 }
 
 .btn-primary:disabled {
@@ -315,8 +346,9 @@ input.form-input[readonly] {
 
 .photo-preview-item {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 78px;
+    height: auto;
+    aspect-ratio: var(--outfit-photo-aspect, 3 / 4);
     border-radius: 8px;
     overflow: hidden;
     border: 2px solid transparent;
@@ -521,10 +553,18 @@ input.form-input[readonly] {
     padding: var(--spacing-md);
 }
 
+.crop-modal-hint {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1.45;
+}
+
 .crop-container {
     width: 100%;
-    height: 280px;
-    background: #000;
+    height: min(52vh, 420px);
+    background: var(--color-bg-secondary);
     overflow: hidden;
 }
 
@@ -542,9 +582,9 @@ input.form-input[readonly] {
 }
 
 .crop-ratio-btn {
-    padding: 8px 14px;
+    padding: var(--chip-padding-y) var(--spacing-md);
     border: 1px solid var(--color-border-mid);
-    border-radius: 8px;
+    border-radius: var(--btn-radius-compact);
     background: var(--color-bg-primary);
     font-size: var(--font-size-sm);
     font-weight: 500;
@@ -573,10 +613,11 @@ input.form-input[readonly] {
 .crop-cancel-btn,
 .crop-apply-btn {
     flex: 1;
-    padding: 14px;
-    border-radius: 8px;
-    font-size: var(--font-size-md);
-    font-weight: 600;
+    min-height: var(--btn-height-md);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    border-radius: var(--btn-radius);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
 }
 
@@ -1327,7 +1368,7 @@ input.form-input[readonly] {
     max-width: var(--container-max-width);
     margin: 0 auto;
     background-color: var(--color-bg-primary);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--modal-sheet-top-radius) var(--modal-sheet-top-radius) 0 0;
     padding: 0 var(--spacing-xl) calc(var(--spacing-2xl) + env(safe-area-inset-bottom, 0));
     padding-top: var(--spacing-sm);
     max-height: 85vh;
@@ -1427,6 +1468,226 @@ input.form-input[readonly] {
 .outfit-category-confirm-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+.wardrobe-add-label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.wardrobe-add-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    color: var(--color-text-primary);
+}
+
+.wardrobe-add-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+/* 옷장 피커 (작성 화면) */
+.outfit-wardrobe-picker-panel {
+    display: flex;
+    flex-direction: column;
+    max-height: 88vh;
+}
+
+.outfit-wardrobe-picker-search {
+    width: 100%;
+    height: 40px;
+    padding: 0 var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    background: var(--color-bg-primary);
+}
+
+.outfit-wardrobe-picker-search:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.outfit-wardrobe-picker-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--spacing-sm);
+    overflow-x: auto;
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.outfit-wardrobe-picker-chips::-webkit-scrollbar {
+    display: none;
+}
+
+.outfit-wardrobe-picker-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 34px;
+    padding: 0 var(--spacing-md);
+    border: 0.5px solid var(--color-border-light);
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.outfit-wardrobe-picker-chip.is-active {
+    background: var(--color-outfit-category-active-bg);
+    color: var(--color-outfit-category-active-fg);
+    border-color: var(--color-outfit-category-active-bg);
+}
+
+.outfit-wardrobe-picker-chip-icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
+.outfit-wardrobe-picker-list {
+    flex: 1 1 auto;
+    min-height: 120px;
+    max-height: min(42vh, 360px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+    -webkit-overflow-scrolling: touch;
+}
+
+.outfit-wardrobe-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    width: 100%;
+    min-height: 48px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border-lighter);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.outfit-wardrobe-picker-item:hover {
+    background: var(--color-bg-hover);
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border-light));
+}
+
+.outfit-wardrobe-picker-item-name {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.outfit-wardrobe-picker-item-meta {
+    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.outfit-wardrobe-picker-empty {
+    margin: 0 0 var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1.45;
+}
+
+.outfit-wardrobe-picker-new-btn {
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: var(--spacing-sm);
+    border: 1px dashed var(--color-border-mid);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+    cursor: pointer;
+}
+
+.outfit-wardrobe-picker-new-btn:hover {
+    background: var(--color-primary-light);
+}
+
+.outfit-wardrobe-picker-done-btn {
+    margin-top: 0;
+}
+
+.outfit-item-pick-btn {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    min-height: 38px;
+    padding: 0 var(--spacing-md);
+    border: 1px solid var(--color-border-light);
+    border-radius: 10px;
+    background-color: var(--color-bg-primary);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition:
+        border-color var(--transition-fast),
+        background-color var(--transition-fast);
+}
+
+.outfit-item-pick-btn:hover {
+    border-color: var(--color-border-mid);
+    background-color: var(--color-bg-tertiary);
+}
+
+.outfit-item-pick-btn--placeholder {
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-weight-normal);
+}
+
+.outfit-item-pick-btn-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.outfit-item-pick-btn-chevron {
+    flex-shrink: 0;
+    color: var(--color-text-tertiary);
+    font-size: 18px;
+    line-height: 1;
 }
 
 /* 반응형 */

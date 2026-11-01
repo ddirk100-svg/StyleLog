@@ -15,11 +15,12 @@
     <title>스타일로그 - 상세</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/utils.css">
+    <link rel="stylesheet" href="styles/utils.css?v=7">
     <link rel="stylesheet" href="styles/dialog.css">
-    <link rel="stylesheet" href="styles/detail.css?v=3">
+    <link rel="stylesheet" href="styles/detail.css?v=6">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/photo-gallery.css">
+    <link rel="stylesheet" href="styles/outfit-photo.css?v=2">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/require-birthdate.css">
     <!-- Supabase 클라이언트 -->
@@ -27,7 +28,7 @@
     <!-- 설정 및 API -->
     <script src="scripts/config.js?v=6"></script>
     <script src="scripts/api.js?v=3"></script>
-    <script src="scripts/common.js"></script>
+    <script src="scripts/common.js?v=11"></script>
 </head>
 <body class="has-bottom-nav">
     <!-- 상세 화면 - 사진 포함 -->
@@ -54,7 +55,7 @@
         <div class="content-section">
             <!-- 날짜 정보 -->
             <div class="date-info">
-                <span class="date-label"></span>
+                <span class="date-label sl-date sl-date--detail"></span>
             </div>
 
             <!-- 제목 -->
@@ -73,6 +74,7 @@
 
             <!-- 태그 (옵션) -->
             <div class="tags"></div>
+
         </div>
     </div>
 
@@ -103,8 +105,8 @@
     <div class="modal weather-modal" id="weatherModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>SELECT WEATHER</h3>
-                <button class="modal-close">Cancel</button>
+                <h3 class="sl-sheet-title">날씨 선택</h3>
+                <button type="button" class="modal-close">닫기</button>
             </div>
             <div class="weather-options">
                 <label class="weather-option">
@@ -114,7 +116,7 @@
                             <circle cx="16" cy="16" r="4"></circle>
                             <path d="M16 2v4M16 26v4M30 16h-4M6 16H2M25.5 6.5l-2.8 2.8M9.3 22.7l-2.8 2.8M25.5 25.5l-2.8-2.8M9.3 9.3L6.5 6.5"></path>
                         </svg>
-                        <span>Sunny</span>
+                        <span>맑음</span>
                     </div>
                 </label>
 
@@ -124,7 +126,7 @@
                         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
                             <path d="M22 16h-1.26A8 8 0 1 0 9 24h13a5 5 0 0 0 0-10z"></path>
                         </svg>
-                        <span>Cloudy</span>
+                        <span>흐림</span>
                     </div>
                     <svg class="check-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333">
                         <polyline points="20 6 9 17 4 12"></polyline>
@@ -140,7 +142,7 @@
                             <line x1="13" y1="24" x2="13" y2="28"></line>
                             <line x1="18" y1="24" x2="18" y2="28"></line>
                         </svg>
-                        <span>Rainy</span>
+                        <span>비</span>
                     </div>
                 </label>
 
@@ -153,7 +155,7 @@
                             <circle cx="13" cy="27" r="1"></circle>
                             <circle cx="18" cy="27" r="1"></circle>
                         </svg>
-                        <span>Snowy</span>
+                        <span>눈</span>
                     </div>
                 </label>
 
@@ -163,7 +165,7 @@
                         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor">
                             <polygon points="16 2 6 18 16 18 16 30 26 14 16 14 16 2"></polygon>
                         </svg>
-                        <span>Lightning</span>
+                        <span>번개</span>
                     </div>
                 </label>
             </div>
@@ -203,7 +205,7 @@
 
     <script src="scripts/require-birthdate.js"></script>
     <script src="scripts/auth.js"></script>
-    <script src="scripts/detail.js?v=3"></script>
+    <script src="scripts/detail.js?v=8"></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

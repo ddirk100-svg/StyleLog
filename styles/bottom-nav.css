@@ -12,18 +12,19 @@
     margin: 0 auto;
     box-sizing: border-box;
     height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
-    background: var(--color-bg-primary);
-    border-top: 1px solid var(--color-border-light);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-top: 1px solid var(--color-border-lighter);
     display: flex;
     justify-content: space-around;
     align-items: flex-start;
     gap: 0;
-    padding-top: 6px;
+    padding-top: var(--spacing-xs);
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-md));
     padding-left: var(--spacing-xs);
     padding-right: var(--spacing-xs);
     z-index: var(--z-index-modal);
-    box-shadow: 0 -2px 10px var(--color-shadow-sm);
 }
 
 .bottom-nav-item {
@@ -31,9 +32,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: var(--spacing-xs);
     flex: 1;
-    padding: 6px var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-xs);
     text-decoration: none;
     color: var(--color-text-primary);
     transition: all var(--transition-fast);
@@ -69,7 +70,12 @@
 }
 
 .bottom-nav-item.active {
-    color: var(--color-primary);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.bottom-nav-item.active .bottom-nav-label {
+    font-weight: var(--font-weight-semibold);
 }
 
 .bottom-nav-label {
@@ -90,12 +96,12 @@
 }
 
 .bottom-nav-item.write-btn .bottom-nav-icon {
-    color: inherit;
-    background: none;
-    border: 2px solid var(--color-text-primary);
-    border-radius: var(--radius-sm);
-    width: calc(var(--bottom-nav-icon-size) + 4px);
-    height: calc(var(--bottom-nav-icon-size) + 4px);
+    color: var(--color-text-inverse);
+    background: var(--color-text-primary);
+    border: none;
+    border-radius: var(--radius-full);
+    width: calc(var(--bottom-nav-icon-size) + 6px);
+    height: calc(var(--bottom-nav-icon-size) + 6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -108,11 +114,11 @@
 }
 
 .bottom-nav-item.write-btn.active {
-    color: var(--color-primary);
+    color: var(--color-text-primary);
 }
 
 .bottom-nav-item.write-btn.active .bottom-nav-icon {
-    border-color: var(--color-primary);
+    background: var(--color-primary);
 }
 
 /* 페이지 컨텐츠에 하단 여백 추가 */

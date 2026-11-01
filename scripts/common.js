@@ -1,5 +1,63 @@
 // 공통 함수들
-const WEATHER_FIT_LABELS = { cold: 'cold', good: 'good', hot: 'hot' };
+const WEATHER_FIT_LABELS = { cold: '추움', good: '적당', hot: '더움' };
+
+/** 요일 (짧은 표기 — 카드·상세 공통) */
+const STYLELOG_WEEKDAY_KO = Object.freeze(['일', '월', '화', '수', '목', '금', '토']);
+
+function parseStyleLogDate(input) {
+    if (input == null || input === '') return null;
+    if (input instanceof Date) {
+        return Number.isNaN(input.getTime()) ? null : input;
+    }
+    const s = String(input).trim();
+    const iso = s.length >= 10 ? s.slice(0, 10) : s;
+    const d = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function pad2(n) {
+    return String(n).padStart(2, '0');
+}
+
+function parseStyleLogDateTime(input) {
+    if (input == null || input === '') return null;
+    if (input instanceof Date) {
+        return Number.isNaN(input.getTime()) ? null : input;
+    }
+    const d = new Date(input);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * UI 날짜 표시 (앱 전역 통일 — DESIGN_SYSTEM.md §17)
+ * @param {'card'|'detail'|'datetime'|'iso'} style
+ *   - card: 코디 피드 · 오늘 위젯 — 올해 MM.DD 요일 / 그 외 YYYY.MM.DD 요일
+ *   - detail: 코디 상세 — YYYY.MM.DD 요일 (항상 연도)
+ *   - datetime: 문의·접수 시각 — YYYY.MM.DD HH:mm (요일 없음)
+ *   - iso: 저장·API — YYYY-MM-DD
+ */
+function formatStyleLogDate(input, style = 'detail') {
+    if (style === 'datetime') {
+        const dt = parseStyleLogDateTime(input);
+        if (!dt) return '';
+        const y = dt.getFullYear();
+        const m = dt.getMonth() + 1;
+        const day = dt.getDate();
+        return `${y}.${pad2(m)}.${pad2(day)} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+    }
+    const d = parseStyleLogDate(input);
+    if (!d) return '';
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const wd = STYLELOG_WEEKDAY_KO[d.getDay()];
+    if (style === 'iso') return `${y}-${pad2(m)}-${pad2(day)}`;
+    const core = `${pad2(m)}.${pad2(day)} ${wd}`;
+    if (style === 'detail') return `${y}.${core}`;
+    const now = new Date();
+    if (y === now.getFullYear()) return core;
+    return `${y}.${core}`;
+}
 
 /** 착장 품목 구분 표시·저장 정렬 순 (아우터 → 상의 → …) */
 const OUTFIT_CATEGORY_SORT_ORDER = Object.freeze([
@@ -267,6 +325,22 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/** img/src·링크용 — javascript: 등 차단 */
+function safeStyleLogMediaUrl(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^javascript:/i.test(s) || /^data:/i.test(s)) return '';
+    if (s.startsWith('img/') || s.startsWith('/img/') || s.startsWith('./')) return s;
+    try {
+        const base = typeof location !== 'undefined' ? location.href : 'https://localhost/';
+        const u = new URL(s, base);
+        if (u.protocol === 'https:' || u.protocol === 'http:') return u.href;
+    } catch (_) {
+        /* ignore */
+    }
+    return '';
 }
 
 /** 입력 대화상자 — 확인 시 문자열, 취소 시 null */

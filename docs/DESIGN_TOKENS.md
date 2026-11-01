@@ -76,11 +76,33 @@
 
 ### Border Radius
 
-- `--radius-sm`: 8px
-- `--radius-md`: 12px
-- `--radius-lg`: 16px
-- `--radius-xl`: 20px
-- `--radius-full`: 50%
+**스케일:** `--radius-xs` (6) · `--radius-sm` (8) · `--radius-md` (12) · `--radius-lg` (16) · `--radius-xl` (20) · `--radius-pill` (9999) · `--radius-full` (50%, 원형만)
+
+**역할 (버튼·UI는 여기만 사용):**
+
+| 변수 | 용도 |
+|------|------|
+| `--btn-radius` | 모든 직사각 액션 버튼 (12px) |
+| `--chip-radius` | 필터·체감·pill 칩 |
+| `--input-radius` | input, textarea |
+| `--surface-radius` | 카드·모달 박스 |
+| `--photo-radius` | 코디 사진 |
+| `--modal-sheet-top-radius` | 바텀시트 상단 |
+
+상세: `docs/DESIGN_SYSTEM.md` §14, `styles/utils.css` Radius contract
+
+### Spacing (layout)
+
+- `--page-inset-x`, `--section-gap-y`, `--feed-item-gap`, `--form-section-gap`, `--page-padding-bottom-nav` 등 — `DESIGN_SYSTEM.md` §15
+
+### Typography (roles)
+
+- `--type-body-*`, `--type-caption-*`, `--type-label-*`, `--type-detail-title-*` — `DESIGN_SYSTEM.md` §16
+
+### Date display
+
+- `formatStyleLogDate(input, 'card'|'detail'|'datetime'|'iso')` — `common.js`, `DESIGN_SYSTEM.md` §17
+- CSS: `.sl-date`, `.sl-date--detail`, `.sl-date--datetime`
 
 ### Font Sizes
 

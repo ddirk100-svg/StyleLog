@@ -1,3 +1,5 @@
+@import url('variables.css');
+
 /* 생년월일 미입력 회원 로그인 시 필수 입력 모달 (닫기 없음, 전체 차단) */
 #mandatory-birth-overlay {
     display: none;
@@ -6,10 +8,10 @@
     z-index: 100002;
     align-items: center;
     justify-content: center;
-    padding: 1.25rem;
-    background: rgba(15, 23, 42, 0.55);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    padding: var(--page-inset-x);
+    background: var(--modal-overlay);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
 #mandatory-birth-overlay.mandatory-birth-overlay--visible {
@@ -23,57 +25,57 @@ body.mandatory-birth-open {
 .mandatory-birth-card {
     width: 100%;
     max-width: 22rem;
-    padding: 1.5rem 1.35rem;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-    border: 1px solid #e2e8f0;
+    padding: var(--surface-padding-lg) var(--surface-padding);
+    border-radius: var(--surface-radius);
+    background: var(--color-bg-primary);
+    box-shadow: 0 24px 64px var(--color-shadow-xl);
+    border: 1px solid var(--color-border-light);
 }
 
 .mandatory-birth-card h2 {
-    margin: 0 0 0.5rem;
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #0f172a;
+    margin: 0 0 var(--spacing-sm);
+    font-size: var(--type-page-title-size);
+    font-weight: var(--type-page-title-weight);
+    color: var(--color-text-primary);
 }
 
 .mandatory-birth-card p {
-    margin: 0 0 1rem;
-    font-size: 0.875rem;
-    line-height: 1.55;
-    color: #475569;
+    margin: 0 0 var(--block-gap-y);
+    font-size: var(--type-caption-size);
+    line-height: var(--type-caption-line);
+    color: var(--type-caption-color);
 }
 
 .mandatory-birth-card label {
     display: block;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 0.35rem;
+    font-size: var(--type-label-size);
+    font-weight: var(--type-label-weight);
+    color: var(--color-text-primary);
+    margin-bottom: var(--form-field-gap);
 }
 
 .mandatory-birth-card input[type="date"] {
     width: 100%;
-    padding: 0.55rem 0.65rem;
-    font-size: 0.9375rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    font-family: inherit;
-    color: #0f172a;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--type-input-size);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--input-radius);
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
     box-sizing: border-box;
 }
 
 .mandatory-birth-card input[type="date"]:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
 .mandatory-birth-error {
-    margin: 0.65rem 0 0;
-    font-size: 0.8125rem;
-    color: #b91c1c;
-    line-height: 1.45;
+    margin: var(--stack-gap-y) 0 0;
+    font-size: var(--type-caption-size);
+    color: var(--color-error);
+    line-height: var(--type-caption-line);
 }
 
 .mandatory-birth-error[hidden] {
@@ -82,30 +84,24 @@ body.mandatory-birth-open {
 
 .mandatory-birth-submit {
     width: 100%;
-    margin-top: 1rem;
-    padding: 0.65rem 1rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #fff;
-    background: #2563eb;
+    margin-top: var(--block-gap-y);
+    min-height: var(--btn-height-md);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-btn-solid-fg);
+    background: var(--color-btn-solid-bg);
     border: none;
-    border-radius: 10px;
+    border-radius: var(--btn-radius);
     cursor: pointer;
-    font-family: inherit;
+    font-family: var(--font-sans);
 }
 
 .mandatory-birth-submit:hover:not(:disabled) {
-    background: #1d4ed8;
+    background: var(--color-btn-solid-hover);
 }
 
 .mandatory-birth-submit:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
-}
-
-.mandatory-birth-hint {
-    margin: 0.5rem 0 0;
-    font-size: 0.75rem;
-    color: #64748b;
-    line-height: 1.45;
 }

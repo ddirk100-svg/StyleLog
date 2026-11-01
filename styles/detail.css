@@ -21,7 +21,7 @@ body {
     margin: 0 auto;
     background-color: var(--color-bg-primary);
     position: relative;
-    padding-bottom: 80px;
+    padding-bottom: var(--page-padding-bottom-nav);
 }
 
 /* 헤더 */
@@ -29,7 +29,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: var(--header-padding-y) var(--header-padding-x);
     position: absolute;
     top: 0;
     left: 0;
@@ -47,7 +47,7 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
+    padding: var(--spacing-sm);
     color: var(--color-text-primary);
     transition: opacity 0.2s;
 }
@@ -66,20 +66,11 @@ body {
     color: white;
 }
 
-/* 사진 섹션 */
+/* 사진 섹션 — outfit-photo.css 에서 세로 3:4 */
 .photo-section {
     width: 100%;
-    height: 400px;
-    overflow: hidden;
-    background-color: var(--color-border-lighter);
     position: relative;
-}
-
-.photo-section img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    overflow: hidden;
 }
 
 /* 즐겨찾기 버튼 (detail 페이지용) */
@@ -160,43 +151,36 @@ body {
 
 /* 콘텐츠 섹션 */
 .content-section {
-    padding: 32px 24px;
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 32px);
+    padding: var(--spacing-3xl) var(--page-inset-x) var(--page-padding-bottom-nav);
     /* 세로 스크롤은 브라우저 기본, 가로 스와이프로 인접 로그 이동(스크립트) */
     touch-action: pan-y pinch-zoom;
 }
 
 .container.no-photo .content-section {
-    padding-top: 24px;
+    padding-top: var(--spacing-2xl);
 }
 
 /* 날짜 정보 */
 .date-info {
-    margin-bottom: 16px;
-}
-
-.date-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-text-tertiary);
-    letter-spacing: 1px;
+    margin-bottom: var(--block-gap-y);
 }
 
 /* 제목 */
 .content-title {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: var(--type-detail-title-size);
+    font-weight: var(--type-detail-title-weight);
     color: var(--color-text-primary);
-    margin-bottom: 20px;
-    line-height: 1.4;
+    margin-bottom: var(--spacing-xl);
+    line-height: var(--type-detail-title-line);
+    letter-spacing: var(--type-letter-tight);
 }
 
 /* 날씨 정보 */
 .weather-info {
-    margin-bottom: 24px;
+    margin-bottom: var(--section-gap-y);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--stack-gap-y);
 }
 
 .weather-icon {
@@ -204,8 +188,8 @@ body {
 }
 
 .temp-display {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: var(--type-section-title-size);
+    font-weight: var(--type-section-title-weight);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -347,7 +331,7 @@ body {
     right: 0;
     bottom: 0;
     background-color: var(--modal-overlay);
-    z-index: var(--z-index-modal);
+    z-index: var(--z-index-app-sheet);
     align-items: flex-end;
 }
 
@@ -397,10 +381,11 @@ body {
 }
 
 .modal-header h3 {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-tertiary);
-    letter-spacing: 1px;
+    margin: 0;
+    font-size: var(--type-page-title-size);
+    font-weight: var(--type-page-title-weight);
+    color: var(--color-text-primary);
+    letter-spacing: var(--type-letter-tight);
 }
 
 .modal-close {
@@ -531,7 +516,69 @@ body {
     margin: 0;
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
-    line-height: 1.45;
+    line-height: 1.55;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.outfit-items-detail-empty-sub {
+    margin-top: 6px !important;
+    font-size: var(--font-size-xs) !important;
+    color: var(--color-text-tertiary) !important;
+}
+
+.outfit-items-detail-edit-link {
+    display: inline-block;
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.outfit-items-detail-edit-link:active {
+    opacity: 0.7;
+}
+
+.content-body-empty {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+.tags-section-label {
+    width: 100%;
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+}
+
+.detail-page-actions {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border-lighter);
+}
+
+.detail-page-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-mid);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+}
+
+.detail-page-action-btn:active {
+    opacity: 0.85;
 }
 
 .outfit-items-detail-db-hint {

@@ -16,14 +16,15 @@
     <title>스타일로그 - 오늘 뭐입지?</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/utils.css">
+    <link rel="stylesheet" href="styles/utils.css?v=7">
     <link rel="stylesheet" href="styles/dialog.css">
-    <link rel="stylesheet" href="styles/home.css">
-    <link rel="stylesheet" href="styles/bottom-nav.css">
+    <link rel="stylesheet" href="styles/home.css?v=10">
+    <link rel="stylesheet" href="styles/bottom-nav.css?v=2">
     <link rel="stylesheet" href="styles/day-list.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css">
     <link rel="stylesheet" href="styles/photo-gallery.css">
+    <link rel="stylesheet" href="styles/outfit-photo.css?v=5">
     <link rel="stylesheet" href="styles/require-birthdate.css">
 </head>
 <body class="has-bottom-nav">
@@ -34,7 +35,7 @@
     </div>
     
     <!-- 홈 화면 - 일별 리스트 -->
-    <div class="container" id="homeView">
+    <div class="container home-shell" id="homeView">
         <!-- 헤더 -->
         <header class="header">
             <h1 class="logo">
@@ -66,6 +67,20 @@
                     <p>로딩 중...</p>
                 </div>
                 <div class="menu-items">
+                    <a href="wardrobe.html" class="menu-item menu-item-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                        </svg>
+                        <span>내 옷장</span>
+                    </a>
+                    <a href="mypage.html" class="menu-item menu-item-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>마이페이지</span>
+                    </a>
                     <button type="button" class="menu-item" data-open-feedback>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -89,11 +104,14 @@
             </div>
         </div>
 
-        <!-- 오늘 날씨 정보 (Danble 스타일) -->
+        <div class="home-main">
+        <!-- 오늘 날씨 (Apple Weather 톤) -->
         <div class="bottom-section weather-clear" id="weatherBottomSection">
             <div class="weather-widget">
                 <div class="weather-widget-top">
                     <div class="weather-widget-temp-box">
+                        <p class="weather-widget-eyebrow">오늘</p>
+                        <p class="weather-widget-date sl-date" id="weatherTodayDate" aria-label="오늘 날짜"></p>
                         <div class="weather-widget-temp-main">
                             <span class="weather-widget-current-temp" id="weatherCurrentTemp">--</span>
                             <span class="weather-widget-avg-label" id="weatherAvgLabel" aria-label="평균 기온">평균</span>
@@ -110,55 +128,36 @@
                         <span class="weather-widget-diff" id="weatherDiff"></span>
                     </div>
                     <div class="weather-recommend-row">
-                        <span class="weather-recommend-label" id="recommendModeLabel">날씨 맞춤 코디</span>
+                        <div class="weather-recommend-copy">
+                            <span class="weather-recommend-label" id="recommendModeLabel">오늘 기온에 맞춰 보기</span>
+                            <span class="weather-recommend-hint" id="recommendModeHint">내 코디 목록이 오늘 최저·최고 기온으로 필터돼요.</span>
+                        </div>
                         <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 기온별 옷차림 (가로 스크롤 칩 → 정적 이미지 1장 교체) -->
-        <section class="outfit-carousel-section" id="outfitCarouselSection">
-            <h2 class="outfit-carousel-title">기온별 옷차림</h2>
-            <div class="outfit-range-row">
-                <div class="outfit-range-chips-wrap" id="outfitRangeChipsWrap">
-                    <div class="outfit-range-chips" id="outfitRangeSelector" role="radiogroup" aria-label="기온 구간">
-                        <button type="button" class="outfit-range-btn is-active" role="radio" aria-checked="true" data-slide-index="0">4도 이하</button>
-                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="1">5~8도</button>
-                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="2">9~11도</button>
-                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="3">12~16도</button>
-                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="4">17~19도</button>
-                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="5">20~22도</button>
-                        <button type="button" class="outfit-range-btn" role="radio" aria-checked="false" data-slide-index="6">23도 이상</button>
-                    </div>
-                </div>
-            </div>
-            <div class="outfit-sample-frame">
-                <img id="outfitSampleImage" src="img/weather_sample_1.jpg" alt="4도 이하 기온 참고 이미지" width="400" height="240" onerror="this.src='https://via.placeholder.com/400x240?text=Sample'">
-            </div>
-        </section>
-
-        <!-- 코디 모음: 필터·일별 리스트 상단 헤더 -->
-        <section class="coordi-collection-heading" aria-labelledby="coordiCollectionHeading">
-            <h2 class="outfit-carousel-title" id="coordiCollectionHeading">코디 모음</h2>
-        </section>
-
         <!-- 필터 + 일별 리스트 (하나의 세트) -->
         <div class="filter-list-section">
+        <section class="coordi-collection-heading" aria-labelledby="coordiCollectionHeading">
+            <h2 class="sl-section-title" id="coordiCollectionHeading">내 코디</h2>
+        </section>
         <div class="filter-bar" id="filterBar">
             <div class="filter-row filter-row-category">
-                <button type="button" class="filter-btn filter-btn-icon" id="filterOpenBtn" title="필터">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="filter-btn filter-btn--with-label" id="filterOpenBtn" aria-label="필터 열기">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
+                    <span class="filter-btn-label">필터</span>
                 </button>
                 <div class="filter-category-chips-wrap">
                     <div class="filter-category-chips">
                         <button type="button" class="filter-category-chip" data-tab="year">연도</button>
                         <button type="button" class="filter-category-chip" data-tab="month">월</button>
-                        <button type="button" class="filter-category-chip" data-tab="weatherFit">날씨적합도</button>
+                        <button type="button" class="filter-category-chip" data-tab="weatherFit" title="옷차림 체감">체감</button>
                         <button type="button" class="filter-category-chip" data-tab="temp">기온</button>
-                        <button type="button" class="filter-category-chip" data-tab="outfit">착장 품목</button>
+                        <button type="button" class="filter-category-chip" data-tab="outfit" title="착장 품목">품목</button>
                         <button type="button" class="filter-category-chip" data-tab="favorites">즐겨찾기</button>
                     </div>
                 </div>
@@ -176,6 +175,7 @@
             <!-- JavaScript로 동적 생성됩니다 -->
         </div>
         </div>
+        </div>
 
         <!-- 필터 모달 -->
         <div class="filter-modal" id="filterModal">
@@ -190,9 +190,9 @@
                 <div class="filter-modal-tabs">
                     <button type="button" class="filter-tab active" data-tab="year">연</button>
                     <button type="button" class="filter-tab" data-tab="month">월</button>
-                    <button type="button" class="filter-tab" data-tab="weatherFit">날씨적합도</button>
+                    <button type="button" class="filter-tab" data-tab="weatherFit" title="옷차림 체감">체감</button>
                     <button type="button" class="filter-tab" data-tab="temp">기온</button>
-                    <button type="button" class="filter-tab" data-tab="outfit">착장 품목</button>
+                    <button type="button" class="filter-tab" data-tab="outfit" title="착장 품목">품목</button>
                     <button type="button" class="filter-tab" data-tab="favorites">즐겨찾기</button>
                 </div>
                 <div class="filter-modal-active-row" id="filterModalActiveRow">
@@ -210,9 +210,9 @@
                     </div>
                     <div class="filter-tab-panel" id="filterPanelWeatherFit">
                         <div class="filter-options filter-options-grid filter-options-column" id="filterWeatherFitOptions">
-                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="cold"><span>cold</span></label>
-                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="good"><span>good</span></label>
-                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="hot"><span>hot</span></label>
+                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="cold"><span>추움</span></label>
+                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="good"><span>적당</span></label>
+                            <label class="filter-option"><input type="checkbox" name="weatherFit" value="hot"><span>더움</span></label>
                         </div>
                     </div>
                     <div class="filter-tab-panel" id="filterPanelTemp">
@@ -250,32 +250,9 @@
                     </div>
                 </div>
                 <div class="filter-modal-footer">
-                    <button type="button" class="filter-apply-btn" id="filterApplyBtn">0개 확인하기</button>
+                    <button type="button" class="filter-apply-btn" id="filterApplyBtn">적용하기</button>
                     <button type="button" class="filter-reset-all-btn" id="filterResetAllBtn">선택 초기화</button>
                 </div>
-            </div>
-        </div>
-
-        <!-- 메뉴 팝업 (바텀시트) - 일별 리스트용 -->
-        <div class="menu-popup" id="itemMenuPopup">
-            <div class="menu-overlay"></div>
-            <div class="menu-content">
-            <button class="menu-item edit-menu-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                </svg>
-                <span>수정</span>
-            </button>
-            <button class="menu-item delete-menu-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                <span>삭제</span>
-            </button>
-            <button class="menu-item cancel-menu-btn">
-                <span>취소</span>
-            </button>
             </div>
         </div>
 
@@ -316,9 +293,9 @@
     <script src="scripts/api.js?v=7" defer></script>
     <script src="scripts/require-birthdate.js" defer></script>
     <script src="scripts/auth.js" defer></script>
-    <script src="scripts/common.js?v=8" defer></script>
+    <script src="scripts/common.js?v=11" defer></script>
     <script src="scripts/feedback.js" defer></script>
-    <script src="scripts/home.js?v=19" defer></script>
+    <script src="scripts/home.js?v=35" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

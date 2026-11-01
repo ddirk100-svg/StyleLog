@@ -4,7 +4,7 @@
     max-width: var(--container-max-width);
     min-height: calc(100vh - var(--bottom-nav-height));
     margin: 0 auto;
-    padding: 0 20px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
+    padding: 0 var(--page-inset-x) var(--page-padding-bottom-nav);
     background: var(--color-bg-primary);
 }
 
@@ -12,15 +12,17 @@
     margin: 16px 0 18px;
     padding: 12px 14px;
     background: var(--color-bg-secondary);
-    border-radius: 12px;
+    border-radius: var(--photo-radius);
     border: 1px solid var(--color-border-light);
 }
 
 .wardrobe-policy-hint p {
     margin: 0;
     font-size: 13px;
-    line-height: 1.55;
+    line-height: 1.6;
     color: var(--color-text-secondary);
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 .wardrobe-policy-hint p + p {
@@ -47,18 +49,18 @@
     min-height: 44px;
     padding: 10px 8px;
     border: none;
-    border-radius: 12px;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-secondary);
+    border-radius: var(--btn-radius);
+    background: var(--chip-idle-bg);
+    color: var(--chip-idle-color);
     font-family: inherit;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
 }
 
 .wardrobe-mode-tab.is-active {
-    background: var(--color-primary);
-    color: #fff;
+    background: var(--chip-active-bg);
+    color: var(--chip-active-fg);
 }
 
 .wardrobe-mode-count {
@@ -68,7 +70,7 @@
     min-width: 20px;
     height: 20px;
     padding: 0 6px;
-    border-radius: 999px;
+    border-radius: var(--chip-radius);
     font-size: 12px;
     font-weight: 700;
     background: rgba(0, 0, 0, 0.08);
@@ -100,7 +102,7 @@
     border: 1px solid var(--color-border-light);
     background: var(--color-bg-secondary);
     color: var(--color-text-primary);
-    border-radius: 999px;
+    border-radius: var(--chip-radius);
     padding: 8px 12px 8px 10px;
     font-size: 13px;
     font-weight: 600;
@@ -120,9 +122,9 @@
 }
 
 .wardrobe-cat-chip.is-active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
+    background: var(--chip-active-bg);
+    border-color: transparent;
+    color: var(--chip-active-fg);
 }
 
 .wardrobe-section-head {
@@ -283,7 +285,24 @@
     color: var(--color-text-secondary);
     font-size: 14px;
     line-height: 1.45;
-    white-space: nowrap;
+}
+
+.wardrobe-empty-lead {
+    margin: 0 0 14px;
+    white-space: normal;
+}
+
+.wardrobe-empty-cta {
+    display: inline-block;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .wardrobe-add-btn {

@@ -6,12 +6,12 @@
     max-width: var(--container-max-width);
     min-height: calc(100vh - var(--bottom-nav-height));
     margin: 0 auto;
-    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
+    padding-bottom: var(--page-padding-bottom-nav);
     background: var(--color-bg-primary);
 }
 
 .inquiry-section {
-    padding: 20px var(--spacing-xl);
+    padding: var(--surface-padding) var(--page-inset-x);
     border-bottom: 1px solid var(--color-border-lighter);
 }
 
@@ -23,24 +23,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: var(--stack-gap-y);
+    margin-bottom: var(--block-gap-y);
 }
 
 .inquiry-section-title {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: var(--type-section-title-size);
+    font-weight: var(--type-section-title-weight);
     color: var(--color-text-primary);
 }
 
 .inquiry-write-btn {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: var(--type-caption-size);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-accent);
     text-decoration: none;
-    padding: 6px 12px;
+    padding: var(--chip-padding-y) var(--chip-padding-x);
     border: 1px solid var(--color-accent);
-    border-radius: 8px;
+    border-radius: var(--btn-radius-compact);
     white-space: nowrap;
     transition: background, color 0.2s;
 }
@@ -52,18 +52,18 @@
 
 /* 문의내역 placeholder */
 .inquiry-list-placeholder {
-    padding: 24px 0;
+    padding: var(--section-gap-y) 0;
     text-align: center;
 }
 
 .placeholder-text {
-    font-size: 15px;
+    font-size: var(--type-input-size);
     color: var(--color-text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
 }
 
 .placeholder-hint {
-    font-size: 13px;
+    font-size: var(--type-caption-size);
     color: var(--color-text-tertiary);
 }
 
@@ -150,7 +150,7 @@
     padding: 16px;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-lighter);
-    border-radius: 12px;
+    border-radius: var(--photo-radius);
     text-align: left;
 }
 
@@ -166,7 +166,7 @@
     font-size: 12px;
     font-weight: 700;
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--badge-radius);
 }
 
 .inquiry-card-badge.is-open {
@@ -177,11 +177,6 @@
 .inquiry-card-badge.is-answered {
     background: rgba(37, 99, 235, 0.12);
     color: var(--color-primary);
-}
-
-.inquiry-card-date {
-    font-size: 12px;
-    color: var(--color-text-tertiary);
 }
 
 .inquiry-card-title {
@@ -255,19 +250,21 @@
 }
 
 .inquiry-submit-btn {
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    background: var(--color-accent);
+    width: 100%;
+    min-height: var(--btn-height-md);
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-btn-solid-fg);
+    background: var(--color-btn-solid-bg);
     border: none;
-    border-radius: 10px;
+    border-radius: var(--btn-radius);
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: background var(--transition-fast);
 }
 
 .inquiry-submit-btn:hover:not(:disabled) {
-    opacity: 0.9;
+    background: var(--color-btn-solid-hover);
 }
 
 .inquiry-submit-btn:disabled {

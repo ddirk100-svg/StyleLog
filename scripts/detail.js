@@ -110,10 +110,25 @@ function renderLogDetail(log) {
         const photoSection = document.createElement('div');
         photoSection.className = 'photo-section';
         
+        function bindSafePhotoImg(img, rawUrl) {
+            const safe =
+                typeof safeStyleLogMediaUrl === 'function'
+                    ? safeStyleLogMediaUrl(rawUrl)
+                    : String(rawUrl || '');
+            if (safe) {
+                img.src = safe;
+                img.onerror = () => {
+                    img.style.display = 'none';
+                };
+            } else {
+                img.style.display = 'none';
+            }
+        }
+
         if (log.photos.length === 1) {
             // 사진 1개
             photoSection.innerHTML = `
-                <img src="${log.photos[0]}" alt="착장 사진" onerror="this.style.display='none'">
+                <img alt="착장 사진">
                 <button class="favorite-toggle-btn-detail ${log.is_favorite ? 'active' : ''}" id="favoriteToggle" title="${log.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="${log.is_favorite ? '#ff6b6b' : 'none'}" stroke="${log.is_favorite ? '#ff6b6b' : '#555'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -129,7 +144,7 @@ function renderLogDetail(log) {
                 <div class="photo-slider">
                     ${log.photos.map((photo, index) => `
                         <div class="photo-slide">
-                            <img src="${photo}" alt="착장 사진 ${index + 1}" onerror="this.parentElement.style.display='none'">
+                            <img alt="착장 사진 ${index + 1}" data-photo-index="${index}">
                         </div>
                     `).join('')}
                 </div>
@@ -146,6 +161,16 @@ function renderLogDetail(log) {
             `;
         }
         
+        if (log.photos.length === 1) {
+            const singleImg = photoSection.querySelector('img');
+            if (singleImg) bindSafePhotoImg(singleImg, log.photos[0]);
+        } else {
+            photoSection.querySelectorAll('img[data-photo-index]').forEach((img) => {
+                const idx = parseInt(img.getAttribute('data-photo-index'), 10);
+                bindSafePhotoImg(img, log.photos[idx]);
+            });
+        }
+
         const header = document.querySelector('.detail-header');
         header.classList.add('transparent');
         header.after(photoSection);
@@ -201,7 +226,11 @@ function renderLogDetail(log) {
         const weatherFitVal = log.weather_fit && ['cold','good','hot'].includes(log.weather_fit)
             ? log.weather_fit : null;
         if (weatherFitVal) {
-            weatherInfo.innerHTML += `<span class="day-weather-fit-chip day-weather-fit-chip--${weatherFitVal}">${weatherFitVal}</span>`;
+            const fitLabel =
+                typeof WEATHER_FIT_LABELS !== 'undefined' && WEATHER_FIT_LABELS[weatherFitVal]
+                    ? WEATHER_FIT_LABELS[weatherFitVal]
+                    : weatherFitVal;
+            weatherInfo.innerHTML += `<span class="day-weather-fit-chip day-weather-fit-chip--${weatherFitVal}">${fitLabel}</span>`;
         }
     }
 
@@ -210,24 +239,38 @@ function renderLogDetail(log) {
     // 본문
     const contentBody = document.querySelector('.content-body');
     if (contentBody) {
+        contentBody.textContent = '';
         if (log.content) {
-            contentBody.innerHTML = `<p>${log.content.replace(/\n/g, '<br>')}</p>`;
+            const p = document.createElement('p');
+            p.style.whiteSpace = 'pre-wrap';
+            p.textContent = log.content;
+            contentBody.appendChild(p);
         } else {
-            contentBody.innerHTML = '<p style="color: #999;">내용이 없습니다.</p>';
+            const p = document.createElement('p');
+            p.className = 'content-body-empty';
+            p.textContent = '메모 없음';
+            contentBody.appendChild(p);
         }
     }
     
     // 태그
     const tagsContainer = document.querySelector('.tags');
     if (tagsContainer) {
+        tagsContainer.textContent = '';
         if (log.tags && log.tags.length > 0) {
-            tagsContainer.innerHTML = log.tags.map(tag => 
-                `<span class="tag">#${tag}</span>`
-            ).join('');
-        } else {
-            tagsContainer.innerHTML = '';
+            const heading = document.createElement('p');
+            heading.className = 'tags-section-label';
+            heading.textContent = '태그';
+            tagsContainer.appendChild(heading);
+            log.tags.forEach((tag) => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.textContent = `#${tag}`;
+                tagsContainer.appendChild(span);
+            });
         }
     }
+
 }
 
 /** items(jsonb): 비어있으면 상세 섹션에서 숨김 */
@@ -288,9 +331,20 @@ function renderOutfitItemsDetail(log) {
         const empty = document.createElement('div');
         empty.className = 'outfit-items-detail-empty';
         const p1 = document.createElement('p');
-        p1.innerHTML =
-            '지금은 착장 품목이 없어요.<br>메뉴에서 수정 후 저장하면 여기에 표시돼요.';
+        p1.textContent = '옷장에서 고른 품목이 여기 보여요.';
         empty.appendChild(p1);
+        const p2 = document.createElement('p');
+        p2.className = 'outfit-items-detail-empty-sub';
+        p2.textContent = '아래 버튼으로 추가할 수 있어요.';
+        empty.appendChild(p2);
+
+        const dateForWrite = log.date ? String(log.date).slice(0, 10) : '';
+        const editHref = `write.html?id=${encodeURIComponent(log.id)}${dateForWrite ? `&date=${encodeURIComponent(dateForWrite)}` : ''}`;
+        const editLink = document.createElement('a');
+        editLink.className = 'outfit-items-detail-edit-link';
+        editLink.href = editHref;
+        editLink.textContent = '착장 품목 추가';
+        empty.appendChild(editLink);
 
         let dbHint = false;
         try {
@@ -451,57 +505,12 @@ function initPhotoSwipe() {
 // 날짜 표시 업데이트
 function updateDateDisplay(dateStr) {
     const dateLabel = document.querySelector('.date-label');
-    if (dateLabel) {
-        const date = new Date(dateStr);
-        const daysKo = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-        
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const dayName = daysKo[date.getDay()];
-        
-        dateLabel.textContent = `${year}.${month}.${day} ${dayName}`;
-    }
+    if (!dateLabel) return;
+    dateLabel.textContent =
+        typeof formatStyleLogDate === 'function'
+            ? formatStyleLogDate(dateStr, 'detail')
+            : String(dateStr || '').slice(0, 10).replace(/-/g, '.');
 }
-
-// 메뉴 버튼
-document.querySelector('.menu-btn')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    showOptionsMenu();
-});
-
-// 옵션 메뉴 표시
-function showOptionsMenu() {
-    const options = ['수정', '삭제', '공유', '즐겨찾기'];
-    console.log('옵션 메뉴:', options);
-    // 실제 구현 시 액션 시트 표시
-}
-
-// 수정 버튼
-document.querySelector('.edit-btn')?.addEventListener('click', () => {
-    console.log('수정 모드로 전환');
-    // 날씨 모달 열기
-    openWeatherModal();
-});
-
-// 삭제 버튼
-document.querySelector('.delete-btn')?.addEventListener('click', async () => {
-    if (!currentLog) return;
-    
-    const ok = await showConfirm('이 기록을 삭제하시겠습니까?', { confirmText: '삭제', danger: true });
-    if (ok) {
-        try {
-            utils.showLoading();
-            await StyleLogAPI.delete(currentLog.id);
-            showAlert('삭제되었습니다.').then(() => window.history.back());
-        } catch (error) {
-            console.error('삭제 오류:', error);
-            utils.showError('삭제에 실패했습니다.');
-        } finally {
-            utils.hideLoading();
-        }
-    }
-});
 
 // 날씨 모달 초기화
 function initWeatherModal() {
@@ -639,6 +648,7 @@ function attachEventListeners() {
     const editBtn = document.querySelector('.edit-menu-btn');
     if (editBtn) {
         editBtn.addEventListener('click', () => {
+            closeMenu();
             if (currentLog && currentLog.id) {
                 const dateForWrite = dateParam || currentLog.date || '';
                 window.location.href = `write.html?id=${currentLog.id}&date=${encodeURIComponent(dateForWrite)}`;
@@ -872,21 +882,13 @@ async function navigateToAdjacentDetailLog(direction) {
 
 // 키보드 단축키
 document.addEventListener('keydown', (e) => {
-    // ESC: 모달 닫기
-    if (e.key === 'Escape') {
-        closeWeatherModal();
+    if (e.key !== 'Escape') return;
+    const menu = document.getElementById('menuPopup');
+    if (menu?.classList.contains('active')) {
+        closeMenu();
+        return;
     }
-    
-    // E: 수정
-    if (e.key === 'e' || e.key === 'E') {
-        openWeatherModal();
-    }
-    
-    // Backspace: 뒤로가기
-    if (e.key === 'Backspace' && !e.target.matches('input, textarea')) {
-        e.preventDefault();
-        window.history.back();
-    }
+    closeWeatherModal();
 });
 
 // 페이지 로드 시 초기화

@@ -248,7 +248,17 @@ function renderWardrobe() {
                     ? '빼 둔 옷이 없어요.'
                     : '이 구분에 빼 둔 옷이 없어요.';
             } else if (active.length === 0) {
-                emptyEl.textContent = '아직 옷이 없어요.';
+                emptyEl.innerHTML = '';
+                const p = document.createElement('p');
+                p.className = 'wardrobe-empty-lead';
+                p.textContent = '코디 작성할 때 고르기 쉽도록 자주 입는 옷을 등록해 두세요.';
+                emptyEl.appendChild(p);
+                const cta = document.createElement('button');
+                cta.type = 'button';
+                cta.className = 'wardrobe-empty-cta';
+                cta.textContent = '+ 첫 옷 추가하기';
+                cta.addEventListener('click', () => document.getElementById('wardrobeAddBtn')?.click());
+                emptyEl.appendChild(cta);
             } else {
                 emptyEl.textContent = '이 구분에 옷이 없어요.';
             }

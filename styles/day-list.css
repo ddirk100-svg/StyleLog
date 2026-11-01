@@ -274,16 +274,8 @@ body.header-scrolled-hidden.year-label-reached-top #favoriteView .month-label-da
 .day-content.photo {
     border-radius: 12px;
     overflow: hidden;
-    min-height: 200px;
-    background-color: #e0e0e0;
+    background-color: var(--outfit-photo-bg, #eef2f7);
     -webkit-tap-highlight-color: transparent; /* 버튼만 눌림 표시 */
-}
-
-.day-content.photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
 }
 
 /* 텍스트(메모) 콘텐츠 */

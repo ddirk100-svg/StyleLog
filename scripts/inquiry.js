@@ -8,15 +8,17 @@ function escapeInquiryHtml(s) {
 
 function formatInquiryDate(iso) {
     if (!iso) return '';
+    if (typeof formatStyleLogDate === 'function') {
+        return formatStyleLogDate(iso, 'datetime');
+    }
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${y}.${m}.${day} ${h}:${min}`;
 }
 
 function renderInquiryCard(row) {
@@ -34,9 +36,9 @@ function renderInquiryCard(row) {
             const tUpdated = updatedIso ? new Date(updatedIso).getTime() : 0;
             const editedLater = tUpdated > tReplied;
             const updateStr = editedLater ? formatInquiryDate(updatedIso) : '';
-            const lineRegistered = `<div class="inquiry-card-reply-meta-line">답변 등록 <time datetime="${escapeInquiryHtml(firstIso)}">${escapeInquiryHtml(firstStr)}</time></div>`;
+            const lineRegistered = `<div class="inquiry-card-reply-meta-line">답변 등록 <time class="sl-date sl-date--datetime" datetime="${escapeInquiryHtml(firstIso)}">${escapeInquiryHtml(firstStr)}</time></div>`;
             const lineEdited = editedLater && updateStr
-                ? `<div class="inquiry-card-reply-meta-line">마지막 수정 <time datetime="${escapeInquiryHtml(updatedIso)}">${escapeInquiryHtml(updateStr)}</time></div>`
+                ? `<div class="inquiry-card-reply-meta-line">마지막 수정 <time class="sl-date sl-date--datetime" datetime="${escapeInquiryHtml(updatedIso)}">${escapeInquiryHtml(updateStr)}</time></div>`
                 : '';
             replyMeta = `<div class="inquiry-card-reply-meta">${lineRegistered}${lineEdited}</div>`;
         }
@@ -53,7 +55,7 @@ function renderInquiryCard(row) {
     return `<li class="inquiry-card">
         <div class="inquiry-card-head">
             <span class="inquiry-card-badge ${answered ? 'is-answered' : 'is-open'}">${answered ? '답변 완료' : '접수'}</span>
-            <time class="inquiry-card-date" datetime="${escapeInquiryHtml(row.created_at)}">${escapeInquiryHtml(dateStr)}</time>
+            <time class="inquiry-card-date sl-date sl-date--datetime" datetime="${escapeInquiryHtml(row.created_at)}">${escapeInquiryHtml(dateStr)}</time>
         </div>
         <h3 class="inquiry-card-title">${escapeInquiryHtml(row.title)}</h3>
         <p class="inquiry-card-body">${escapeInquiryHtml(row.body)}</p>

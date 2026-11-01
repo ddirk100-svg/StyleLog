@@ -14,7 +14,7 @@
 }
 
 .auth-loading p {
-    font-size: 18px;
+    font-size: var(--type-page-title-size);
     color: var(--color-text-tertiary);
 }
 
@@ -32,14 +32,14 @@ body.scroll-restore-pending #homeView {
     transform: translateX(-50%);
     z-index: var(--z-index-sticky);
     background: var(--color-bg-primary);
-    border-radius: 24px;
+    border-radius: var(--surface-radius);
     box-shadow: 0 2px 12px var(--color-shadow-sm);
-    padding: 12px 24px;
+    padding: var(--stack-gap-y) var(--spacing-2xl);
 }
 .infinite-scroll-loader-fixed .util-infinite-loader {
     padding: 0;
     flex-direction: row;
-    gap: 8px;
+    gap: var(--spacing-sm);
 }
 
 /* 공통 스타일 */
@@ -63,23 +63,30 @@ body:has(.container.day-view-active) {
     height: auto;
     position: relative;
     min-height: calc(100vh + 1px);
-    background: var(--color-bg-primary);
+    background: var(--color-bg-canvas);
 }
 
 .container {
     max-width: var(--container-max-width);
     min-height: 100vh;
     margin: 0 auto;
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-bg-canvas);
     overflow-x: hidden;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-md));
+    padding-bottom: var(--page-padding-bottom-nav);
 }
 
-.container.day-view-active {
-    background: var(--color-bg-primary);
+.container.day-view-active,
+.home-shell.day-view-active {
+    background: var(--color-bg-canvas);
+}
+
+.home-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
 }
 
 /* 일별 리스트일 때 container overflow 제거 - body가 스크롤 컨테이너 */
@@ -121,16 +128,22 @@ body:has(.container.day-view-active) {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--spacing-md) var(--home-inset-x);
     position: sticky;
     top: 0;
-    background-color: var(--color-bg-primary);
+    background-color: rgba(250, 250, 250, 0.82);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
     z-index: var(--z-index-sticky);
     flex-shrink: 0;
     transition: transform 0.15s cubic-bezier(0.32, 0.72, 0, 1);
-    box-shadow: 0 1px 0 var(--color-border-lighter);
+    border-bottom: 1px solid transparent;
     box-sizing: border-box;
     min-height: var(--home-day-header-height);
+}
+
+.container.day-view-active .header {
+    border-bottom-color: var(--color-border-lighter);
 }
 
 /* 스크롤 내릴 때 헤더 숨김 (일별 리스트) */
@@ -170,8 +183,8 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 
 .logo-img {
-    height: 45px;
-    max-height: 45px;
+    height: 36px;
+    max-height: 36px;
     width: auto;
     max-width: none;
     object-fit: contain;
@@ -233,8 +246,8 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     width: 80%;
     max-width: 300px;
     height: 100%;
-    background: white;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    background: var(--color-bg-primary);
+    box-shadow: -4px 0 24px var(--color-shadow-md);
     transform: translateX(100%);
     transition: transform 0.3s;
     display: flex;
@@ -249,14 +262,16 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: var(--header-padding-y) var(--page-inset-x);
     border-bottom: 1px solid var(--color-border-light);
 }
 
 .menu-header h2 {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: var(--type-page-title-size);
+    font-weight: var(--type-page-title-weight);
     color: var(--color-text-primary);
+    letter-spacing: var(--type-letter-tight);
+    margin: 0;
 }
 
 .close-menu-btn {
@@ -268,15 +283,15 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 
 .menu-user-info {
-    padding: 20px;
+    padding: var(--surface-padding) var(--page-inset-x);
     background: var(--color-bg-secondary);
     border-bottom: 1px solid var(--color-border-light);
 }
 
 .menu-user-info p {
-    font-size: 14px;
+    font-size: var(--type-body-size);
     color: var(--color-text-secondary);
-    margin: 4px 0;
+    margin: var(--spacing-xs) 0;
 }
 
 .menu-user-info strong {
@@ -309,6 +324,11 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 
 .menu-item svg {
     stroke-width: 2;
+}
+
+a.menu-item-link {
+    text-decoration: none;
+    color: inherit;
 }
 
 /* 상단 컨트롤 영역 */
@@ -478,7 +498,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 .filter-list-section .day-list-container.day-list-view {
     display: block !important;
     margin: 0;
-    padding: var(--spacing-2xl) 20px;
+    padding: var(--stack-gap-y) var(--page-inset-x) var(--spacing-3xl);
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
@@ -493,9 +513,9 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     z-index: 1; /* 착장 품목 포함 필터 행보다 위로 (탭/스크롤 겹침 방지) */
 }
 
-/* 일별 리스트 - gap을 margin으로 처리 */
+/* 일별 리스트 - 피드 간격 (인스타형) */
 .day-list-container.day-list-view > * {
-    margin-bottom: 20px;
+    margin-bottom: var(--feed-item-gap);
 }
 
 .day-list-container.day-list-view > *:last-child {
@@ -701,71 +721,41 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     font-size: 32px;
 }
 
-/* 오늘 날씨 섹션 */
+/* 오늘 날씨 — 날씨 토큰 틴트 + 얇은 테두리 (그라데이션·글로우 최소) */
 .bottom-section {
-    width: 100%;
-    margin: 16px 0 20px;
-    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-    border-radius: var(--radius-lg);
-    padding: 20px 24px;
+    width: calc(100% - 2 * var(--home-inset-x));
+    max-width: calc(var(--container-max-width) - 2 * var(--home-inset-x));
+    margin: var(--spacing-md) auto 0;
+    background: var(--color-bg-primary);
+    border: none;
+    border-radius: var(--home-surface-radius);
+    padding: var(--surface-padding-lg) var(--surface-padding-lg) var(--spacing-lg);
     flex-shrink: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(33, 150, 243, 0.12);
+    box-shadow: none;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: background var(--transition-fast);
 }
 
-/* 날씨별 배경 색상 */
 .bottom-section.weather-sunny {
-    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.15);
+    background: linear-gradient(165deg, var(--color-weather-sunny-start) 0%, var(--color-bg-primary) 72%);
 }
 
 .bottom-section.weather-clear,
 .bottom-section.weather-cloudy {
-    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
+    background: linear-gradient(165deg, var(--color-weather-cloudy-start) 0%, var(--color-bg-primary) 72%);
 }
 
 .bottom-section.weather-rainy {
-    background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 100%);
-    box-shadow: 0 8px 24px rgba(3, 169, 244, 0.15);
+    background: linear-gradient(165deg, var(--color-weather-rainy-start) 0%, var(--color-bg-primary) 72%);
 }
 
 .bottom-section.weather-snowy {
-    background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
-    box-shadow: 0 8px 24px rgba(156, 39, 176, 0.15);
+    background: linear-gradient(165deg, var(--color-weather-snowy-start) 0%, var(--color-bg-primary) 72%);
 }
 
 .bottom-section.weather-lightning {
-    background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
-    box-shadow: 0 8px 24px rgba(255, 193, 7, 0.15);
-}
-
-.bottom-section::before {
-    content: '';
-    position: absolute;
-    top: -30%;
-    right: -15%;
-    width: 250px;
-    height: 250px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0.6;
-}
-
-.bottom-section::after {
-    content: '';
-    position: absolute;
-    bottom: -20%;
-    left: -10%;
-    width: 180px;
-    height: 180px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0.5;
+    background: linear-gradient(165deg, var(--color-weather-lightning-start) 0%, var(--color-bg-primary) 72%);
 }
 
 /* 날씨 카드 — 맞춤 코디 토글 */
@@ -776,33 +766,169 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     gap: 10px;
 }
 
+.weather-widget-eyebrow {
+    margin: 0;
+    font-size: var(--type-eyebrow-size);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--color-text-secondary);
+    position: relative;
+    z-index: 1;
+}
+
+.weather-widget-date {
+    margin: var(--spacing-xs) 0 var(--spacing-sm);
+    color: var(--type-caption-color);
+    font-weight: var(--font-weight-medium);
+}
+
 .weather-recommend-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.45);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-sm) 0;
+    margin-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border-lighter);
+}
+
+.weather-recommend-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .weather-recommend-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #222;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
     letter-spacing: -0.02em;
 }
 
-.home-recommend-switch {
-    width: 48px;
-    height: 28px;
-    border-radius: 8px;
+.weather-recommend-hint {
+    display: block;
+    font-size: var(--type-caption-size);
+    line-height: var(--type-caption-line);
+    color: var(--type-section-desc-color);
+    letter-spacing: var(--type-letter-body);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.weather-recommend-hint[hidden] {
+    display: none !important;
+}
+
+.home-quick-actions {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 8px;
+    padding: 0 16px 14px;
+    background: var(--color-bg-primary);
+}
+
+.home-quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border-light);
+    background: var(--color-bg-secondary);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.home-quick-action:active {
+    opacity: 0.85;
+}
+
+.home-quick-action--primary {
+    background: var(--color-primary-light);
+    border-color: rgba(37, 99, 235, 0.25);
+}
+
+.home-quick-action-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.home-quick-action-label {
+    font-size: 12px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+    text-align: center;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: manual;
+}
+
+.home-coach-banner {
+    margin: 0 16px 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.home-coach-banner__text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.home-coach-banner__text p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.home-coach-banner__close {
+    align-self: flex-end;
+    padding: 8px 14px;
     border: none;
-    background: rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+}
+
+.home-inline-link {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+}
+
+.home-inline-link:active {
+    opacity: 0.7;
+}
+
+.home-recommend-switch {
+    width: 44px;
+    height: 26px;
+    margin: 0;
+    border-radius: var(--radius-full);
+    border: none;
+    background: var(--color-border-mid);
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
-    transition: background 0.2s ease;
+    transition: background var(--transition-fast) var(--transition-ease);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -812,211 +938,67 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     position: absolute;
     width: 22px;
     height: 22px;
-    border-radius: 6px;
-    background: #fff;
-    top: 3px;
-    left: 3px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s ease;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-primary);
+    top: 2px;
+    left: 2px;
+    box-shadow: 0 1px 2px var(--color-shadow-sm);
+    transition: transform var(--transition-fast) var(--transition-ease);
 }
 
 .home-recommend-switch.is-on {
-    background: var(--color-primary);
+    background: var(--color-btn-accent-bg);
 }
 
 .home-recommend-switch.is-on::after {
-    transform: translateX(20px);
+    transform: translateX(18px);
 }
 
-/* 기온별 옷차림 캐러셀 */
-.outfit-carousel-section {
-    width: 100%;
-    margin: 0 0 24px;
-    padding: var(--spacing-2xl) 16px;
-    background: var(--color-bg-primary);
-    border-radius: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    flex-shrink: 0;
-}
-
-.outfit-carousel-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-lg) 0;
-    padding: 0;
-    letter-spacing: -0.02em;
-}
-
-/* 코디 모음 — 필터 블록 바로 위 섹션 제목 (기온별 옷차림과 동일 타이포) */
+/* 내 코디 — 필터·피드 묶음 상단 */
 .coordi-collection-heading {
     width: 100%;
-    padding: 0 16px;
-    margin: 0 0 12px;
+    padding: var(--section-gap-y) var(--page-inset-x) var(--stack-gap-y);
+    margin: 0;
     flex-shrink: 0;
-    background: var(--color-bg-primary);
-}
-.coordi-collection-heading .outfit-carousel-title {
-    margin-bottom: 0;
+    background: transparent;
 }
 
-/* 기온 구간 칩 (필터 바 카테고리 칩과 동일: 한 줄 가로 스크롤) */
-.outfit-range-row {
+.home-section-desc-block {
+    margin: 6px 0 0;
+    padding: 0 16px;
     display: flex;
-    align-items: center;
-    margin: 0 -16px var(--spacing-md);
+    flex-direction: column;
+    gap: 4px;
+}
+
+.home-section-desc {
+    margin: 0;
     padding: 0;
-    position: relative;
-}
-.outfit-range-row::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 20px;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 0;
-    transition: opacity 0.2s;
-    background: linear-gradient(to right, var(--color-bg-primary), transparent);
-}
-.outfit-range-row.fade-left::before {
-    opacity: 1;
-}
-.outfit-range-row::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 24px;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 0;
-    transition: opacity 0.2s;
-    background: linear-gradient(to left, var(--color-bg-primary), transparent);
-}
-.outfit-range-row.fade-right::after {
-    opacity: 1;
-}
-.outfit-range-chips-wrap {
-    flex: 1;
-    min-width: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 0 16px;
-    position: relative;
-}
-.outfit-range-chips-wrap::-webkit-scrollbar {
-    display: none;
-}
-.outfit-range-chips {
-    display: inline-flex;
-    flex-wrap: nowrap;
-    gap: 8px;
-    padding: 0;
-    min-width: min-content;
-}
-.outfit-range-btn {
-    flex-shrink: 0;
-    padding: 8px 14px;
-    background: var(--color-bg-primary);
-    border: 2px solid var(--color-border-mid);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, background 0.2s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-@media (hover: hover) {
-    .outfit-range-btn:hover {
-        border-color: var(--color-primary);
-        color: var(--color-primary);
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
-    }
-}
-.outfit-range-btn.is-active {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: var(--color-bg-hover);
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
-    font-weight: 600;
-}
-.outfit-range-btn:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-}
-
-/* 정적 샘플 이미지 1장 (슬라이더 없음) */
-.outfit-sample-frame {
-    height: 240px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    background: var(--color-bg-secondary);
-}
-.outfit-sample-frame img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.outfit-carousel-section[hidden] {
-    display: none !important;
-}
-
-.outfit-carousel-slide {
-    position: relative;
-    cursor: pointer;
-}
-
-.outfit-carousel-slide-caption {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
     font-size: var(--font-size-sm);
-    color: #fff;
+    line-height: 1.55;
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-weight-normal);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.home-section-desc strong {
     font-weight: var(--font-weight-semibold);
-    pointer-events: none;
-}
-
-.outfit-carousel-slide--empty {
-    cursor: default;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.outfit-carousel-empty-inner {
-    text-align: center;
-    padding: var(--spacing-xl);
     color: var(--color-text-secondary);
 }
 
-.outfit-carousel-empty-inner .util-sub {
-    margin-top: var(--spacing-sm);
-    font-size: var(--font-size-xs);
+.coordi-collection-heading .home-section-desc-block {
+    margin-bottom: 4px;
 }
 
 /* 필터 + 일별 리스트 (하나의 세트) - overflow: visible 필수 (year/month 레이블 sticky 동작) */
 .filter-list-section {
     width: 100%;
-    margin: 0 0 24px;
-    background: var(--color-bg-primary);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    margin: 0 0 var(--spacing-2xl);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     overflow: visible;
     flex-shrink: 0;
     /* 필터 칩 행 vs 일별 리스트 z-index 충돌을 이 블록 안에서만 해결 (상단 코디 모음 등과 레이어 섞임 방지) */
@@ -1044,9 +1026,9 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     min-height: 0;
 }
 .filter-row-category {
-    gap: 8px;
-    padding: 10px 14px;
-    background: var(--color-bg-primary);
+    gap: var(--spacing-sm);
+    padding: var(--stack-gap-y) var(--page-inset-x);
+    background: transparent;
     position: relative;
 }
 .filter-btn {
@@ -1054,37 +1036,43 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    background: var(--color-bg-primary);
-    border: 2px solid var(--color-border-mid);
-    border-radius: 8px;
-    color: var(--color-text-secondary);
+    width: auto;
+    min-width: 40px;
+    height: 36px;
+    padding: 0 var(--spacing-md);
+    background: var(--chip-idle-bg);
+    border: var(--chip-border);
+    border-radius: var(--chip-radius);
+    color: var(--chip-idle-color);
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: none;
+    transition: background var(--transition-fast), color var(--transition-fast);
 }
 .filter-btn:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+    color: var(--color-text-primary);
 }
 .filter-btn.has-active {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+    color: var(--chip-active-fg);
+    background: var(--chip-active-bg);
     position: relative;
 }
 .filter-btn.has-active::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 6px;
-    height: 6px;
-    background: var(--color-primary);
-    border-radius: 50%;
+    display: none;
+}
+
+.filter-btn--with-label {
+    width: auto;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px 0 8px;
+    gap: 4px;
+}
+
+.filter-btn-label {
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    letter-spacing: -0.02em;
 }
 .filter-category-chips-wrap {
     flex: 1;
@@ -1100,7 +1088,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     left: 0;
     top: 0;
     bottom: 0;
-    width: 48px; /* filter-btn(40) + gap(8) */
+    width: 72px; /* filter-btn(라벨 포함) + gap(8) — 좌측 페이드 */
     pointer-events: none;
     z-index: 2;
     opacity: 0;
@@ -1139,31 +1127,26 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 .filter-category-chip {
     flex-shrink: 0;
-    padding: 8px 14px;
-    background: var(--color-bg-primary);
-    border: 2px solid var(--color-border-mid);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--chip-idle-bg);
+    border: var(--chip-border);
+    border-radius: var(--chip-radius);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--chip-idle-color);
     cursor: pointer;
     white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: none;
+    transition: background var(--transition-fast), color var(--transition-fast);
 }
-/* hover는 마우스 등 호버 가능 기기에서만 (터치 드래그 시 sticky hover 방지) */
 @media (hover: hover) {
     .filter-category-chip:hover {
-        border-color: var(--color-primary);
-        color: var(--color-primary);
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+        color: var(--color-text-primary);
     }
 }
 .filter-category-chip.has-filter {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: var(--color-bg-hover);
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+    color: var(--chip-active-fg);
+    background: var(--chip-active-bg);
 }
 .filter-row-active {
     display: none;
@@ -1360,7 +1343,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1000;
+    z-index: var(--z-index-app-sheet);
 }
 .filter-modal.active {
     display: flex;
@@ -1371,7 +1354,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--modal-overlay);
 }
 .filter-modal-content {
     position: absolute;
@@ -1380,7 +1363,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     right: 0;
     max-height: 85vh;
     background: var(--color-bg-primary);
-    border-radius: 20px 20px 0 0;
+    border-radius: var(--modal-sheet-top-radius) var(--modal-sheet-top-radius) 0 0;
     display: flex;
     flex-direction: column;
     animation: filterSlideUp 0.3s ease-out;
@@ -1393,24 +1376,23 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: var(--header-padding-y) var(--page-inset-x);
     border-bottom: 1px solid var(--color-border-lighter);
 }
 .filter-modal-header h3 {
-    font-size: 18px;
-    font-weight: 700;
+    margin: 0;
 }
 .filter-modal-close {
     background: none;
     border: none;
-    padding: 4px;
+    padding: var(--spacing-xs);
     cursor: pointer;
     color: var(--color-text-secondary);
 }
 .filter-modal-tabs {
     display: flex;
-    gap: 4px;
-    padding: 12px 20px;
+    gap: var(--spacing-xs);
+    padding: var(--stack-gap-y) var(--page-inset-x);
     background: var(--color-bg-muted);
     border-bottom: 1px solid var(--color-border-mid);
     overflow-x: auto;
@@ -1418,15 +1400,15 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 .filter-tab {
     flex-shrink: 0;
-    padding: 8px 14px;
+    padding: var(--chip-padding-y) var(--spacing-md);
     min-width: 52px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: none;
     border: none;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--type-body-size);
+    font-weight: var(--font-weight-medium);
     color: var(--color-text-secondary);
     cursor: pointer;
     border-bottom: 2px solid transparent;
@@ -1440,11 +1422,20 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     font-weight: 600;
     border-bottom-color: var(--color-primary);
 }
+.filter-panel-hint {
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-text-tertiary);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
 .filter-modal-body {
     overflow-y: auto;
-    padding: 20px;
+    padding: var(--surface-padding) var(--page-inset-x);
     flex: 1;
-    background: #fff;
+    background: var(--color-bg-primary);
 }
 .filter-tab-panel {
     display: none;
@@ -1506,11 +1497,20 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     gap: 12px;
     min-height: 120px;
 }
+.filter-outfit-hint-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
 .filter-outfit-hint {
     font-size: 13px;
     line-height: 1.55;
     color: var(--color-text-tertiary);
-    margin: 0 0 4px;
+    margin: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 .filter-outfit-empty {
     font-size: 14px;
@@ -1520,7 +1520,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 .filter-outfit-category {
     border: 1px solid var(--color-border-mid);
-    border-radius: 10px;
+    border-radius: var(--photo-radius);
     overflow: hidden;
     background: var(--color-bg-primary);
 }
@@ -1602,7 +1602,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     color: var(--color-text-secondary);
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-sm);
+    border-radius: var(--btn-radius);
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -1611,9 +1611,9 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     color: var(--color-text-primary);
 }
 #filterTempTodayBtn.active {
-    background: var(--color-primary-light);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
+    background: var(--chip-active-bg);
+    color: var(--chip-active-fg);
+    border-color: transparent;
 }
 .filter-temp-track-wrap {
     flex: 1;
@@ -1731,26 +1731,32 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 
 .filter-modal-footer {
-    padding: 20px;
     border-top: 1px solid var(--color-border-lighter);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--stack-gap-y);
 }
 .filter-apply-btn {
     width: 100%;
-    padding: 16px;
-    background: var(--color-text-primary);
-    color: white;
+    min-height: var(--btn-height-md);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--color-btn-solid-bg);
+    color: var(--color-btn-solid-fg);
     border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
+    border-radius: var(--btn-radius);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
+    letter-spacing: -0.02em;
+    transition: background var(--transition-fast);
 }
 .filter-apply-btn:hover {
-    background: var(--color-text-primary);
+    background: var(--color-btn-solid-hover);
 }
+.filter-modal:not(.has-selection) .filter-reset-all-btn {
+    display: none;
+}
+
 .filter-reset-all-btn {
     background: none;
     border: none;
@@ -1760,7 +1766,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     padding: 8px;
 }
 .filter-reset-all-btn:hover {
-    color: var(--color-primary);
+    color: var(--color-text-primary);
 }
 
 /* 날씨 위젯 (Danble 스타일) */
@@ -1793,28 +1799,27 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 
 .weather-widget-avg-label {
     font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: #555;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
     padding: 2px 6px;
-    background: rgba(0, 0, 0, 0.06);
-    border-radius: 4px;
+    background: var(--color-bg-muted);
+    border-radius: var(--radius-sm);
     display: none;
 }
 
 .weather-widget-current-temp {
-    font-size: 38px;
-    font-weight: 800;
-    color: #1a1a1a;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    font-size: var(--type-weather-display-size);
+    font-weight: var(--type-weather-display-weight);
+    color: var(--color-text-primary);
+    line-height: 1;
+    letter-spacing: var(--type-letter-tight);
 }
 
 .weather-widget-temp-range {
     font-size: var(--font-size-base);
-    font-weight: 600;
-    color: #444;
-    letter-spacing: 0.01em;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    letter-spacing: -0.02em;
 }
 
 .weather-widget-icon {
@@ -1822,20 +1827,21 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.92;
 }
 
 .weather-widget-icon svg {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
 }
 
 .weather-widget-icon .weather-icon {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
     color: var(--color-text-primary);
-    stroke-width: 1.5;
+    stroke-width: 1.35;
 }
 
 .weather-widget-summary {
@@ -1848,16 +1854,20 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
 }
 
 .weather-widget-status {
-    font-size: var(--font-size-lg);
-    font-weight: 700;
-    color: #1a1a1a;
-    letter-spacing: -0.01em;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
 }
 
 .weather-widget-diff {
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: #444;
+    flex: 1 1 100%;
+    font-size: var(--font-size-sm);
+    line-height: 1.45;
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-secondary);
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 .weather-section {
@@ -2015,16 +2025,17 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     top: var(--home-day-header-height);
     transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
     margin: 0 -20px;
-    padding: 0 20px;
+    padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-xs);
     min-height: var(--home-day-year-band-height);
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: var(--font-size-md);
+    font-weight: var(--type-section-title-weight);
     line-height: 1.2;
+    letter-spacing: -0.03em;
     color: var(--color-text-primary);
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-bg-canvas);
     z-index: 11;
     margin-top: 0;
     margin-bottom: 0;
@@ -2036,60 +2047,241 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     position: sticky;
     top: calc(var(--home-day-header-height) + var(--home-day-year-band-height));
     transition: top 0.12s cubic-bezier(0.32, 0.72, 0, 1);
-    margin: 0 -20px 8px;
-    padding: 0 20px 4px;
-    font-size: 16px;
-    font-weight: 600;
+    margin: 0 -20px var(--spacing-sm);
+    padding: 0 var(--spacing-xl) var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     line-height: 1.25;
-    color: var(--color-text-secondary);
-    background-color: var(--color-bg-primary);
+    letter-spacing: -0.01em;
+    color: var(--color-text-tertiary);
+    background-color: var(--color-bg-canvas);
     z-index: 11;
     width: calc(100% + 40px);
     display: block;
 }
 
-/* Day 아이템 */
+/* Day 피드 — 코디 훑어보기 (사진 우선 · 메타 한 줄) */
 .day-item {
     display: flex;
-    gap: 16px;
-    padding: 18px;
-    background: var(--color-bg-primary);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--color-border-lighter);
-    -webkit-tap-highlight-color: transparent; /* favorite/item-menu 탭 시 day-item 반짝임 방지 */
-}
-
-.day-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.day-left {
-    display: flex;
     flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    border-radius: 0;
+    cursor: pointer;
+    border: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.day-item--memo {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-lighter);
+    border-radius: var(--radius-md);
+}
+
+@media (hover: hover) {
+    .day-item--memo:hover {
+        border-color: var(--color-border-light);
+    }
+}
+
+/* 사진 카드 — 히어로 */
+.day-item--photo .day-card-hero {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--outfit-photo-bg, var(--color-bg-subtle));
+    -webkit-tap-highlight-color: transparent;
+}
+
+.day-card-overlay-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.day-card-overlay-actions .day-card-actions {
+    pointer-events: auto;
+}
+
+.day-card-actions {
+    display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
 }
 
-.day-date {
-    text-align: center;
+/* 피드 카드 전용 — 레거시 absolute 덮어씀 */
+.day-item .day-card-icon-btn {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border-lighter);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: var(--color-text-secondary);
+    box-shadow: none;
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.day-number {
-    font-size: 24px;
-    font-weight: 700;
+.day-item--memo .day-card-icon-btn {
+    background: var(--color-bg-primary);
+}
+
+.day-item .day-card-icon-btn:hover {
+    transform: none;
+    background: #fff;
     color: var(--color-text-primary);
 }
 
-.day-week {
-    font-size: 11px;
-    font-weight: 600;
+.day-item--memo .day-card-icon-btn:hover {
+    background: var(--color-bg-muted);
+}
+
+.day-item .day-card-icon-btn.active {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(255, 107, 107, 0.35);
+}
+
+/* 날짜 · 날씨 요약 줄 */
+.day-card-summary {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.day-item--photo .day-card-summary {
+    border-top: none;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: var(--spacing-sm);
+}
+
+.day-item--memo .day-card-summary {
+    border-bottom: 1px solid var(--color-border-lighter);
+    background: var(--color-bg-primary);
+}
+
+.day-card-date-label {
+    white-space: nowrap;
+}
+
+.day-card-weather-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
-    letter-spacing: 0.5px;
+}
+
+.day-card-weather-inline svg {
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+}
+
+.day-card-temps {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.day-card-temps .temp-high {
+    color: var(--color-temp-high);
+    font-weight: var(--font-weight-semibold);
+}
+
+.day-card-temps .temp-sep {
+    color: var(--color-text-disabled);
+    font-size: 10px;
+}
+
+.day-card-temps .temp-low {
+    color: var(--color-temp-low);
+    font-weight: var(--font-weight-medium);
+}
+
+.day-card-weather-inline .day-weather-fit-chip {
+    margin-top: 0;
+    padding: 2px 7px;
+    font-size: 9px;
+}
+
+.day-card-summary .day-card-actions {
+    grid-column: 3;
+}
+
+.day-card-weather-inline {
+    grid-column: 2;
+}
+
+.day-card-date-label {
+    grid-column: 1;
+}
+
+/* 메모 · 부가 텍스트 */
+.day-card-note {
+    padding: 12px 14px 14px;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    word-break: break-word;
+}
+
+.day-card-note-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-right: 6px;
+}
+
+.day-card-note-title--muted {
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-weight-medium);
+}
+
+.day-card-note-body {
+    color: var(--color-text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.day-item--memo .day-card-note-body {
+    margin-top: 6px;
+}
+
+.day-card-note--muted {
+    margin: 0;
+    padding: 14px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
 }
 
 .day-content {
@@ -2097,54 +2289,7 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     position: relative;
 }
 
-.day-content.photo {
-    border-radius: 8px;
-    overflow: hidden;
-    height: 200px;
-    -webkit-tap-highlight-color: transparent; /* 버튼만 눌림 표시, 영역 확장 방지 */
-}
-
-.day-content.photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.day-content.text {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    -webkit-tap-highlight-color: transparent; /* 버튼만 눌림 표시, 영역 확장 방지 */
-}
-
-.quote-mark {
-    font-size: 48px;
-    font-weight: 700;
-    color: var(--color-accent);
-    opacity: 0.3;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-.memo-text {
-    flex: 1;
-}
-
-.memo-text h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: 4px;
-}
-
-.memo-text p {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-}
-
-/* 즐겨찾기 버튼 */
+/* 즐겨찾기 (카드 헤더 외 레거시 오버레이용) */
 .favorite-toggle-btn {
     position: absolute;
     bottom: 8px;
@@ -2302,23 +2447,23 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     }
     
     .weather-widget-current-temp {
-        font-size: 32px;
-        font-weight: 800;
+        font-size: 48px;
+        font-weight: 200;
     }
 
     .weather-widget-temp-range {
         font-size: var(--font-size-sm);
-        font-weight: 600;
+        font-weight: var(--font-weight-medium);
     }
 
     .weather-widget-status {
         font-size: var(--font-size-md);
-        font-weight: 700;
+        font-weight: var(--font-weight-semibold);
     }
 
     .weather-widget-diff {
         font-size: var(--font-size-sm);
-        font-weight: 600;
+        font-weight: var(--font-weight-normal);
     }
 
     .weather-widget-icon,

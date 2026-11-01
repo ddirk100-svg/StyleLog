@@ -1,0 +1,86 @@
+@import url('variables.css');
+
+/* 홈 — 코디 히어로 (3:4) */
+.day-item.day-item--photo .day-card-hero.day-content.photo {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: var(--outfit-photo-aspect);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.day-item.day-item--photo .day-card-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+#monthDetailView .day-content.photo,
+.day-list .day-content.photo {
+    flex: 0 0 auto;
+    width: var(--outfit-photo-list-width);
+    height: auto;
+    min-height: 0;
+    aspect-ratio: var(--outfit-photo-aspect);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--outfit-photo-bg);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+#monthDetailView .day-content.photo img,
+.day-list .day-content.photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.photo-section {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: var(--outfit-photo-max-height-detail);
+    aspect-ratio: var(--outfit-photo-aspect);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--outfit-photo-bg);
+    overflow: hidden;
+}
+
+.photo-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.photo-gallery {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: var(--outfit-photo-max-height-detail);
+    aspect-ratio: var(--outfit-photo-aspect);
+    background-color: var(--outfit-photo-bg);
+    overflow: hidden;
+}
+
+.photo-gallery .photo-slide {
+    background-color: var(--outfit-photo-bg);
+}
+
+.photo-gallery .photo-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}

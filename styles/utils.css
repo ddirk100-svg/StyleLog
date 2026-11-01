@@ -1,17 +1,199 @@
 /* 공통 UI 유틸리티 - home.js, config.js 등에서 인라인 대신 클래스 사용 */
 @import url('variables.css');
 
+/* 섹션 제목·설명 (홈 「내 코디」 등) */
+.sl-section-title {
+    font-size: var(--type-section-title-size);
+    font-weight: var(--type-section-title-weight);
+    color: var(--color-text-primary);
+    letter-spacing: var(--type-letter-tight);
+    line-height: var(--type-section-title-line);
+    margin: 0;
+}
+
+.sl-section-desc {
+    font-size: var(--type-section-desc-size);
+    font-weight: var(--font-weight-normal);
+    color: var(--type-section-desc-color);
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    margin: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+/* 날짜 표기 (피드·상세) */
+.sl-date {
+    font-size: var(--type-caption-size);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    letter-spacing: var(--type-letter-body);
+    font-variant-numeric: tabular-nums;
+}
+
+.sl-date--detail {
+    font-size: var(--type-body-size);
+    color: var(--type-caption-color);
+    font-weight: var(--font-weight-medium);
+}
+
+.sl-date--datetime {
+    font-size: var(--type-caption-size);
+    font-weight: var(--font-weight-normal);
+    color: var(--type-section-desc-color);
+    letter-spacing: var(--type-letter-body);
+}
+
+/* Typography roles */
+.sl-type-body {
+    font-size: var(--type-body-size);
+    font-weight: var(--type-body-weight);
+    line-height: var(--type-body-line);
+    color: var(--type-body-color);
+    letter-spacing: var(--type-letter-body);
+}
+
+.sl-type-caption {
+    font-size: var(--type-caption-size);
+    line-height: var(--type-caption-line);
+    color: var(--type-caption-color);
+    letter-spacing: var(--type-letter-body);
+}
+
+.sl-label,
+.form-label {
+    display: block;
+    font-size: var(--type-label-size);
+    font-weight: var(--type-label-weight);
+    color: var(--color-text-primary);
+    margin-bottom: var(--form-field-gap);
+    letter-spacing: var(--type-letter-body);
+}
+
+.form-hint {
+    font-size: var(--type-caption-size);
+    line-height: var(--type-caption-line);
+    color: var(--type-section-desc-color);
+    letter-spacing: var(--type-letter-body);
+}
+
+/* 버튼 — 앱 전역 (filled / outline) */
+.sl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--btn-height-md);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    border-radius: var(--btn-radius);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: background var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sl-btn-solid {
+    background: var(--color-btn-solid-bg);
+    color: var(--color-btn-solid-fg);
+}
+
+.sl-btn-solid:hover:not(:disabled) {
+    background: var(--color-btn-solid-hover);
+}
+
+.sl-btn-solid:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sl-btn-outline {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-btn-outline-border);
+}
+
+.sl-btn-outline:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+}
+
+.sl-btn-block {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/*
+ * Radius contract — 클릭 가능한 직사각 버튼은 --btn-radius 만 사용 (가이드 §14)
+ * 칩·필터 pill → --chip-radius / 입력 → --input-radius / 카드·패널 → --surface-radius
+ */
+.auth-btn,
+.btn-primary,
+.filter-apply-btn,
+.filter-temp-action-btn,
+.stylelog-dialog-btn,
+.mypage-nudge-btn,
+.logout-btn,
+.inquiry-submit-btn,
+.mandatory-birth-submit,
+.wardrobe-mode-tab,
+.util-btn-primary,
+.util-btn-secondary {
+    border-radius: var(--btn-radius);
+}
+
+.filter-category-chip,
+.filter-active-chip,
+.weather-fit-btn,
+.wardrobe-cat-chip {
+    border-radius: var(--chip-radius);
+    padding: var(--chip-padding-y) var(--chip-padding-x);
+    font-size: var(--type-caption-size);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--type-letter-body);
+}
+
+.form-input,
+.form-textarea,
+.stylelog-dialog-input {
+    border-radius: var(--input-radius);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--type-input-size);
+    line-height: var(--type-body-line);
+    letter-spacing: var(--type-letter-body);
+}
+
+/*
+ * Spacing & typography contract — 페이지 여백·섹션 간격·역할별 글자 (가이드 §15–§16)
+ * 좌우 inset → --page-inset-x / 섹션 → --section-gap-y / 폼 → --form-section-gap, --form-field-gap
+ * 제목·본문·캡션 → .sl-section-title, .sl-type-caption, .sl-label / 날짜 → .sl-date
+ */
+
+.mypage-header {
+    padding-top: var(--header-padding-y);
+    padding-bottom: var(--header-padding-y);
+}
+
+.write-header .header-title,
+.mypage-header .header-title {
+    font-size: var(--type-page-title-size);
+    font-weight: var(--type-page-title-weight);
+    letter-spacing: var(--type-letter-tight);
+}
+
 /* 빈 상태 / 에러 상태 / 로딩 (home.js 동적 생성용) */
 .util-empty,
 .util-error,
 .util-loading {
     text-align: center;
-    padding: 60px 20px;
+    padding: var(--spacing-5xl) var(--page-inset-x);
 }
 
-.util-empty.util-empty--spacious { padding: 100px 20px; }
-.util-error.util-error--spacious { padding: 80px 20px; }
-.util-sub.util-sub--spaced { margin-bottom: 24px; }
+.util-empty.util-empty--spacious { padding: var(--spacing-5xl) var(--page-inset-x) var(--spacing-5xl); }
+.util-error.util-error--spacious { padding: var(--spacing-4xl) var(--page-inset-x); }
+.util-sub.util-sub--spaced { margin-bottom: var(--section-gap-y); }
 .util-sub.util-sub--sm { font-size: var(--font-size-sm); }
 
 .util-empty { color: var(--color-text-tertiary); }
@@ -20,36 +202,97 @@
 .util-error .util-error-title {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
-    margin-bottom: 12px;
+    margin-bottom: var(--stack-gap-y);
 }
 
 .util-empty p,
 .util-error p,
 .util-loading p {
     font-size: var(--font-size-lg);
-    margin-bottom: 12px;
+    margin-bottom: var(--stack-gap-y);
 }
 
 .util-empty .util-sub,
 .util-error .util-sub {
     font-size: var(--font-size-base);
     color: var(--color-text-tertiary);
+    line-height: 1.6;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.util-empty > p:first-of-type {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.util-empty .util-sub {
+    max-width: 18rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.util-empty .util-sub + .util-sub {
+    margin-top: var(--spacing-xs);
+    margin-bottom: 0;
 }
 
 .util-btn-primary {
-    margin-top: 20px;
-    padding: 12px 24px;
-    background: var(--color-primary) !important;
-    color: var(--color-text-inverse) !important;
+    margin-top: var(--spacing-xl);
+}
+
+.util-btn-primary.sl-btn-solid,
+.util-btn-primary:not(.sl-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--btn-height-md);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    background: var(--color-btn-solid-bg) !important;
+    color: var(--color-btn-solid-fg) !important;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--btn-radius);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+}
+
+.util-btn-primary.sl-btn-solid:hover,
+.util-btn-primary:not(.sl-btn):hover {
+    background: var(--color-btn-solid-hover) !important;
+}
+
+.util-btn-secondary {
+    margin-top: var(--spacing-md);
+}
+
+.util-btn-secondary.sl-btn-outline,
+.util-btn-secondary:not(.sl-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--btn-height-md);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-btn-outline-border);
+    border-radius: var(--btn-radius);
     cursor: pointer;
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
 }
 
-.util-btn-primary:hover {
-    background: var(--color-primary-dark) !important;
+.util-btn-secondary.sl-btn-outline:hover,
+.util-btn-secondary:not(.sl-btn):hover {
+    background: var(--color-bg-hover);
+}
+
+.util-empty .util-btn-secondary + .util-btn-primary {
+    margin-top: var(--stack-gap-y);
 }
 
 /* 로딩 스피너 (config.js utils.showLoading) */
@@ -82,8 +325,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
-    gap: 12px;
+    padding: var(--spacing-4xl) var(--page-inset-x);
+    gap: var(--stack-gap-y);
 }
 
 .util-infinite-loader .util-spinner {
@@ -99,9 +342,9 @@
 /* 리스트 끝 메시지 */
 .util-end-message {
     text-align: center;
-    padding: 40px 20px;
+    padding: var(--spacing-4xl) var(--page-inset-x);
     color: var(--color-text-tertiary);
-    font-size: var(--font-size-base);
+    font-size: var(--type-body-size);
 }
 
 .util-end-message p { margin: 0; }
@@ -109,9 +352,9 @@
 /* 필터 로딩 인디케이터 */
 .util-filter-loading {
     text-align: center;
-    padding: 16px;
+    padding: var(--spacing-lg);
     color: var(--color-text-tertiary);
-    font-size: var(--font-size-base);
+    font-size: var(--type-body-size);
 }
 
 /* 작성/상세: 본문과 구분되는 보조 액션 (마이페이지 메뉴 행과 톤 맞춤) */
@@ -122,12 +365,12 @@
 }
 
 .page-aux-section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-text-tertiary);
+    font-size: var(--type-eyebrow-size);
+    font-weight: var(--type-eyebrow-weight);
+    color: var(--type-eyebrow-color);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin: 0 0 10px;
+    margin: 0 0 var(--spacing-sm);
 }
 
 .page-aux-menu {
@@ -140,15 +383,15 @@
 .page-aux-menu-item {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: var(--spacing-md);
     width: 100%;
-    padding: 16px 16px;
+    padding: var(--spacing-lg) var(--page-inset-x);
     margin: 0;
     border: none;
     background: none;
     font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 500;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
     cursor: pointer;
     text-align: left;
@@ -167,7 +410,7 @@
 .page-aux-menu-icon {
     width: 32px;
     flex-shrink: 0;
-    font-size: 18px;
+    font-size: var(--type-section-title-size);
     line-height: 1;
     text-align: center;
 }
@@ -179,8 +422,29 @@
 
 .page-aux-menu-arrow {
     flex-shrink: 0;
-    font-size: 22px;
+    font-size: var(--font-size-2xl);
     font-weight: 300;
     color: var(--color-text-tertiary);
     line-height: 1;
+}
+
+/*
+ * Overlay & sheet contract (DESIGN_SYSTEM.md §18)
+ * — dim: var(--modal-overlay) / 하단 시트 상단: var(--modal-sheet-top-radius)
+ * — z-index: 바텀탭 < --z-index-app-sheet(9600) < 작성 시트(9935+) < dialog(10000)
+ */
+.sl-sheet-title,
+.filter-modal-header h3,
+.crop-modal-header h3,
+.outfit-category-sheet__title {
+    font-size: var(--type-page-title-size);
+    font-weight: var(--type-page-title-weight);
+    letter-spacing: var(--type-letter-tight);
+    color: var(--color-text-primary);
+}
+
+.sl-sheet-footer,
+.filter-modal-footer {
+    padding: var(--surface-padding) var(--page-inset-x)
+        calc(var(--surface-padding) + env(safe-area-inset-bottom, 0px));
 }

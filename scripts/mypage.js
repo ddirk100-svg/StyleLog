@@ -5,13 +5,18 @@ async function initPage() {
     if (verEl && typeof APP_VERSION !== 'undefined' && APP_VERSION) {
         verEl.textContent = `스타일로그 ${APP_VERSION}`;
     }
-    await loadUserProfile();
+    const user = await getCurrentUser();
+    await loadUserProfile(user);
     attachEventListeners();
-    loadStats().catch(() => {}); /* 통계는 비동기 로드 - 화면 먼저 표시 */
+    if (user?.id) {
+        loadStats(user).catch(() => {});
+    } else {
+        loadStats(null).catch(() => {});
+    }
 }
 
-async function loadUserProfile() {
-    const user = await getCurrentUser();
+async function loadUserProfile(userArg) {
+    const user = userArg ?? (await getCurrentUser());
     const emailEl = document.getElementById('profileEmail');
     const avatarEl = document.getElementById('profileAvatar');
     const metaEl = document.getElementById('profileMeta');
@@ -38,73 +43,111 @@ function formatStatCount(n) {
     return String(n);
 }
 
-async function loadStats() {
+function countFromLimitedRows(data, limit = 1001) {
+    const len = data?.length ?? 0;
+    return len >= limit ? limit : len;
+}
+
+async function loadStats(user) {
     const totalEl = document.getElementById('statTotalCount');
     const favEl = document.getElementById('statFavoriteCount');
     const wardrobeEl = document.getElementById('statWardrobeCount');
     if (totalEl) totalEl.textContent = '-';
     if (favEl) favEl.textContent = '-';
     if (wardrobeEl) wardrobeEl.textContent = '-';
+
+    if (!user?.id) {
+        if (totalEl) totalEl.textContent = '0';
+        if (favEl) favEl.textContent = '0';
+        if (wardrobeEl) wardrobeEl.textContent = '0';
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const wardrobePromise =
+        typeof StyleLogAPI?.getWardrobeCatalog === 'function'
+            ? StyleLogAPI.getWardrobeCatalog().catch(() => null)
+            : Promise.resolve(null);
+
     try {
-        const user = await getCurrentUser();
-        if (!user?.id) {
-            if (totalEl) totalEl.textContent = '0';
-            if (favEl) favEl.textContent = '0';
-            if (wardrobeEl) wardrobeEl.textContent = '0';
-            return;
-        }
-
-        // real(프로덕션) DB는 count API 500 이슈 → select만 사용. alpha/localhost는 count API 시도
-        const isProd = !/alpha|localhost|127\.0\.0\.1/.test(window.location.hostname);
-        let totalCount = null;
-        let favCount = null;
-
-        if (!isProd) {
-            const { count: tc, error: err1 } = await supabaseClient
+        const [totalRes, favRes, todayRes, catalog] = await Promise.all([
+            supabaseClient.from('style_logs').select('id').eq('user_id', user.id).limit(1001),
+            supabaseClient
                 .from('style_logs')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.id);
-            const { count: fc, error: err2 } = await supabaseClient
-                .from('style_logs')
-                .select('*', { count: 'exact', head: true })
+                .select('id')
                 .eq('user_id', user.id)
-                .eq('is_favorite', true);
-            if (!err1 && tc != null) totalCount = tc;
-            if (!err2 && fc != null) favCount = fc;
-        }
+                .eq('is_favorite', true)
+                .limit(1001),
+            supabaseClient
+                .from('style_logs')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('date', today)
+                .limit(1),
+            wardrobePromise
+        ]);
 
-        if (totalCount == null || favCount == null) {
-            const [totalRes, favRes] = await Promise.all([
-                totalCount == null ? supabaseClient.from('style_logs').select('id').eq('user_id', user.id).limit(1001) : Promise.resolve({ data: null }),
-                favCount == null ? supabaseClient.from('style_logs').select('id').eq('user_id', user.id).eq('is_favorite', true).limit(1001) : Promise.resolve({ data: null })
-            ]);
-            if (totalCount == null) {
-                const len = totalRes.data?.length ?? 0;
-                totalCount = len >= 1001 ? 1001 : len;
-            }
-            if (favCount == null) {
-                const len = favRes.data?.length ?? 0;
-                favCount = len >= 1001 ? 1001 : len;
-            }
-        }
+        const totalCount = countFromLimitedRows(totalRes.data);
+        const favCount = countFromLimitedRows(favRes.data);
+        const hasTodayLog = (todayRes.data?.length ?? 0) > 0;
 
-        totalEl.textContent = formatStatCount(totalCount);
-        favEl.textContent = formatStatCount(favCount);
+        if (totalEl) totalEl.textContent = formatStatCount(totalCount);
+        if (favEl) favEl.textContent = formatStatCount(favCount);
+        updateMypageProfileMeta(totalCount, favCount);
+        applyMypageTodayNudge(totalCount, hasTodayLog, today);
 
-        if (wardrobeEl && typeof StyleLogAPI?.getWardrobeCatalog === 'function') {
-            try {
-                const catalog = await StyleLogAPI.getWardrobeCatalog();
-                wardrobeEl.textContent = formatStatCount(countActiveWardrobeItems(catalog));
-            } catch (_) {
-                wardrobeEl.textContent = formatStatCount(null);
-            }
+        if (wardrobeEl) {
+            wardrobeEl.textContent = formatStatCount(
+                catalog ? countActiveWardrobeItems(catalog) : null
+            );
         }
     } catch (error) {
         console.error('통계 로드 오류:', error);
-        totalEl.textContent = formatStatCount(null);
-        favEl.textContent = formatStatCount(null);
+        if (totalEl) totalEl.textContent = formatStatCount(null);
+        if (favEl) favEl.textContent = formatStatCount(null);
         if (wardrobeEl) wardrobeEl.textContent = formatStatCount(null);
     }
+}
+
+function updateMypageProfileMeta(totalCount, favCount) {
+    const metaEl = document.getElementById('profileMeta');
+    if (!metaEl) return;
+    const total = totalCount ?? 0;
+    const fav = favCount ?? 0;
+    if (total <= 0) {
+        metaEl.textContent = '하루 한 번씩 쌓으면 비슷한 날씨에 다시 꺼낼 수 있어요.';
+        return;
+    }
+    if (fav > 0) {
+        metaEl.textContent = `코디 ${formatStatCount(total)}개 · 즐겨찾기 ${formatStatCount(fav)}개`;
+    } else {
+        metaEl.textContent = `코디 ${formatStatCount(total)}개 · ♡로 마음에 드는 코디만 모아요`;
+    }
+}
+
+function applyMypageTodayNudge(totalCount, hasTodayLog, todayIso) {
+    const nudge = document.getElementById('mypageNudge');
+    const textEl = document.getElementById('mypageNudgeText');
+    const btn = document.getElementById('mypageNudgeBtn');
+    if (!nudge || !textEl || !btn) return;
+
+    btn.href = `write.html?date=${todayIso}`;
+
+    if ((totalCount ?? 0) <= 0) {
+        textEl.textContent = '아직 코디가 없어요. 오늘 입은 차림부터 남겨 보세요.';
+        nudge.hidden = false;
+        btn.textContent = '첫 코디 기록하기';
+        return;
+    }
+
+    if (hasTodayLog) {
+        nudge.hidden = true;
+        return;
+    }
+
+    textEl.textContent = '오늘 코디가 아직 없어요. 사진 한 장이면 충분해요.';
+    nudge.hidden = false;
+    btn.textContent = '오늘 코디 남기기';
 }
 
 function attachEventListeners() {

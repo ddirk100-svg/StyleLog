@@ -30,6 +30,18 @@ let outfitCategorySheetReturnEl = null;
 /** 바텀시트에서 선택 중인 구분들 (확인 전) */
 let outfitCategoryPending = new Set();
 
+/** 옷장 카탈로그 (작성 화면 품목 선택) */
+let writeWardrobeCatalog = [];
+/** null = 여러 품목 추가 모드, number = 해당 행만 고르기 */
+let outfitWardrobePickerRowIndex = null;
+let outfitWardrobePickerCatFilter = '';
+/** null이면 옷장 전체, 배열이면 해당 구분만 */
+let outfitWardrobePickerAllowedCats = null;
+let outfitWardrobePickerSearchQuery = '';
+let writeWardrobeAddCat = '상의';
+let writeWardrobeAddBusy = false;
+let outfitWardrobePickerReturnEl = null;
+
 /** DB 및 현재 작성 중인 행까지 반영한 구분별 품목명 후보 (제안 패널) */
 let outfitSavedValuesByCategory = new Map();
 
@@ -153,6 +165,7 @@ async function initPage() {
     }
     
     await loadOutfitValueSuggestions();
+    await loadWriteWardrobeCatalog();
 
     // 이벤트 리스너 등록
     attachEventListeners();
@@ -248,6 +261,7 @@ async function loadLogForEdit(logId) {
         if (headerTitle) {
             headerTitle.textContent = '수정하기';
         }
+        document.getElementById('writeFormLedeBlock')?.setAttribute('hidden', '');
         
         // 저장 버튼 텍스트 변경
         const saveBtn = document.querySelector('.save-btn');
@@ -402,11 +416,31 @@ function updateWeatherDisplay(weather) {
     if (weather.description) weatherDescInput.value = weather.description;
 }
 
+function writeFormHasDraftContent() {
+    if (isEditMode) return false;
+    if (selectedPhotos && selectedPhotos.length > 0) return true;
+    const title = document.getElementById('titleInput')?.value?.trim();
+    const content = document.getElementById('contentInput')?.value?.trim();
+    if (title || content) return true;
+    const tags = document.querySelectorAll('#tagsDisplay .tag');
+    if (tags.length > 0) return true;
+    const itemsRaw = document.getElementById('itemsJsonInput')?.value;
+    try {
+        const items = JSON.parse(itemsRaw || '[]');
+        if (Array.isArray(items) && items.length > 0) return true;
+    } catch (_) { /* ignore */ }
+    return false;
+}
+
 // 이벤트 리스너 등록
 function attachEventListeners() {
     // 취소 버튼
     document.querySelector('.cancel-btn').addEventListener('click', () => {
-        showConfirm('작성을 취소하시겠습니까?').then((ok) => {
+        if (!writeFormHasDraftContent()) {
+            window.history.back();
+            return;
+        }
+        showConfirm('작성 중인 내용이 사라져요. 나가시겠어요?').then((ok) => {
             if (ok) window.history.back();
         });
     });
@@ -1001,7 +1035,7 @@ function mergeOutfitCategoryOptions() {
 function updateOutfitItemsCountBadge() {
     const badge = document.getElementById('outfitItemsCountBadge');
     if (badge) {
-        badge.textContent = `${outfitItems.length}개`;
+        badge.textContent = `${outfitItemsForSave().length}개`;
     }
 }
 
@@ -1119,6 +1153,415 @@ function outfitItemsForSave() {
         .filter((r) => r.category.length > 0 && r.value.length > 0);
 }
 
+async function loadWriteWardrobeCatalog() {
+    try {
+        writeWardrobeCatalog = mergeWardrobeCatalogWithExtras(
+            await StyleLogAPI.getWardrobeCatalog()
+        );
+    } catch (e) {
+        console.error('옷장 로드 오류:', e);
+        writeWardrobeCatalog = [];
+    }
+}
+
+function getActiveWriteWardrobeItems() {
+    const blocked = getOutfitSuggestionBlockedMap();
+    return writeWardrobeCatalog.filter(
+        (it) => !isOutfitItemHiddenInMap(blocked, it.category, it.value)
+    );
+}
+
+function outfitItemKey(category, value) {
+    return `${normalizeOutfitCategoryKey(category)}\0${String(value || '').trim()}`;
+}
+
+function isDuplicateOutfitItem(category, value, exceptIndex = null) {
+    const key = outfitItemKey(category, value);
+    if (!String(value || '').trim()) return false;
+    return outfitItems.some((row, i) => {
+        if (exceptIndex != null && i === exceptIndex) return false;
+        return outfitItemKey(row.category, row.value) === key;
+    });
+}
+
+function applyWardrobePickToOutfit(item) {
+    const cat = String(item.category || '').trim();
+    const val = String(item.value || '').trim();
+    if (!cat || !val) return false;
+
+    const rowIdx = outfitWardrobePickerRowIndex;
+    if (rowIdx != null && rowIdx >= 0 && rowIdx < outfitItems.length) {
+        if (isDuplicateOutfitItem(cat, val, rowIdx)) {
+            void showAlert('이미 이 코디에 추가된 옷이에요.');
+            return false;
+        }
+        outfitItems[rowIdx].category = cat;
+        outfitItems[rowIdx].value = val;
+        outfitItems[rowIdx].valueDraft = val;
+        rememberOutfitValueSuggestion(cat, val);
+        syncOutfitItemsHiddenInput();
+        renderOutfitItemRows();
+        return true;
+    }
+
+    if (isDuplicateOutfitItem(cat, val)) {
+        void showAlert('이미 이 코디에 추가된 옷이에요.');
+        return false;
+    }
+    outfitItems.push({ category: cat, value: val, valueDraft: val });
+    rememberOutfitValueSuggestion(cat, val);
+    sortOutfitItemsInPlace();
+    syncOutfitItemsHiddenInput();
+    renderOutfitItemRows();
+    return true;
+}
+
+function getOutfitWardrobePickerCategoryOptions() {
+    const active = getActiveWriteWardrobeItems();
+    const allowed = outfitWardrobePickerAllowedCats;
+    const baseCats =
+        allowed && allowed.length
+            ? [...allowed]
+            : [...OUTFIT_DEFAULT_CATEGORIES];
+    const seen = new Set(baseCats);
+    active.forEach((it) => {
+        const c = String(it.category || '').trim();
+        if (c && !seen.has(c)) {
+            seen.add(c);
+            baseCats.push(c);
+        }
+    });
+    if (allowed && allowed.length) {
+        return baseCats.filter((c) => allowed.includes(c));
+    }
+    return baseCats;
+}
+
+function renderOutfitWardrobePickerChips() {
+    const wrap = document.getElementById('outfitWardrobePickerChips');
+    if (!wrap) return;
+    const cats = getOutfitWardrobePickerCategoryOptions();
+    wrap.innerHTML = '';
+    const mk = (label, key, iconHtml) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className =
+            'outfit-wardrobe-picker-chip' +
+            (outfitWardrobePickerCatFilter === key ? ' is-active' : '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', outfitWardrobePickerCatFilter === key ? 'true' : 'false');
+        if (iconHtml) {
+            const icon = document.createElement('span');
+            icon.className = 'outfit-wardrobe-picker-chip-icon';
+            icon.innerHTML = iconHtml;
+            btn.appendChild(icon);
+        }
+        const text = document.createElement('span');
+        text.textContent = label;
+        btn.appendChild(text);
+        btn.addEventListener('click', () => {
+            outfitWardrobePickerCatFilter = key;
+            renderOutfitWardrobePickerChips();
+            renderOutfitWardrobePickerList();
+        });
+        wrap.appendChild(btn);
+    };
+    if (cats.length > 1) {
+        mk('전체', '', '');
+    }
+    cats.forEach((c) => mk(c, c, getOutfitCategoryIconMarkup(c)));
+    if (cats.length === 1) {
+        outfitWardrobePickerCatFilter = cats[0];
+    }
+}
+
+function renderOutfitWardrobePickerList() {
+    const listEl = document.getElementById('outfitWardrobePickerList');
+    const emptyEl = document.getElementById('outfitWardrobePickerEmpty');
+    if (!listEl) return;
+
+    const q = outfitWardrobePickerSearchQuery.trim().toLowerCase();
+    let items = getActiveWriteWardrobeItems();
+    const allowed = outfitWardrobePickerAllowedCats;
+    if (allowed && allowed.length) {
+        const allowSet = new Set(allowed);
+        items = items.filter((it) => allowSet.has(it.category));
+    }
+    if (outfitWardrobePickerCatFilter) {
+        items = items.filter((it) => it.category === outfitWardrobePickerCatFilter);
+    }
+    if (q) {
+        items = items.filter((it) => String(it.value).toLowerCase().includes(q));
+    }
+    items.sort((a, b) => {
+        const d = outfitCategorySortRank(a.category) - outfitCategorySortRank(b.category);
+        if (d !== 0) return d;
+        return String(a.value).localeCompare(String(b.value), 'ko');
+    });
+
+    listEl.innerHTML = '';
+    if (emptyEl) emptyEl.hidden = items.length > 0;
+
+    items.forEach((it) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'outfit-wardrobe-picker-item';
+        btn.setAttribute('role', 'option');
+
+        const name = document.createElement('span');
+        name.className = 'outfit-wardrobe-picker-item-name';
+        name.textContent = it.value;
+
+        const meta = document.createElement('span');
+        meta.className = 'outfit-wardrobe-picker-item-meta';
+        meta.textContent = it.wearCount > 0 ? `${it.wearCount}회` : it.category;
+
+        btn.appendChild(name);
+        btn.appendChild(meta);
+        btn.addEventListener('click', () => {
+            const ok = applyWardrobePickToOutfit(it);
+            if (!ok) return;
+            renderOutfitWardrobePickerList();
+            if (outfitWardrobePickerRowIndex != null) {
+                closeOutfitWardrobePickerSheet();
+            }
+        });
+        listEl.appendChild(btn);
+    });
+}
+
+function renderOutfitWardrobePicker() {
+    renderOutfitWardrobePickerChips();
+    renderOutfitWardrobePickerList();
+    const hint = document.getElementById('outfitWardrobePickerHint');
+    if (hint) {
+        if (outfitWardrobePickerRowIndex != null) {
+            hint.textContent = '고른 옷이 이 품목 줄에 들어가요.';
+        } else if (outfitWardrobePickerAllowedCats && outfitWardrobePickerAllowedCats.length) {
+            hint.textContent = '옷을 탭할 때마다 착장 품목에 추가돼요. 다 고르면 선택 완료를 눌러 주세요.';
+        } else {
+            hint.textContent = '구분을 골라 옷을 탭하면 착장 품목에 추가돼요.';
+        }
+    }
+}
+
+function showOutfitWardrobePickerSheet() {
+    const sheet = document.getElementById('outfitWardrobePickerSheet');
+    if (!sheet) return;
+    renderOutfitWardrobePicker();
+    sheet.classList.add('active');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function openOutfitWardrobePicker(options = {}) {
+    hideAllOutfitValueSuggestionPanels();
+    outfitWardrobePickerRowIndex =
+        typeof options.rowIndex === 'number' ? options.rowIndex : null;
+    outfitWardrobePickerAllowedCats = options.categories
+        ? [...options.categories]
+        : null;
+    outfitWardrobePickerSearchQuery = '';
+    const search = document.getElementById('outfitWardrobePickerSearch');
+    if (search) search.value = '';
+
+    if (options.categories && options.categories.length === 1) {
+        outfitWardrobePickerCatFilter = options.categories[0];
+    } else if (
+        outfitWardrobePickerRowIndex != null &&
+        outfitItems[outfitWardrobePickerRowIndex]
+    ) {
+        const rowCat = String(outfitItems[outfitWardrobePickerRowIndex].category || '').trim();
+        outfitWardrobePickerCatFilter = rowCat || '';
+    } else {
+        outfitWardrobePickerCatFilter = '';
+    }
+
+    outfitWardrobePickerReturnEl = options.returnFocusEl || null;
+    showOutfitWardrobePickerSheet();
+}
+
+function openOutfitWardrobePickerForRow(rowIndex) {
+    const row = outfitItems[rowIndex];
+    const cat = String(row?.category || '').trim();
+    if (!cat) {
+        openOutfitCategorySheet(rowIndex);
+        return;
+    }
+    const btn = document.querySelector(
+        `[data-outfit-pick-index="${CSS.escape(String(rowIndex))}"]`
+    );
+    openOutfitWardrobePicker({
+        rowIndex,
+        categories: [cat],
+        returnFocusEl: btn
+    });
+}
+
+function closeOutfitWardrobePickerSheet() {
+    const sheet = document.getElementById('outfitWardrobePickerSheet');
+    if (!sheet) return;
+    const active = document.activeElement;
+    if (active && typeof active.blur === 'function' && sheet.contains(active)) {
+        active.blur();
+    }
+    sheet.classList.remove('active');
+    sheet.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    outfitWardrobePickerRowIndex = null;
+    outfitWardrobePickerAllowedCats = null;
+    outfitWardrobePickerSearchQuery = '';
+    const back = outfitWardrobePickerReturnEl;
+    outfitWardrobePickerReturnEl = null;
+    if (back && document.body.contains(back) && typeof back.focus === 'function') {
+        try {
+            back.focus();
+        } catch (_) {
+            /* ignore */
+        }
+    }
+}
+
+function syncWriteWardrobeAddGrid() {
+    const grid = document.getElementById('writeWardrobeAddGrid');
+    if (!grid) return;
+    if (!grid.childElementCount) {
+        OUTFIT_DEFAULT_CATEGORIES.forEach((cat) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'outfit-category-pill';
+            btn.dataset.category = cat;
+            const icon = document.createElement('span');
+            icon.className = 'outfit-category-pill-icon';
+            icon.innerHTML = getOutfitCategoryIconMarkup(cat);
+            const label = document.createElement('span');
+            label.textContent = cat;
+            btn.appendChild(icon);
+            btn.appendChild(label);
+            grid.appendChild(btn);
+        });
+    }
+    grid.querySelectorAll('.outfit-category-pill').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.category === writeWardrobeAddCat);
+    });
+}
+
+function openWriteWardrobeAddSheet() {
+    const pref =
+        outfitWardrobePickerCatFilter &&
+        OUTFIT_DEFAULT_CATEGORIES.includes(outfitWardrobePickerCatFilter)
+            ? outfitWardrobePickerCatFilter
+            : outfitWardrobePickerAllowedCats &&
+                outfitWardrobePickerAllowedCats.length === 1
+              ? outfitWardrobePickerAllowedCats[0]
+              : writeWardrobeAddCat;
+    if (OUTFIT_DEFAULT_CATEGORIES.includes(pref)) writeWardrobeAddCat = pref;
+
+    const sheet = document.getElementById('writeWardrobeAddSheet');
+    const input = document.getElementById('writeWardrobeAddName');
+    if (!sheet) return;
+    syncWriteWardrobeAddGrid();
+    if (input) input.value = '';
+    sheet.classList.add('active');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => input?.focus(), 80);
+}
+
+function closeWriteWardrobeAddSheet() {
+    const sheet = document.getElementById('writeWardrobeAddSheet');
+    if (!sheet || !sheet.classList.contains('active')) return;
+    sheet.classList.remove('active');
+    sheet.setAttribute('aria-hidden', 'true');
+    const picker = document.getElementById('outfitWardrobePickerSheet');
+    if (picker?.classList.contains('active')) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+}
+
+async function submitWriteWardrobeAdd() {
+    if (writeWardrobeAddBusy) return;
+    const cat = String(writeWardrobeAddCat || '').trim();
+    const input = document.getElementById('writeWardrobeAddName');
+    const name = String(input?.value || '').trim();
+    if (!cat || !OUTFIT_DEFAULT_CATEGORIES.includes(cat)) {
+        await showAlert('구분을 골라 주세요.');
+        return;
+    }
+    if (!name) {
+        await showAlert('이름을 입력해 주세요.');
+        input?.focus();
+        return;
+    }
+    if (name.length > OUTFIT_ITEM_VALUE_MAX_LEN) {
+        await showAlert(`이름은 ${OUTFIT_ITEM_VALUE_MAX_LEN}자 이하로 입력해 주세요.`);
+        return;
+    }
+
+    const active = getActiveWriteWardrobeItems();
+    if (active.some((it) => it.category === cat && it.value === name)) {
+        await showAlert('이미 옷장에 있는 이름이에요. 목록에서 선택해 주세요.');
+        return;
+    }
+
+    const blocked = getOutfitSuggestionBlockedMap();
+    if (isOutfitItemHiddenInMap(blocked, cat, name)) {
+        removeOutfitSuggestionBlockedValue(cat, name);
+    }
+    persistOutfitSuggestionExtra(cat, name);
+
+    writeWardrobeAddBusy = true;
+    try {
+        await loadWriteWardrobeCatalog();
+        closeWriteWardrobeAddSheet();
+        outfitWardrobePickerCatFilter = cat;
+        const picked = applyWardrobePickToOutfit({ category: cat, value: name });
+        if (picked) renderOutfitWardrobePicker();
+        if (outfitWardrobePickerRowIndex != null && picked) {
+            closeOutfitWardrobePickerSheet();
+        }
+    } finally {
+        writeWardrobeAddBusy = false;
+    }
+}
+
+function initOutfitWardrobePickerUI() {
+    document.getElementById('outfitWardrobePickerOverlay')?.addEventListener('click', () => {
+        closeOutfitWardrobePickerSheet();
+    });
+    document.getElementById('outfitWardrobePickerDoneBtn')?.addEventListener('click', () => {
+        closeOutfitWardrobePickerSheet();
+    });
+    document.getElementById('outfitWardrobePickerNewBtn')?.addEventListener('click', () => {
+        openWriteWardrobeAddSheet();
+    });
+    document.getElementById('outfitWardrobePickerSearch')?.addEventListener('input', (e) => {
+        outfitWardrobePickerSearchQuery = e.target.value || '';
+        renderOutfitWardrobePickerList();
+    });
+
+    document.getElementById('writeWardrobeAddOverlay')?.addEventListener('click', () => {
+        closeWriteWardrobeAddSheet();
+    });
+    document.getElementById('writeWardrobeAddGrid')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.outfit-category-pill');
+        if (!btn?.dataset.category) return;
+        writeWardrobeAddCat = btn.dataset.category;
+        syncWriteWardrobeAddGrid();
+    });
+    document.getElementById('writeWardrobeAddSubmit')?.addEventListener('click', () => {
+        submitWriteWardrobeAdd();
+    });
+    document.getElementById('writeWardrobeAddName')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitWriteWardrobeAdd();
+        }
+    });
+}
+
 function renderOutfitItemRows() {
     const list = document.getElementById('outfitItemsList');
     if (!list) return;
@@ -1153,46 +1596,25 @@ function renderOutfitItemRows() {
         catBtn.appendChild(iconWrap);
         catBtn.appendChild(labelSpan);
 
-        const wrap = document.createElement('div');
-        wrap.className = 'outfit-value-field';
+        const valTrim = String(row.value || '').trim();
+        const pickBtn = document.createElement('button');
+        pickBtn.type = 'button';
+        pickBtn.className =
+            'outfit-item-pick-btn' + (valTrim ? '' : ' outfit-item-pick-btn--placeholder');
+        pickBtn.setAttribute('data-outfit-pick-index', String(index));
+        pickBtn.setAttribute('aria-label', valTrim ? '옷장에서 다시 고르기' : '옷장에서 선택');
 
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.className = 'outfit-item-value-input';
-        inp.setAttribute('data-outfit-value-index', String(index));
-        inp.placeholder = hasCat ? '직접 쓸 땐 입력으로 확정' : '먼저 구분 선택';
-        inp.maxLength = OUTFIT_ITEM_VALUE_MAX_LEN;
-        inp.autocomplete = 'off';
-        inp.value = getOutfitItemDraftString(row);
+        const pickLabel = document.createElement('span');
+        pickLabel.className = 'outfit-item-pick-btn-label';
+        pickLabel.textContent = valTrim || (hasCat ? '옷장에서 선택' : '먼저 구분 선택');
 
-        const sug = document.createElement('div');
-        sug.className = 'outfit-value-suggestions';
-        sug.hidden = true;
-        sug.setAttribute('role', 'listbox');
-        sug.setAttribute('aria-label', '최근 품목');
+        const chevron = document.createElement('span');
+        chevron.className = 'outfit-item-pick-btn-chevron';
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.textContent = '›';
 
-        const commitBtn = document.createElement('button');
-        commitBtn.type = 'button';
-        commitBtn.className = 'outfit-item-value-commit';
-        commitBtn.textContent = '입력';
-        commitBtn.setAttribute('data-outfit-commit-index', String(index));
-        commitBtn.setAttribute('aria-label', '품목명 확정');
-        commitBtn.addEventListener('click', () => commitOutfitItemValue(index));
-
-        attachOutfitValueSuggestionUI(inp, sug);
-
-        inp.addEventListener('input', () => {
-            outfitItems[index].valueDraft = inp.value;
-            refreshOutfitValueCommitBtn(commitBtn, index);
-        });
-
-        inp.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
-            if (commitBtn.disabled) return;
-            if (isOutfitRowCommittedClean(index)) beginEditingOutfitValueWithSuggestions(index);
-            else commitOutfitItemValue(index);
-        });
+        pickBtn.appendChild(pickLabel);
+        pickBtn.appendChild(chevron);
 
         const rm = document.createElement('button');
         rm.type = 'button';
@@ -1202,15 +1624,10 @@ function renderOutfitItemRows() {
         rm.innerHTML =
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>';
 
-        wrap.appendChild(inp);
-        wrap.appendChild(sug);
         rowEl.appendChild(catBtn);
-        rowEl.appendChild(wrap);
-        rowEl.appendChild(commitBtn);
+        rowEl.appendChild(pickBtn);
         rowEl.appendChild(rm);
         list.appendChild(rowEl);
-
-        refreshOutfitValueCommitBtn(commitBtn, index);
     });
 
     updateOutfitItemsCountBadge();
@@ -1352,12 +1769,12 @@ function confirmOutfitCategorySheet() {
     if (ordered.length === 0) return;
 
     if (outfitCategorySheetMode === 'add') {
-        ordered.forEach((cat) => {
-            outfitItems.push({ category: cat, value: '', valueDraft: '' });
-        });
-        sortOutfitItemsInPlace();
-        renderOutfitItemRows();
         closeOutfitCategorySheet();
+        const addBtn = document.getElementById('outfitItemsAddBtn');
+        openOutfitWardrobePicker({
+            categories: ordered,
+            returnFocusEl: addBtn
+        });
         return;
     }
 
@@ -1369,10 +1786,20 @@ function confirmOutfitCategorySheet() {
         closeOutfitCategorySheet();
         return;
     }
-    outfitItems[outfitCategorySheetRowIndex].category = ordered[0];
+    const rowIdx = outfitCategorySheetRowIndex;
+    const targetRow = outfitItems[rowIdx];
+    const prevCat = String(targetRow.category || '').trim();
+    const nextCat = ordered[0];
+    targetRow.category = nextCat;
+    if (prevCat !== nextCat) {
+        targetRow.value = '';
+        targetRow.valueDraft = '';
+    }
     sortOutfitItemsInPlace();
     renderOutfitItemRows();
     closeOutfitCategorySheet();
+    const sortedIdx = outfitItems.indexOf(targetRow);
+    if (sortedIdx >= 0) openOutfitWardrobePickerForRow(sortedIdx);
 }
 
 function addOutfitItemRow(openSheetAfter = false) {
@@ -1402,30 +1829,7 @@ function initOutfitItemsUI() {
 
     if (!list || !addBtn || !sheet) return;
 
-    document.addEventListener(
-        'pointerdown',
-        (e) => {
-            const t = e.target;
-            if (
-                t.closest?.('.outfit-value-field') ||
-                t.closest?.('.outfit-value-suggestions') ||
-                t.closest?.('.outfit-item-value-commit')
-            ) {
-                return;
-            }
-            hideAllOutfitValueSuggestionPanels();
-        },
-        true
-    );
-    window.addEventListener(
-        'scroll',
-        (ev) => {
-            const t = ev.target;
-            if (t instanceof Element && t.closest?.('.outfit-value-suggestions')) return;
-            hideAllOutfitValueSuggestionPanels();
-        },
-        { capture: true, passive: true }
-    );
+    initOutfitWardrobePickerUI();
 
     renderOutfitItemRows();
 
@@ -1444,6 +1848,12 @@ function initOutfitItemsUI() {
         if (catBtn) {
             const i = parseInt(catBtn.getAttribute('data-outfit-cat-index'), 10);
             if (!Number.isNaN(i)) openOutfitCategorySheet(i);
+            return;
+        }
+        const pickBtn = e.target.closest('[data-outfit-pick-index]');
+        if (pickBtn) {
+            const i = parseInt(pickBtn.getAttribute('data-outfit-pick-index'), 10);
+            if (!Number.isNaN(i)) openOutfitWardrobePickerForRow(i);
         }
     });
 
@@ -1471,11 +1881,23 @@ function initOutfitItemsUI() {
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
-        if (sheet.classList.contains('active')) {
-            closeOutfitCategorySheet();
+        if (isCropModalOpen()) {
+            closeCropModal();
             return;
         }
-        hideAllOutfitValueSuggestionPanels();
+        const addSheet = document.getElementById('writeWardrobeAddSheet');
+        if (addSheet?.classList.contains('active')) {
+            closeWriteWardrobeAddSheet();
+            return;
+        }
+        const picker = document.getElementById('outfitWardrobePickerSheet');
+        if (picker?.classList.contains('active')) {
+            closeOutfitWardrobePickerSheet();
+            return;
+        }
+        if (sheet.classList.contains('active')) {
+            closeOutfitCategorySheet();
+        }
     });
 }
 
@@ -1504,8 +1926,8 @@ function handlePhotoSelect(e) {
             results[index] = { file, dataUrl: event.target.result };
             loadedCount++;
             if (loadedCount === filesToAdd.length) {
-                selectedPhotos.push(...results);
-                renderPhotoPreviews();
+                cropUploadQueue.push(...results.filter((r) => r?.dataUrl));
+                processNextCropInQueue();
             }
         };
         reader.readAsDataURL(file);
@@ -1640,7 +2062,7 @@ function createDragGhost(sourceItem) {
     ghost.id = 'photoDragGhost';
     ghost.className = 'photo-preview-item photo-drag-ghost';
     ghost.querySelectorAll('.photo-remove-btn, .photo-edit-btn').forEach(b => b.remove());
-    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9998;width:100px;height:100px;opacity:0.95;transform:scale(1.05);box-shadow:0 8px 24px rgba(0,0,0,0.2);border:2px solid var(--color-primary);border-radius:8px;overflow:hidden;';
+    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9998;width:78px;height:104px;opacity:0.95;transform:scale(1.05);box-shadow:0 8px 24px rgba(0,0,0,0.2);border:2px solid var(--color-primary);border-radius:8px;overflow:hidden;';
     document.body.appendChild(ghost);
     dragGhostEl = ghost;
     return ghost;
@@ -1812,9 +2234,65 @@ function removePhoto(index) {
     renderPhotoPreviews();
 }
 
-// 크롭 편집 모달
+// 크롭 편집 모달 — 코디 표시와 동일한 세로 3:4만 허용
+const OUTFIT_PHOTO_CROP_ASPECT = 3 / 4;
+
 let cropModalCropper = null;
+/** selectedPhotos 인덱스. 신규 업로드 대기 중이면 null */
 let cropModalPhotoIndex = null;
+/** 앨범에서 고른 뒤 아직 selectedPhotos에 넣기 전 */
+let cropPendingNewPhoto = null;
+let cropUploadQueue = [];
+
+function initCropperOnImage() {
+    const img = document.getElementById('cropImage');
+    if (!img || typeof Cropper === 'undefined') return;
+    if (cropModalCropper) {
+        cropModalCropper.destroy();
+        cropModalCropper = null;
+    }
+    cropModalCropper = new Cropper(img, {
+        aspectRatio: OUTFIT_PHOTO_CROP_ASPECT,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 0.92
+    });
+}
+
+function isCropModalOpen() {
+    return document.getElementById('cropModal')?.classList.contains('active');
+}
+
+function processNextCropInQueue() {
+    if (isCropModalOpen()) return;
+    if (cropUploadQueue.length === 0) return;
+    if (selectedPhotos.length >= 3) {
+        cropUploadQueue = [];
+        return;
+    }
+    const next = cropUploadQueue.shift();
+    if (next?.dataUrl) openCropModalForNewUpload(next);
+}
+
+function openCropModalForNewUpload(pending) {
+    if (typeof Cropper === 'undefined') {
+        void showAlert('편집 기능을 불러올 수 없습니다. 페이지를 새로고침해 주세요.');
+        processNextCropInQueue();
+        return;
+    }
+    cropPendingNewPhoto = pending;
+    cropModalPhotoIndex = null;
+
+    const modal = document.getElementById('cropModal');
+    const img = document.getElementById('cropImage');
+    if (!modal || !img) return;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    img.onload = () => initCropperOnImage();
+    img.src = pending.dataUrl;
+}
 
 function openCropModal(index) {
     const photo = selectedPhotos[index];
@@ -1824,61 +2302,81 @@ function openCropModal(index) {
         return;
     }
 
+    cropPendingNewPhoto = null;
     cropModalPhotoIndex = index;
     const modal = document.getElementById('cropModal');
     const img = document.getElementById('cropImage');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    img.onload = () => {
-        if (cropModalCropper) {
-            cropModalCropper.destroy();
-            cropModalCropper = null;
-        }
-        cropModalCropper = new Cropper(img, {
-            aspectRatio: NaN,
-            viewMode: 1,
-            dragMode: 'move',
-            autoCropArea: 1
-        });
-        document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.ratio === 'free');
-        });
-    };
+    img.onload = () => initCropperOnImage();
     img.src = photo.dataUrl;
 }
 
-function closeCropModal() {
+function finishCropModalCleanup() {
     const modal = document.getElementById('cropModal');
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
+    modal?.classList.remove('active');
     if (cropModalCropper) {
         cropModalCropper.destroy();
         cropModalCropper = null;
     }
     cropModalPhotoIndex = null;
+    cropPendingNewPhoto = null;
+    if (
+        !document.getElementById('outfitWardrobePickerSheet')?.classList.contains('active') &&
+        !document.getElementById('writeWardrobeAddSheet')?.classList.contains('active') &&
+        !document.getElementById('outfitCategorySheet')?.classList.contains('active')
+    ) {
+        document.body.style.overflow = '';
+    }
+}
+
+function closeCropModal() {
+    const wasPending = cropPendingNewPhoto != null;
+    finishCropModalCleanup();
+    if (wasPending) processNextCropInQueue();
 }
 
 function applyCrop() {
-    if (!cropModalCropper || cropModalPhotoIndex == null) {
+    if (!cropModalCropper) {
         closeCropModal();
         return;
     }
-    const canvas = cropModalCropper.getCroppedCanvas({ maxWidth: 1920, maxHeight: 1920, imageSmoothingQuality: 'high' });
+    const canvas = cropModalCropper.getCroppedCanvas({
+        maxWidth: 1920,
+        maxHeight: 2560,
+        imageSmoothingQuality: 'high'
+    });
     if (!canvas) {
-        closeCropModal();
+        void showAlert('사진을 3:4 영역에 맞춰 주세요. 다시 드래그·확대한 뒤 적용해 주세요.');
         return;
     }
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+    if (cropPendingNewPhoto) {
+        const pending = cropPendingNewPhoto;
+        cropPendingNewPhoto = null;
+        selectedPhotos.push({
+            file: pending.file,
+            dataUrl
+        });
+        renderPhotoPreviews();
+        finishCropModalCleanup();
+        processNextCropInQueue();
+        return;
+    }
+
+    if (cropModalPhotoIndex == null) {
+        closeCropModal();
+        return;
+    }
+
     const photo = selectedPhotos[cropModalPhotoIndex];
     if (photo) {
         selectedPhotos[cropModalPhotoIndex] = {
             ...photo,
             dataUrl
         };
-        if (photo.file) {
-            selectedPhotos[cropModalPhotoIndex].file = photo.file;
-        }
         renderPhotoPreviews();
     }
     closeCropModal();
@@ -1895,17 +2393,6 @@ function initCropModal() {
     cancelBtn?.addEventListener('click', closeCropModal);
     overlay?.addEventListener('click', closeCropModal);
     applyBtn?.addEventListener('click', applyCrop);
-
-    const ratioMap = { '1': 1, '4/3': 4/3, '3/4': 3/4, '16/9': 16/9, '9/16': 9/16 };
-    document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const ratio = btn.dataset.ratio;
-            document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (!cropModalCropper) return;
-            cropModalCropper.setAspectRatio(ratio === 'free' ? NaN : ratioMap[ratio]);
-        });
-    });
 }
 
 // 리스트용 썸네일 생성 (첫 번째 사진 리사이즈, 최대 1200px, 화질 85%)
