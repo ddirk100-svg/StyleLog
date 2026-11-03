@@ -49,6 +49,8 @@ let homeListSelectIncludesItems = true;
 
 /** 로컬 저장: 홈에서 오늘 날씨 맞춤 보기 여부 (기본 on) */
 const RECOMMEND_MODE_STORAGE_KEY = 'stylelog_home_recommend_mode';
+/** 상세 → 홈 복귀 시 필터·맞춤 토글 복원 (homeScrollY 와 쌍) */
+const HOME_FILTER_STATE_STORAGE_KEY = 'stylelog_home_filter_state';
 let recommendationModeEnabled = localStorage.getItem(RECOMMEND_MODE_STORAGE_KEY) !== 'false';
 /** 맞춤 켤 때 복원할 필터 스냅샷 */
 let manualFilterSnapshot = null;
@@ -152,9 +154,9 @@ function summarizeOutfitFilterKeysForChip(keys) {
     const list = k.map(outfitFilterKeyLabel).filter(Boolean);
     const title = list.join(', ');
     const n = k.length;
-    if (n === 0) return { label: '착장', title: '' };
-    if (n >= 2) return { label: `착장 ${n}개`, title };
-    return { label: `착장 · ${list[0] || '품목'}`, title };
+    if (n === 0) return { label: '착장 품목', title: '' };
+    if (n >= 2) return { label: `착장 품목 ${n}`, title };
+    return { label: `착장 품목 · ${list[0] || ''}`, title };
 }
 
 function escapeFilterChipAttr(text) {
@@ -228,7 +230,7 @@ function refreshHomeOutfitFilterPanelUI(containerEl) {
     containerEl.innerHTML = '';
     if (cats.length === 0) {
         containerEl.innerHTML =
-            '<p class="filter-outfit-empty">불러온 기록에 착장 품목이 없습니다. 목록을 더 불러오거나 작성 화면에서 품목을 저장해 보세요.</p>';
+            '<p class="filter-outfit-empty">불러온 기록에 착장 품목이 없습니다. 목록을 더 불러오거나 작성 화면에서 착장 품목을 저장해 보세요.</p>';
         return;
     }
     cats.forEach((cat, idx) => {
@@ -291,6 +293,39 @@ function restoreFiltersFromSnapshot(s) {
         : [];
 }
 
+function saveHomeFilterStateForDetailReturn() {
+    try {
+        const payload = {
+            ...snapshotCurrentFilters(),
+            recommendationModeEnabled: !!recommendationModeEnabled
+        };
+        sessionStorage.setItem(HOME_FILTER_STATE_STORAGE_KEY, JSON.stringify(payload));
+    } catch (_) {
+        /* quota 등 */
+    }
+}
+
+/** homeScrollY 가 있으면 상세에서 돌아온 것 — 저장된 필터 1회 복원 */
+function consumeHomeFilterStateIfReturningFromDetail() {
+    if (sessionStorage.getItem('homeScrollY') == null) return false;
+    const raw = sessionStorage.getItem(HOME_FILTER_STATE_STORAGE_KEY);
+    sessionStorage.removeItem(HOME_FILTER_STATE_STORAGE_KEY);
+    if (!raw) return false;
+    try {
+        const s = JSON.parse(raw);
+        if (!s || typeof s !== 'object') return false;
+        recommendationModeEnabled = !!s.recommendationModeEnabled;
+        localStorage.setItem(
+            RECOMMEND_MODE_STORAGE_KEY,
+            recommendationModeEnabled ? 'true' : 'false'
+        );
+        restoreFiltersFromSnapshot(s);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 async function applyTodayWeatherRecommendationFilters() {
     try {
         const weather = await getCurrentWeather();
@@ -344,13 +379,18 @@ async function setRecommendationMode(on) {
     }
 }
 
-async function initRecommendModeOnLoad() {
+function bindRecommendModeToggle() {
     const toggle = document.getElementById('recommendModeToggle');
-    toggle?.addEventListener('click', async () => {
+    if (!toggle || toggle.dataset.stylelogRecommendBound === '1') return;
+    toggle.dataset.stylelogRecommendBound = '1';
+    toggle.addEventListener('click', async () => {
         await setRecommendationMode(!recommendationModeEnabled);
     });
+}
 
-    if (recommendationModeEnabled) {
+async function initRecommendModeOnLoad(options = {}) {
+    bindRecommendModeToggle();
+    if (!options.skipAutoApply && recommendationModeEnabled) {
         await applyTodayWeatherRecommendationFilters();
     }
 }
@@ -365,12 +405,17 @@ function outfitFilterKeyFromUrl(params = new URLSearchParams(location.search)) {
 
 async function initPage() {
     const params = new URLSearchParams(location.search);
-    const outfitFromUrl = outfitFilterKeyFromUrl(params);
-    if (params.get('filter') === 'fav' || outfitFromUrl) {
-        recommendationModeEnabled = false;
-    }
-    if (outfitFromUrl) {
-        filterOutfitSelectionKeys = [outfitFromUrl];
+    const restoredFiltersFromDetail = consumeHomeFilterStateIfReturningFromDetail();
+    window.__stylelogHomeSkipUrlFilterParams = restoredFiltersFromDetail;
+
+    if (!restoredFiltersFromDetail) {
+        const outfitFromUrl = outfitFilterKeyFromUrl(params);
+        if (params.get('filter') === 'fav' || outfitFromUrl) {
+            recommendationModeEnabled = false;
+        }
+        if (outfitFromUrl) {
+            filterOutfitSelectionKeys = [outfitFromUrl];
+        }
     }
     /** Open-Meteo 지연 시 로그 목록까지 막히지 않도록 비차단 — 완료 후 토글만 동기화 */
     void refreshCachedTodayTemps().then(() => {
@@ -395,7 +440,19 @@ async function initPage() {
     // 필터 모달 초기화
     initFilterModal();
 
-    await initRecommendModeOnLoad();
+    if (restoredFiltersFromDetail) {
+        await initRecommendModeOnLoad({ skipAutoApply: true });
+        if (typeof window.__stylelogHomeApplyFilters === 'function') {
+            window.__stylelogHomeApplyFilters();
+        } else {
+            const filtered = getFilteredLogs();
+            renderFullDayList(filtered);
+        }
+    } else {
+        await initRecommendModeOnLoad();
+    }
+
+    window.__stylelogHomeSkipUrlFilterParams = false;
 
     // 상세에서 뒤로 왔을 때 스크롤 위치 복원 (완료될 때까지 await)
     await restoreHomeScrollPosition();
@@ -971,6 +1028,11 @@ function syncFavoriteToggleBtnUI(btn, isFavorite) {
     }
 }
 
+/** 홈 리스트 썸네일 — 목록 쿼리는 thumb_url 만 (photos 컬럼 제외로 페이로드·타임아웃 방지) */
+function pickHomeListThumbRaw(log) {
+    return String(log.thumb_url || '').trim();
+}
+
 function createDayItemForHome(log) {
     const date = parseStyleLogDate(log.date) || new Date(log.date);
 
@@ -980,13 +1042,14 @@ function createDayItemForHome(log) {
     const titleRaw = String(log.title || '').trim();
     const bodyHtml = log.content ? escapeHtmlForDayCard(String(log.content).trim()) : '';
 
-    if (log.thumb_url) {
+    const thumbRaw = pickHomeListThumbRaw(log);
+    if (thumbRaw) {
         dayItem.classList.add('day-item--photo');
         const noteBlock = dayCardNoteHtml(titleRaw, bodyHtml, 'photo');
         const thumbSrc =
             typeof safeStyleLogMediaUrl === 'function'
-                ? safeStyleLogMediaUrl(log.thumb_url)
-                : String(log.thumb_url || '');
+                ? safeStyleLogMediaUrl(thumbRaw)
+                : thumbRaw;
         dayItem.innerHTML = `
             <div class="day-card-hero day-content photo">
                 <img alt="착장" loading="lazy" decoding="async">
@@ -1107,6 +1170,7 @@ function attachDayListEventListeners() {
         if (logId) {
             sessionStorage.setItem('homeScrollY', String(window.scrollY || document.documentElement.scrollTop));
             sessionStorage.setItem('detailFrom', 'home');
+            saveHomeFilterStateForDetailReturn();
             window.location.href = `detail.html?id=${logId}`;
         }
     });
@@ -1177,7 +1241,7 @@ function buildHomeFirstEmptyHtml() {
 
 function buildHomeFilteredEmptyHtml() {
     let title = '조건에 맞는 코디가 없어요';
-    let subs = ['필터를 바꾸거나 「필터 초기화」를 눌러 보세요.'];
+    let subs = ['필터를 바꿔 보세요.', '또는 「초기화」를 눌러 보세요.'];
     const favOnly =
         filterFavoritesOnly &&
         filterYears.length === 0 &&
@@ -1190,10 +1254,10 @@ function buildHomeFilteredEmptyHtml() {
 
     if (favOnly) {
         title = '즐겨찾기한 코디가 없어요';
-        subs = ['마음에 드는 코디에 ♡를 눌러 모아 보세요.'];
+        subs = ['마음에 드는 코디에 ♡를 눌러', '즐겨찾기로 모아 보세요.'];
     } else if (recommendationModeEnabled) {
         title = '오늘 기온과 맞는 코디가 없어요';
-        subs = ['비슷한 날씨 코디를 남기면 다음에 여기에 보여요.'];
+        subs = ['비슷한 날씨 코디를 남기면', '다음에 여기에 보여요.'];
     }
 
     const subsHtml = subs
@@ -1986,22 +2050,24 @@ function initFilterModal() {
         });
     }
 
-    // URL 파라미터 ?filter=fav → 즐겨찾기, ?outfitCat=&outfitVal= → 착장 품목 (옷장 "입은 기록 보기")
-    const homeUrlParams = new URLSearchParams(location.search);
-    const outfitUrlKey = outfitFilterKeyFromUrl(homeUrlParams);
-    if (homeUrlParams.get('filter') === 'fav') {
-        filterFavoritesOnly = true;
-        syncModalFromState();
-        renderActiveChips();
-        applyFilterAndRender();
-    } else if (outfitUrlKey) {
-        filterOutfitSelectionKeys = [outfitUrlKey];
-        syncModalFromState();
-        renderActiveChips();
-        applyFilterAndRender();
-        requestAnimationFrame(() => {
-            document.getElementById('coordiCollectionHeading')?.scrollIntoView({ block: 'start' });
-        });
+    // URL 파라미터 ?filter=fav → 즐겨찾기, ?outfitCat=&outfitVal= → 착장 품목 (상세 복귀 시 스킵)
+    if (!window.__stylelogHomeSkipUrlFilterParams) {
+        const homeUrlParams = new URLSearchParams(location.search);
+        const outfitUrlKey = outfitFilterKeyFromUrl(homeUrlParams);
+        if (homeUrlParams.get('filter') === 'fav') {
+            filterFavoritesOnly = true;
+            syncModalFromState();
+            renderActiveChips();
+            applyFilterAndRender();
+        } else if (outfitUrlKey) {
+            filterOutfitSelectionKeys = [outfitUrlKey];
+            syncModalFromState();
+            renderActiveChips();
+            applyFilterAndRender();
+            requestAnimationFrame(() => {
+                document.getElementById('coordiCollectionHeading')?.scrollIntoView({ block: 'start' });
+            });
+        }
     }
 
     window.__stylelogHomeApplyFilters = () => {

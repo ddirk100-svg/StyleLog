@@ -331,7 +331,7 @@ function renderOutfitItemsDetail(log) {
         const empty = document.createElement('div');
         empty.className = 'outfit-items-detail-empty';
         const p1 = document.createElement('p');
-        p1.textContent = '옷장에서 고른 품목이 여기 보여요.';
+        p1.textContent = '옷장에서 고른 착장 품목이 여기 보여요.';
         empty.appendChild(p1);
         const p2 = document.createElement('p');
         p2.className = 'outfit-items-detail-empty-sub';

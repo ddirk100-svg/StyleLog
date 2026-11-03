@@ -61,6 +61,8 @@ async function jpegBlobResizeFromImageSrc(src, maxEdge, quality) {
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
     return canvasToJpegBlob(canvas, quality);
 }

@@ -42,8 +42,11 @@ body.mandatory-birth-open {
 .mandatory-birth-card p {
     margin: 0 0 var(--block-gap-y);
     font-size: var(--type-caption-size);
-    line-height: var(--type-caption-line);
+    line-height: 1.55;
     color: var(--type-caption-color);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
 }
 
 .mandatory-birth-card label {

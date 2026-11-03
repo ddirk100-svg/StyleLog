@@ -15,8 +15,8 @@
     <title>스타일로그 - 작성</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/utils.css?v=7">
-    <link rel="stylesheet" href="styles/write.css?v=15">
+    <link rel="stylesheet" href="styles/utils.css?v=8">
+    <link rel="stylesheet" href="styles/write.css?v=19">
     <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/require-birthdate.css">
@@ -40,7 +40,10 @@
         <!-- 본문 폼 -->
         <form class="write-form" id="writeForm">
             <div class="write-form-lede-block" id="writeFormLedeBlock">
-                <p class="write-form-lede" id="writeFormLede">사진이나 메모로 코디를 남기면, 날씨·기온으로 다시 찾을 수 있어요.</p>
+                <p class="write-form-lede write-ui-copy" id="writeFormLede">
+                    <span class="write-ui-copy__line">사진·메모로 코디를 남겨 보세요.</span>
+                    <span class="write-ui-copy__line">나중에 날씨·기온으로 다시 찾을 수 있어요.</span>
+                </p>
             </div>
             <!-- 날짜 선택 -->
             <div class="form-section">
@@ -61,7 +64,10 @@
                         </svg>
                         <span>사진 추가</span>
                     </button>
-                    <p class="form-hint">고르면 세로 3:4로 맞춰요. 사진 없이 메모만 저장해도 괜찮아요.</p>
+                    <p class="form-hint write-ui-copy">
+                        <span class="write-ui-copy__line">사진은 세로 3:4로 맞춰 저장돼요.</span>
+                        <span class="write-ui-copy__line">사진 없이 메모만 남겨도 괜찮아요.</span>
+                    </p>
                     <p class="form-hint photo-reorder-hint" id="photoReorderHint" style="display: none;">드래그하여 순서 변경</p>
                     <div class="photo-preview-list" id="photoPreviewList"></div>
                 </div>
@@ -85,7 +91,7 @@
                         <span class="temp-min">최저 --°C</span>
                     </div>
                 </div>
-                <p class="form-hint">날짜를 바꾸면 날씨도 함께 바뀌어요.</p>
+                <p class="form-hint write-ui-copy">날짜를 바꾸면 날씨도 같이 바뀌어요.</p>
                 <input type="hidden" id="weatherInput" name="weather" required>
                 <input type="hidden" id="weatherTempInput" name="weather_temp">
                 <input type="hidden" id="weatherDescInput" name="weather_description">
@@ -99,7 +105,7 @@
                     <button type="button" class="weather-fit-btn active" data-value="good">적당</button>
                     <button type="button" class="weather-fit-btn" data-value="hot">더움</button>
                 </div>
-                <p class="form-hint">나중에 홈 필터 「체감」으로 찾을 때 쓰여요.</p>
+                <p class="form-hint write-ui-copy">홈 「체감」 필터로 찾을 때 써요.</p>
                 <input type="hidden" id="weatherFitInput" name="weather_fit" value="good">
             </div>
 
@@ -112,14 +118,15 @@
                     <label class="form-label" for="outfitItemsAddBtn">착장 품목 <span class="form-label-optional">(선택)</span></label>
                     <span class="outfit-items-count-badge" id="outfitItemsCountBadge" aria-live="polite">0개</span>
                 </div>
-                <ul class="form-hint-list outfit-items-hint">
-                    <li><strong>품목 추가</strong> → 구분 선택</li>
-                    <li><strong>내 옷장</strong>에서 고르기 (없으면 그 자리에서 등록)</li>
+                <ul class="form-hint-list outfit-items-hint write-ui-copy">
+                    <li><strong>착장 품목 추가</strong> → 구분 선택</li>
+                    <li><strong>내 옷장</strong>에서 고르기</li>
+                    <li>옷이 없으면 그 자리에서 등록</li>
                 </ul>
                 <div class="outfit-items-list-region">
                     <div class="outfit-items-list" id="outfitItemsList"></div>
                 </div>
-                <button type="button" class="outfit-item-add-btn" id="outfitItemsAddBtn">+ 품목 추가</button>
+                <button type="button" class="outfit-item-add-btn" id="outfitItemsAddBtn">+ 착장 품목 추가</button>
                 <input type="hidden" name="items_json" id="itemsJsonInput" value="[]">
             </div>
 
@@ -142,7 +149,7 @@
                     <div class="tags-display" id="tagsDisplay"></div>
                     <input type="text" class="form-input tags-input" id="tagsInput" placeholder="#태그를 입력하고 엔터">
                 </div>
-                <p class="form-hint">엔터 또는 쉼표로 태그 추가</p>
+                <p class="form-hint write-ui-copy">엔터·쉼표로 태그 추가</p>
             </div>
         </form>
     </div>
@@ -184,11 +191,18 @@
         <div class="outfit-category-sheet__panel outfit-wardrobe-picker-panel" role="dialog" aria-labelledby="outfitWardrobePickerTitle" aria-modal="true">
             <div class="outfit-category-sheet__handle"></div>
             <h2 class="outfit-category-sheet__title" id="outfitWardrobePickerTitle">옷장에서 선택</h2>
-            <p class="outfit-category-sheet__hint" id="outfitWardrobePickerHint">구분을 골라 옷을 탭하면 착장 품목에 추가돼요.</p>
+            <p class="outfit-category-sheet__hint write-ui-copy" id="outfitWardrobePickerHint">
+                <span class="write-ui-copy__line">구분을 고른 뒤 옷을 탭하세요.</span>
+                <span class="write-ui-copy__line">탭하면 착장 품목에 추가돼요.</span>
+                <span class="write-ui-copy__line">다시 탭하면 빼요.</span>
+            </p>
             <input type="search" class="outfit-wardrobe-picker-search" id="outfitWardrobePickerSearch" placeholder="이름 검색" autocomplete="off" enterkeyhint="search">
             <div class="outfit-wardrobe-picker-chips" id="outfitWardrobePickerChips" role="tablist" aria-label="구분 필터"></div>
             <div class="outfit-wardrobe-picker-list" id="outfitWardrobePickerList" role="listbox" aria-label="옷장 목록"></div>
-            <p class="outfit-wardrobe-picker-empty" id="outfitWardrobePickerEmpty" hidden>이 구분에 옷이 없어요. 아래에서 옷장에 추가해 주세요.</p>
+            <p class="outfit-wardrobe-picker-empty write-ui-copy" id="outfitWardrobePickerEmpty" hidden>
+                <span class="write-ui-copy__line">이 구분에 옷이 없어요.</span>
+                <span class="write-ui-copy__line">아래에서 옷장에 추가해 주세요.</span>
+            </p>
             <button type="button" class="outfit-wardrobe-picker-new-btn" id="outfitWardrobePickerNewBtn">+ 옷장에 새 옷 추가</button>
             <button type="button" class="outfit-category-confirm-btn outfit-wardrobe-picker-done-btn" id="outfitWardrobePickerDoneBtn">선택 완료</button>
         </div>
@@ -200,7 +214,10 @@
         <div class="outfit-category-sheet__panel" role="dialog" aria-labelledby="writeWardrobeAddTitle" aria-modal="true">
             <div class="outfit-category-sheet__handle"></div>
             <h2 class="outfit-category-sheet__title" id="writeWardrobeAddTitle">옷장에 새 옷 추가</h2>
-            <p class="outfit-category-sheet__hint">등록하면 바로 이 코디에 선택할 수 있어요.</p>
+            <p class="outfit-category-sheet__hint write-ui-copy">
+                <span class="write-ui-copy__line">등록하면 이 코디에</span>
+                <span class="write-ui-copy__line">바로 선택할 수 있어요.</span>
+            </p>
             <div class="outfit-category-grid" id="writeWardrobeAddGrid"></div>
             <label class="wardrobe-add-label" for="writeWardrobeAddName">이름</label>
             <input type="text" class="wardrobe-add-input" id="writeWardrobeAddName" maxlength="200" placeholder="예: 흰티, 청바지" autocomplete="off">
@@ -214,7 +231,10 @@
         <div class="outfit-category-sheet__panel" role="dialog" aria-labelledby="outfitCategorySheetTitle" aria-modal="true">
             <div class="outfit-category-sheet__handle"></div>
             <h2 class="outfit-category-sheet__title" id="outfitCategorySheetTitle">구분 선택</h2>
-            <p class="outfit-category-sheet__hint" id="outfitCategorySheetHint">여러 개를 고른 뒤 확인하면 행이 한꺼번에 추가됩니다.</p>
+            <p class="outfit-category-sheet__hint write-ui-copy" id="outfitCategorySheetHint">
+                <span class="write-ui-copy__line">구분을 여러 개 고른 뒤</span>
+                <span class="write-ui-copy__line">확인하면 한꺼번에 추가돼요.</span>
+            </p>
             <div class="outfit-category-grid" id="outfitCategoryGrid"></div>
             <button type="button" class="outfit-category-confirm-btn" id="outfitCategoryConfirmBtn">확인</button>
         </div>
@@ -232,7 +252,10 @@
                 <div class="crop-container">
                     <img id="cropImage" src="" alt="크롭할 이미지">
                 </div>
-                <p class="crop-modal-hint">코디용 세로 <strong>3:4</strong> 비율로만 저장돼요. 드래그·핀치로 위치와 크기를 맞춘 뒤 적용해 주세요.</p>
+                <p class="crop-modal-hint write-ui-copy">
+                    <span class="write-ui-copy__line">코디용 세로 <strong>3:4</strong>로 저장돼요.</span>
+                    <span class="write-ui-copy__line">드래그·핀치로 맞춘 뒤 적용해 주세요.</span>
+                </p>
             </div>
             <div class="crop-modal-footer">
                 <button type="button" class="crop-cancel-btn" id="cropCancelBtn">취소</button>
@@ -248,8 +271,8 @@
     <script src="scripts/api.js?v=7" defer></script>
     <script src="scripts/require-birthdate.js" defer></script>
     <script src="scripts/auth.js" defer></script>
-    <script src="scripts/common.js?v=11" defer></script>
-    <script src="scripts/write.js?v=14" defer></script>
+    <script src="scripts/common.js?v=13" defer></script>
+    <script src="scripts/write.js?v=20" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

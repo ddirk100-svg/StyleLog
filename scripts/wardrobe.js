@@ -251,7 +251,14 @@ function renderWardrobe() {
                 emptyEl.innerHTML = '';
                 const p = document.createElement('p');
                 p.className = 'wardrobe-empty-lead';
-                p.textContent = '코디 작성할 때 고르기 쉽도록 자주 입는 옷을 등록해 두세요.';
+                if (typeof setUiCopyLines === 'function') {
+                    setUiCopyLines(p, [
+                        '자주 입는 옷을 등록해 두면',
+                        '코디 작성 때 고르기 쉬워요.'
+                    ]);
+                } else {
+                    p.textContent = '자주 입는 옷을 등록해 두면 코디 작성 때 고르기 쉬워요.';
+                }
                 emptyEl.appendChild(p);
                 const cta = document.createElement('button');
                 cta.type = 'button';

@@ -77,6 +77,26 @@
     letter-spacing: var(--type-letter-body);
 }
 
+/* 안내·힌트 줄바꿈 (320px+ — write-ui-copy = sl-ui-copy) */
+.write-ui-copy,
+.sl-ui-copy {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+    line-height: 1.55;
+    letter-spacing: -0.02em;
+}
+
+.write-ui-copy__line,
+.sl-ui-copy__line {
+    display: block;
+}
+
+.write-ui-copy__line + .write-ui-copy__line,
+.sl-ui-copy__line + .sl-ui-copy__line {
+    margin-top: 0.15em;
+}
+
 /* 버튼 — 앱 전역 (filled / outline) */
 .sl-btn {
     display: inline-flex;
@@ -216,9 +236,10 @@
 .util-error .util-sub {
     font-size: var(--font-size-base);
     color: var(--color-text-tertiary);
-    line-height: 1.6;
+    line-height: 1.55;
     overflow-wrap: break-word;
-    word-break: normal;
+    word-break: keep-all;
+    text-wrap: pretty;
 }
 
 .util-empty > p:first-of-type {
@@ -230,9 +251,15 @@
 }
 
 .util-empty .util-sub {
-    max-width: 18rem;
+    max-width: min(100%, 20rem);
     margin-left: auto;
     margin-right: auto;
+}
+
+@media (max-width: 360px) {
+    .util-empty .util-sub {
+        max-width: 100%;
+    }
 }
 
 .util-empty .util-sub + .util-sub {

@@ -1,5 +1,25 @@
 @import url('variables.css');
 
+/*
+ * 코디 사진 프레임 — 크롭(3:4) 결과가 letterbox 없이 꽉 차도록
+ * (flex 가운데 정렬 + height:100% 조합은 빈 여백·검은 띠처럼 보일 수 있음)
+ */
+.sl-outfit-photo-fill {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--outfit-photo-bg);
+}
+
+.sl-outfit-photo-fill > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
 /* 홈 — 코디 히어로 (3:4) */
 .day-item.day-item--photo .day-card-hero.day-content.photo {
     flex: 0 0 auto;
@@ -8,40 +28,47 @@
     min-height: 0;
     max-height: none;
     aspect-ratio: var(--outfit-photo-aspect);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
 }
 
-.day-item.day-item--photo .day-card-hero img {
+.day-item.day-item--photo .day-card-hero.day-content.photo,
+#monthDetailView .day-content.photo,
+.day-list .day-content.photo,
+.photo-section,
+.photo-gallery,
+.photo-gallery .photo-slide {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--outfit-photo-bg);
+}
+
+.day-item.day-item--photo .day-card-hero.day-content.photo,
+#monthDetailView .day-content.photo,
+.day-list .day-content.photo {
+    flex: 0 0 auto;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: var(--outfit-photo-aspect);
 }
 
 #monthDetailView .day-content.photo,
 .day-list .day-content.photo {
-    flex: 0 0 auto;
     width: var(--outfit-photo-list-width);
-    height: auto;
-    min-height: 0;
-    aspect-ratio: var(--outfit-photo-aspect);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--outfit-photo-bg);
     border-radius: var(--radius-sm);
-    overflow: hidden;
 }
 
+.day-item.day-item--photo .day-card-hero img,
 #monthDetailView .day-content.photo img,
-.day-list .day-content.photo img {
+.day-list .day-content.photo img,
+.photo-section img,
+.photo-gallery .photo-slide img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center top;
+    object-position: center center;
+    display: block;
 }
 
 .photo-section {
@@ -50,18 +77,6 @@
     min-height: 0;
     max-height: var(--outfit-photo-max-height-detail);
     aspect-ratio: var(--outfit-photo-aspect);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--outfit-photo-bg);
-    overflow: hidden;
-}
-
-.photo-section img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
 }
 
 .photo-gallery {
@@ -70,17 +85,10 @@
     min-height: 0;
     max-height: var(--outfit-photo-max-height-detail);
     aspect-ratio: var(--outfit-photo-aspect);
-    background-color: var(--outfit-photo-bg);
-    overflow: hidden;
 }
 
 .photo-gallery .photo-slide {
-    background-color: var(--outfit-photo-bg);
-}
-
-.photo-gallery .photo-slide img {
-    width: 100%;
+    flex: 0 0 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center top;
+    min-height: 100%;
 }

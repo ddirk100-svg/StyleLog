@@ -51,10 +51,14 @@
     el.innerHTML =
       '<div class="mandatory-birth-card">' +
       '<h2 id="mandatory-birth-title">생년월일 입력</h2>' +
-      '<p>서비스 정책에 따라 생년월일이 필요합니다. 만 14세 이상만 이용할 수 있습니다.</p>' +
+      '<p class="write-ui-copy">' +
+      '<span class="write-ui-copy__line">서비스 정책상 생년월일이 필요해요.</span>' +
+      '<span class="write-ui-copy__line">만 14세 이상만 이용할 수 있어요.</span></p>' +
       '<label for="mandatory-birth-input">생년월일</label>' +
       '<input type="date" id="mandatory-birth-input" name="mandatory-birth" required autocomplete="bday" />' +
-      '<p class="mandatory-birth-hint">입력 후 아래 버튼을 눌러야 계속 이용할 수 있습니다.</p>' +
+      '<p class="mandatory-birth-hint write-ui-copy">' +
+      '<span class="write-ui-copy__line">입력 후 아래 버튼을 눌러</span>' +
+      '<span class="write-ui-copy__line">계속 이용할 수 있어요.</span></p>' +
       '<p id="mandatory-birth-error" class="mandatory-birth-error" hidden></p>' +
       '<button type="button" class="mandatory-birth-submit" id="mandatory-birth-submit">확인하고 계속</button>' +
       '</div>';

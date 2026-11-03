@@ -369,8 +369,11 @@ function updateWeatherDisplay(weather) {
         weatherDescInput.value = '날씨를 알 수 없어요';
         
         const hint = document.createElement('p');
-        hint.className = 'weather-future-hint';
-        hint.textContent = '7일 이후 날짜는 아직 날씨를 볼 수 없어요. 일기는 그대로 저장돼요.';
+        hint.className = 'weather-future-hint write-ui-copy';
+        setUiCopyLines(hint, [
+            '7일 이후 날짜는 날씨 미리보기가 없어요.',
+            '기록은 그대로 저장할 수 있어요.'
+        ]);
         weatherDisplay?.appendChild(hint);
         return;
     }
@@ -1184,16 +1187,57 @@ function isDuplicateOutfitItem(category, value, exceptIndex = null) {
     });
 }
 
-function applyWardrobePickToOutfit(item) {
+function findOutfitItemIndexByCategoryValue(category, value) {
+    const key = outfitItemKey(category, value);
+    if (!String(value || '').trim()) return -1;
+    return outfitItems.findIndex(
+        (row) => outfitItemKey(row.category, row.value) === key && String(row.value || '').trim()
+    );
+}
+
+function removeOutfitItemAtIndex(idx, options = {}) {
+    const render = options.render !== false;
+    if (idx < 0 || idx >= outfitItems.length) return false;
+    outfitItems.splice(idx, 1);
+    sortOutfitItemsInPlace();
+    syncOutfitItemsHiddenInput();
+    if (render) renderOutfitItemRows();
+    return true;
+}
+
+function addWardrobeItemToOutfitItems(cat, val, options = {}) {
+    const render = options.render !== false;
+    outfitItems.push({ category: cat, value: val, valueDraft: val });
+    rememberOutfitValueSuggestion(cat, val);
+    sortOutfitItemsInPlace();
+    syncOutfitItemsHiddenInput();
+    if (render) renderOutfitItemRows();
+    return true;
+}
+
+/** 옷장 시트 열린 상태 — 착장 품목 행·피커 목록을 한 프레임에 갱신 (깜빡임 완화) */
+function refreshOutfitRowsAndWardrobePickerList() {
+    requestAnimationFrame(() => {
+        renderOutfitItemRows();
+        if (document.getElementById('outfitWardrobePickerSheet')?.classList.contains('active')) {
+            renderOutfitWardrobePickerList();
+        }
+    });
+}
+
+/** 옷장 시트 — 행 지정 모드는 채우기, 여러 개 추가 모드는 탭으로 추가·재탭으로 제거 */
+function handleWardrobePickerItemClick(item) {
     const cat = String(item.category || '').trim();
     const val = String(item.value || '').trim();
-    if (!cat || !val) return false;
+    if (!cat || !val) return 'noop';
 
     const rowIdx = outfitWardrobePickerRowIndex;
+    const existingIdx = findOutfitItemIndexByCategoryValue(cat, val);
+
     if (rowIdx != null && rowIdx >= 0 && rowIdx < outfitItems.length) {
-        if (isDuplicateOutfitItem(cat, val, rowIdx)) {
-            void showAlert('이미 이 코디에 추가된 옷이에요.');
-            return false;
+        if (existingIdx >= 0 && existingIdx !== rowIdx) {
+            void showAlert('다른 착장 품목 줄에 이미 있어요.');
+            return 'blocked';
         }
         outfitItems[rowIdx].category = cat;
         outfitItems[rowIdx].value = val;
@@ -1201,19 +1245,45 @@ function applyWardrobePickToOutfit(item) {
         rememberOutfitValueSuggestion(cat, val);
         syncOutfitItemsHiddenInput();
         renderOutfitItemRows();
-        return true;
+        return 'row-filled';
     }
 
-    if (isDuplicateOutfitItem(cat, val)) {
-        void showAlert('이미 이 코디에 추가된 옷이에요.');
-        return false;
+    if (existingIdx >= 0) {
+        removeOutfitItemAtIndex(existingIdx, { render: false });
+        return 'removed';
     }
-    outfitItems.push({ category: cat, value: val, valueDraft: val });
-    rememberOutfitValueSuggestion(cat, val);
-    sortOutfitItemsInPlace();
-    syncOutfitItemsHiddenInput();
-    renderOutfitItemRows();
-    return true;
+
+    addWardrobeItemToOutfitItems(cat, val, { render: false });
+    return 'added';
+}
+
+function applyWardrobePickToOutfit(item, options = {}) {
+    if (options.forceAdd) {
+        const cat = String(item.category || '').trim();
+        const val = String(item.value || '').trim();
+        if (!cat || !val) return false;
+        const rowIdx = outfitWardrobePickerRowIndex;
+        if (rowIdx != null && rowIdx >= 0 && rowIdx < outfitItems.length) {
+            const existingIdx = findOutfitItemIndexByCategoryValue(cat, val);
+            if (existingIdx >= 0 && existingIdx !== rowIdx) {
+                void showAlert('다른 착장 품목 줄에 이미 있어요.');
+                return false;
+            }
+            outfitItems[rowIdx].category = cat;
+            outfitItems[rowIdx].value = val;
+            outfitItems[rowIdx].valueDraft = val;
+            rememberOutfitValueSuggestion(cat, val);
+            syncOutfitItemsHiddenInput();
+            refreshOutfitRowsAndWardrobePickerList();
+            return true;
+        }
+        if (findOutfitItemIndexByCategoryValue(cat, val) >= 0) return true;
+        addWardrobeItemToOutfitItems(cat, val, { render: false });
+        refreshOutfitRowsAndWardrobePickerList();
+        return true;
+    }
+    const result = handleWardrobePickerItemClick(item);
+    return result === 'added' || result === 'row-filled';
 }
 
 function getOutfitWardrobePickerCategoryOptions() {
@@ -1305,8 +1375,15 @@ function renderOutfitWardrobePickerList() {
     items.forEach((it) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'outfit-wardrobe-picker-item';
+        const alreadyInOutfit =
+            findOutfitItemIndexByCategoryValue(it.category, it.value) >= 0;
+        btn.className =
+            'outfit-wardrobe-picker-item' + (alreadyInOutfit ? ' is-selected' : '');
         btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', alreadyInOutfit ? 'true' : 'false');
+        if (alreadyInOutfit) {
+            btn.setAttribute('aria-label', `${it.value}, 착장 품목에 추가됨. 다시 탭하면 빼요.`);
+        }
 
         const name = document.createElement('span');
         name.className = 'outfit-wardrobe-picker-item-name';
@@ -1314,16 +1391,25 @@ function renderOutfitWardrobePickerList() {
 
         const meta = document.createElement('span');
         meta.className = 'outfit-wardrobe-picker-item-meta';
-        meta.textContent = it.wearCount > 0 ? `${it.wearCount}회` : it.category;
+        if (alreadyInOutfit) {
+            meta.textContent = '추가됨';
+        } else if (it.wearCount > 0) {
+            meta.textContent = `${it.wearCount}회`;
+        } else {
+            meta.textContent = it.category;
+        }
 
         btn.appendChild(name);
         btn.appendChild(meta);
         btn.addEventListener('click', () => {
-            const ok = applyWardrobePickToOutfit(it);
-            if (!ok) return;
-            renderOutfitWardrobePickerList();
-            if (outfitWardrobePickerRowIndex != null) {
+            const result = handleWardrobePickerItemClick(it);
+            if (result === 'blocked' || result === 'noop') return;
+            if (result === 'row-filled') {
                 closeOutfitWardrobePickerSheet();
+                return;
+            }
+            if (result === 'removed' || result === 'added') {
+                refreshOutfitRowsAndWardrobePickerList();
             }
         });
         listEl.appendChild(btn);
@@ -1336,11 +1422,17 @@ function renderOutfitWardrobePicker() {
     const hint = document.getElementById('outfitWardrobePickerHint');
     if (hint) {
         if (outfitWardrobePickerRowIndex != null) {
-            hint.textContent = '고른 옷이 이 품목 줄에 들어가요.';
+            setUiCopyLines(hint, ['고른 옷이 이 착장 품목 줄에 들어가요.']);
         } else if (outfitWardrobePickerAllowedCats && outfitWardrobePickerAllowedCats.length) {
-            hint.textContent = '옷을 탭할 때마다 착장 품목에 추가돼요. 다 고르면 선택 완료를 눌러 주세요.';
+            setUiCopyLines(hint, [
+                '탭하면 착장 품목에 추가돼요.',
+                '다시 탭하면 빼요. 끝나면 선택 완료.'
+            ]);
         } else {
-            hint.textContent = '구분을 골라 옷을 탭하면 착장 품목에 추가돼요.';
+            setUiCopyLines(hint, [
+                '탭하면 착장 품목에 추가돼요.',
+                '다시 탭하면 빼요.'
+            ]);
         }
     }
 }
@@ -1517,7 +1609,10 @@ async function submitWriteWardrobeAdd() {
         await loadWriteWardrobeCatalog();
         closeWriteWardrobeAddSheet();
         outfitWardrobePickerCatFilter = cat;
-        const picked = applyWardrobePickToOutfit({ category: cat, value: name });
+        const picked = applyWardrobePickToOutfit(
+            { category: cat, value: name },
+            { forceAdd: true }
+        );
         if (picked) renderOutfitWardrobePicker();
         if (outfitWardrobePickerRowIndex != null && picked) {
             closeOutfitWardrobePickerSheet();
@@ -1685,10 +1780,13 @@ function updateCategorySheetCopy() {
     if (hint) {
         if (outfitCategorySheetMode === 'add') {
             hint.hidden = false;
-            hint.textContent = '여러 개를 고른 뒤 확인하면 행이 한꺼번에 추가됩니다.';
+            setUiCopyLines(hint, [
+                '구분을 여러 개 고른 뒤',
+                '확인하면 한꺼번에 추가돼요.'
+            ]);
         } else {
             hint.hidden = true;
-            hint.textContent = '';
+            hint.replaceChildren();
         }
     }
     refreshCategorySheetConfirmBtn();
@@ -2255,7 +2353,33 @@ function initCropperOnImage() {
         aspectRatio: OUTFIT_PHOTO_CROP_ASPECT,
         viewMode: 1,
         dragMode: 'move',
-        autoCropArea: 0.92
+        autoCropArea: 1,
+        responsive: true
+    });
+}
+
+/** 크롭 결과 — 정확히 3:4 픽셀, JPEG용 불투명 배경 */
+function getOutfitCropCanvas(cropper) {
+    if (!cropper) return null;
+    const data = cropper.getData(true);
+    let w = Math.max(1, Math.round(Number(data.width) || 900));
+    let h = Math.max(1, Math.round(w / OUTFIT_PHOTO_CROP_ASPECT));
+    const maxW = 1920;
+    const maxH = 2560;
+    if (w > maxW) {
+        w = maxW;
+        h = Math.round(w / OUTFIT_PHOTO_CROP_ASPECT);
+    }
+    if (h > maxH) {
+        h = maxH;
+        w = Math.round(h * OUTFIT_PHOTO_CROP_ASPECT);
+    }
+    return cropper.getCroppedCanvas({
+        width: w,
+        height: h,
+        fillColor: '#ffffff',
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
     });
 }
 
@@ -2342,11 +2466,7 @@ function applyCrop() {
         closeCropModal();
         return;
     }
-    const canvas = cropModalCropper.getCroppedCanvas({
-        maxWidth: 1920,
-        maxHeight: 2560,
-        imageSmoothingQuality: 'high'
-    });
+    const canvas = getOutfitCropCanvas(cropModalCropper);
     if (!canvas) {
         void showAlert('사진을 3:4 영역에 맞춰 주세요. 다시 드래그·확대한 뒤 적용해 주세요.');
         return;
@@ -2393,38 +2513,6 @@ function initCropModal() {
     cancelBtn?.addEventListener('click', closeCropModal);
     overlay?.addEventListener('click', closeCropModal);
     applyBtn?.addEventListener('click', applyCrop);
-}
-
-// 리스트용 썸네일 생성 (첫 번째 사진 리사이즈, 최대 1200px, 화질 85%)
-function createThumbnail(dataUrl) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const MAX_SIZE = 1200;
-            let w = img.width;
-            let h = img.height;
-            if (w > h && w > MAX_SIZE) {
-                h = (h * MAX_SIZE) / w;
-                w = MAX_SIZE;
-            } else if (h > MAX_SIZE) {
-                w = (w * MAX_SIZE) / h;
-                h = MAX_SIZE;
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            try {
-                const thumb = canvas.toDataURL('image/jpeg', 0.85);
-                resolve(thumb);
-            } catch {
-                resolve(dataUrl);
-            }
-        };
-        img.onerror = () => resolve(null);
-        img.src = dataUrl;
-    });
 }
 
 // 태그 추가
@@ -2552,7 +2640,9 @@ async function handleSubmit() {
 
         let thumbUrl = null;
         if (photoUrls.length > 0) {
-            thumbUrl = await createThumbnail(photoUrls[0]);
+            /* 홈 카드는 thumb_url만 조회 — Storage display URL과 동일하게 두면 safeStyleLogMediaUrl·용량 모두 안전 */
+            const first = String(photoUrls[0] || '').trim();
+            thumbUrl = first || null;
         }
 
         const weatherFitInput = document.getElementById('weatherFitInput');

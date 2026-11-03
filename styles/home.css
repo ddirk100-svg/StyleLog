@@ -810,11 +810,12 @@ a.menu-item-link {
 .weather-recommend-hint {
     display: block;
     font-size: var(--type-caption-size);
-    line-height: var(--type-caption-line);
+    line-height: 1.55;
     color: var(--type-section-desc-color);
     letter-spacing: var(--type-letter-body);
     overflow-wrap: break-word;
-    word-break: normal;
+    word-break: keep-all;
+    text-wrap: pretty;
 }
 
 .weather-recommend-hint[hidden] {

@@ -31,7 +31,7 @@ async function loadUserProfile(userArg) {
     const name = user.user_metadata?.full_name || user.user_metadata?.name;
 
     if (emailEl) emailEl.textContent = email;
-    if (metaEl) metaEl.textContent = name || '스타일로그와 함께 착장을 기록해보세요';
+    if (metaEl) metaEl.textContent = name || '스타일로그와 함께 코디를 기록해 보세요';
     if (avatarEl) {
         avatarEl.textContent = (name || email).charAt(0).toUpperCase();
     }
@@ -115,13 +115,20 @@ function updateMypageProfileMeta(totalCount, favCount) {
     const total = totalCount ?? 0;
     const fav = favCount ?? 0;
     if (total <= 0) {
-        metaEl.textContent = '하루 한 번씩 쌓으면 비슷한 날씨에 다시 꺼낼 수 있어요.';
+        if (typeof setUiCopyLines === 'function') {
+            setUiCopyLines(metaEl, [
+                '하루 한 번씩 쌓으면',
+                '비슷한 날씨에 다시 꺼낼 수 있어요.'
+            ]);
+        } else {
+            metaEl.textContent = '하루 한 번씩 쌓으면 비슷한 날씨에 다시 꺼낼 수 있어요.';
+        }
         return;
     }
     if (fav > 0) {
         metaEl.textContent = `코디 ${formatStatCount(total)}개 · 즐겨찾기 ${formatStatCount(fav)}개`;
     } else {
-        metaEl.textContent = `코디 ${formatStatCount(total)}개 · ♡로 마음에 드는 코디만 모아요`;
+        metaEl.textContent = `코디 ${formatStatCount(total)}개 · ♡로 모아요`;
     }
 }
 
@@ -134,7 +141,11 @@ function applyMypageTodayNudge(totalCount, hasTodayLog, todayIso) {
     btn.href = `write.html?date=${todayIso}`;
 
     if ((totalCount ?? 0) <= 0) {
-        textEl.textContent = '아직 코디가 없어요. 오늘 입은 차림부터 남겨 보세요.';
+        if (typeof setUiCopyLines === 'function') {
+            setUiCopyLines(textEl, ['아직 코디가 없어요.', '오늘 입은 차림부터 남겨 보세요.']);
+        } else {
+            textEl.textContent = '아직 코디가 없어요. 오늘 입은 차림부터 남겨 보세요.';
+        }
         nudge.hidden = false;
         btn.textContent = '첫 코디 기록하기';
         return;
@@ -145,7 +156,11 @@ function applyMypageTodayNudge(totalCount, hasTodayLog, todayIso) {
         return;
     }
 
-    textEl.textContent = '오늘 코디가 아직 없어요. 사진 한 장이면 충분해요.';
+    if (typeof setUiCopyLines === 'function') {
+        setUiCopyLines(textEl, ['오늘 코디가 아직 없어요.', '사진 한 장이면 충분해요.']);
+    } else {
+        textEl.textContent = '오늘 코디가 아직 없어요. 사진 한 장이면 충분해요.';
+    }
     nudge.hidden = false;
     btn.textContent = '오늘 코디 남기기';
 }

@@ -65,6 +65,17 @@
 .placeholder-hint {
     font-size: var(--type-caption-size);
     color: var(--color-text-tertiary);
+    line-height: 1.55;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+}
+
+.faq-body p {
+    line-height: 1.55;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
 }
 
 /* FAQ: inquiry.html 의 <details> 목록 — 문구는 HTML에서 직접 수정 */

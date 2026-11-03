@@ -19,14 +19,24 @@
 .wardrobe-policy-hint p {
     margin: 0;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.55;
     color: var(--color-text-secondary);
     overflow-wrap: break-word;
-    word-break: normal;
+    word-break: keep-all;
+    text-wrap: pretty;
 }
 
 .wardrobe-policy-hint p + p {
-    margin-top: 8px;
+    margin-top: 6px;
+}
+
+.wardrobe-empty,
+.wardrobe-empty-lead {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+    line-height: 1.55;
+    text-align: center;
 }
 
 .wardrobe-policy-hint strong {

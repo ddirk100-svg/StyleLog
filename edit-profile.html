@@ -15,7 +15,8 @@
     <title>스타일로그 - 내 정보 수정</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/write.css">
+    <link rel="stylesheet" href="styles/utils.css?v=8">
+    <link rel="stylesheet" href="styles/write.css?v=17">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/require-birthdate.css">
@@ -23,7 +24,7 @@
     <script src="scripts/config.js?v=6"></script>
     <script src="scripts/require-birthdate.js"></script>
     <script src="scripts/auth.js"></script>
-    <script src="scripts/common.js"></script>
+    <script src="scripts/common.js?v=13"></script>
 </head>
 <body class="has-bottom-nav">
     <div class="container" id="editProfileView">
@@ -41,7 +42,10 @@
             <div class="form-section">
                 <label class="form-label" for="email">이메일</label>
                 <input type="email" id="email" class="form-input" readonly>
-                <p class="form-hint">이메일은 로그인 시 사용되는 식별자로 변경할 수 없습니다.</p>
+                <p class="form-hint write-ui-copy">
+                    <span class="write-ui-copy__line">이메일은 로그인 식별자예요.</span>
+                    <span class="write-ui-copy__line">여기서는 변경할 수 없어요.</span>
+                </p>
             </div>
             <div class="form-section">
                 <label class="form-label" for="displayName">표시 이름</label>

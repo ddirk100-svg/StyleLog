@@ -331,7 +331,10 @@ function escapeHtml(text) {
 function safeStyleLogMediaUrl(raw) {
     const s = String(raw || '').trim();
     if (!s) return '';
-    if (/^javascript:/i.test(s) || /^data:/i.test(s)) return '';
+    if (/^javascript:/i.test(s)) return '';
+    /* 리스트 thumb_url 등 DB에 저장된 JPEG 썸네일(data URL) — 상세 photos(https)와 별도 */
+    if (/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(s)) return s;
+    if (/^data:/i.test(s)) return '';
     if (s.startsWith('img/') || s.startsWith('/img/') || s.startsWith('./')) return s;
     try {
         const base = typeof location !== 'undefined' ? location.href : 'https://localhost/';
@@ -631,6 +634,22 @@ function getWeatherIconSVG(weather, size = 24) {
 // - getCurrentWeather(): 현재 날씨 조회
 // - getWeatherByCoords(lat, lon): 좌표 기반 현재 날씨 조회
 // - getWeatherByDateAndCoords(lat, lon, date): 좌표 + 날짜 기반 날씨 조회
+
+/** UI 안내 문구 — 좁은 폭에서 줄 단위 표시 (write-ui-copy) */
+function setUiCopyLines(el, lines) {
+    if (!el) return;
+    el.classList.add('write-ui-copy');
+    el.replaceChildren();
+    const arr = (Array.isArray(lines) ? lines : [lines]).filter(
+        (t) => t != null && String(t).trim() !== ''
+    );
+    arr.forEach((text) => {
+        const span = document.createElement('span');
+        span.className = 'write-ui-copy__line';
+        span.textContent = String(text);
+        el.appendChild(span);
+    });
+}
 
 // 유틸리티 함수 추가 (config.js의 utils 객체에 추가)
 if (typeof utils !== 'undefined') {
