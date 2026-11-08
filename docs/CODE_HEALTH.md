@@ -64,8 +64,8 @@
 
 | 영역 | 상태 | 비고 |
 |------|------|------|
-| `scripts/*.js` 구문 | ✅ `node --check` | 배포 전 재실행 권장 |
-| `common.js` / `utils.css` 캐시 | ✅ v13 / v8 | 앱 HTML 동기화 (edit-profile·inquiry·detail 포함) |
+| `scripts/*.js` 구문 | ✅ `node --check` | 2.2 배포 전 재실행 |
+| `common.js` / `utils.css` 캐시 | ✅ 작성·홈·상세는 common v16, utils는 작성 v9 | `(선택)` 스타일은 `utils.css` |
 | 디자인 토큰 | ✅ | 신규 UI는 `variables.css`·`utils.css` contract |
 | `write-ui-copy` | ✅ | write·wardrobe·home·mypage·inquiry·생년월일 |
 | 보안 (XSS·미디어 URL) | ✅ | `escapeHtml`·`safeStyleLogMediaUrl` |
@@ -73,6 +73,10 @@
 | 썸네일 | ✅ | 목록은 `thumb_url`만 select · 저장 시 display URL |
 | 상세 복귀 후 맞춤 토글 | ✅ | `bindRecommendModeToggle` — 필터 복원 시에도 클릭 핸들러 등록 |
 | 옷장 신규 추가→선택 | ✅ | `forceAdd` — 기존 착장 품목과 겹쳐도 제거하지 않음 |
+| 상황 다섯 개 | ✅ | 회사·일상/데이트·여행·운동·경조사. 예전 코드는 `normalizeTpoValues` |
+| 상세 진입 스크롤 | ✅ | 상세는 맨 위. 홈 복귀 스크롤·필터는 유지. `scrollRestoration`은 바꾸지 않음 |
+| 옷장 선택에서 이름 변경 | ✅ | `renameOutfitItemValueAcrossLogs` — 작성 줄·옷장·지난 기록 |
+| 홈 카드 id | ✅ | 상세 URL은 `encodeURIComponent`, 복귀 카드 선택은 `CSS.escape` |
 | Dead code | ✅ | `createThumbnail` 제거 (미사용) |
 
 ## 성능 · 한계 (의도적)

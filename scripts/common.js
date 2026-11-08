@@ -1,6 +1,41 @@
 // 공통 함수들
 const WEATHER_FIT_LABELS = { cold: '추움', good: '적당', hot: '더움' };
 
+/** 상황(TPO). value는 DB `style_logs.tpo`에 저장 */
+const TPO_OPTIONS = Object.freeze([
+    { value: 'work', label: '회사' },
+    { value: 'daily', label: '일상/데이트' },
+    { value: 'travel', label: '여행' },
+    { value: 'workout', label: '운동' },
+    { value: 'guest', label: '경조사' },
+]);
+
+/** 예전 칩은 화면·필터에서 지금의 다섯 개로 묶는다. 저장값은 수정할 때 바뀐다. */
+const TPO_VALUE_ALIASES = Object.freeze({
+    interview: 'work',
+    date: 'daily',
+    plan: 'daily',
+});
+
+const TPO_LABELS = Object.freeze(
+    Object.fromEntries(TPO_OPTIONS.map((opt) => [opt.value, opt.label]))
+);
+
+function normalizeTpoValues(raw) {
+    const allowed = new Set(TPO_OPTIONS.map((opt) => opt.value));
+    const list = Array.isArray(raw) ? raw : [];
+    const seen = new Set();
+    const out = [];
+    list.forEach((value) => {
+        const rawKey = String(value || '').trim();
+        const key = TPO_VALUE_ALIASES[rawKey] || rawKey;
+        if (!allowed.has(key) || seen.has(key)) return;
+        seen.add(key);
+        out.push(key);
+    });
+    return out;
+}
+
 /** 요일 (짧은 표기 — 카드·상세 공통) */
 const STYLELOG_WEEKDAY_KO = Object.freeze(['일', '월', '화', '수', '목', '금', '토']);
 

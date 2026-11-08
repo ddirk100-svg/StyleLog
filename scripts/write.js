@@ -7,7 +7,9 @@ const editLogId = urlParams.get('id'); // 수정 모드인지 확인
 
 let currentWeather = null;
 let selectedPhotos = [];
-let tags = [];
+/** 예전 자유 태그. 화면에서는 고치지 않고 저장 때 그대로 둔다 */
+let preservedTags = [];
+let selectedTpo = [];
 let isEditMode = false; // 수정 모드 플래그
 let currentLog = null; // 수정할 로그 데이터
 /** 신규 저장 시 INSERT id 를 Storage 경로와 맞추기 위해 한 번 결정되는 UUID */
@@ -35,11 +37,12 @@ let writeWardrobeCatalog = [];
 /** null = 여러 품목 추가 모드, number = 해당 행만 고르기 */
 let outfitWardrobePickerRowIndex = null;
 let outfitWardrobePickerCatFilter = '';
-/** null이면 옷장 전체, 배열이면 해당 구분만 */
+/** null이면 구분 칩을 모두 보여주고, 배열이면 그 구분만 */
 let outfitWardrobePickerAllowedCats = null;
 let outfitWardrobePickerSearchQuery = '';
 let writeWardrobeAddCat = '상의';
 let writeWardrobeAddBusy = false;
+let outfitWardrobeRenameBusy = false;
 let outfitWardrobePickerReturnEl = null;
 
 /** DB 및 현재 작성 중인 행까지 반영한 구분별 품목명 후보 (제안 패널) */
@@ -229,11 +232,11 @@ async function loadLogForEdit(logId) {
             renderPhotoPreviews();
         }
         
-        // 태그 로드
-        if (currentLog.tags && currentLog.tags.length > 0) {
-            tags = [...currentLog.tags];
-            renderTags();
-        }
+        preservedTags = Array.isArray(currentLog.tags) ? [...currentLog.tags] : [];
+        selectedTpo = typeof normalizeTpoValues === 'function'
+            ? normalizeTpoValues(currentLog.tpo)
+            : [];
+        syncTpoButtons();
 
         // 착장 품목 로드
         hydrateOutfitItemsFromLog(currentLog.items);
@@ -252,7 +255,7 @@ async function loadLogForEdit(logId) {
         const weatherFit = currentLog.weather_fit || 'good';
         const weatherFitInput = document.getElementById('weatherFitInput');
         if (weatherFitInput) weatherFitInput.value = weatherFit;
-        document.querySelectorAll('.weather-fit-btn').forEach(btn => {
+        document.querySelectorAll('#weatherFitBtns .weather-fit-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.value === weatherFit);
         });
         
@@ -425,8 +428,7 @@ function writeFormHasDraftContent() {
     const title = document.getElementById('titleInput')?.value?.trim();
     const content = document.getElementById('contentInput')?.value?.trim();
     if (title || content) return true;
-    const tags = document.querySelectorAll('#tagsDisplay .tag');
-    if (tags.length > 0) return true;
+    if (selectedTpo.length > 0) return true;
     const itemsRaw = document.getElementById('itemsJsonInput')?.value;
     try {
         const items = JSON.parse(itemsRaw || '[]');
@@ -499,25 +501,28 @@ function attachEventListeners() {
     document.addEventListener('pointerup', clearPhotoDraggingState);
     document.addEventListener('pointercancel', clearPhotoDraggingState);
     
-    // 태그 입력
-    const tagsInput = document.getElementById('tagsInput');
-    tagsInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            addTag(tagsInput.value.trim());
-            tagsInput.value = '';
-        }
+    document.querySelectorAll('#tpoBtns .weather-fit-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const value = btn.dataset.value;
+            if (!value) return;
+            btn.classList.toggle('active');
+            if (btn.classList.contains('active')) {
+                if (!selectedTpo.includes(value)) selectedTpo.push(value);
+            } else {
+                selectedTpo = selectedTpo.filter((item) => item !== value);
+            }
+        });
     });
-    
+
     // 폼 입력 시 유효성 검사
     document.getElementById('dateInput').addEventListener('change', validateForm);
     document.getElementById('titleInput').addEventListener('input', validateForm);
     document.getElementById('contentInput').addEventListener('input', validateForm);
 
-    // 날씨적합도 단일선택 버튼
-    document.querySelectorAll('.weather-fit-btn').forEach(btn => {
+    // 옷차림 체감만 단일 선택. 상황 칩은 같은 버튼 클래스를 쓰지만 여러 개 남긴다.
+    document.querySelectorAll('#weatherFitBtns .weather-fit-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.weather-fit-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#weatherFitBtns .weather-fit-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const input = document.getElementById('weatherFitInput');
             if (input) input.value = btn.dataset.value;
@@ -1307,10 +1312,18 @@ function getOutfitWardrobePickerCategoryOptions() {
     return baseCats;
 }
 
+function ensureOutfitWardrobePickerCategory() {
+    const cats = getOutfitWardrobePickerCategoryOptions();
+    if (!cats.includes(outfitWardrobePickerCatFilter)) {
+        outfitWardrobePickerCatFilter = cats[0] || '';
+    }
+    return cats;
+}
+
 function renderOutfitWardrobePickerChips() {
     const wrap = document.getElementById('outfitWardrobePickerChips');
     if (!wrap) return;
-    const cats = getOutfitWardrobePickerCategoryOptions();
+    const cats = ensureOutfitWardrobePickerCategory();
     wrap.innerHTML = '';
     const mk = (label, key, iconHtml) => {
         const btn = document.createElement('button');
@@ -1336,12 +1349,75 @@ function renderOutfitWardrobePickerChips() {
         });
         wrap.appendChild(btn);
     };
-    if (cats.length > 1) {
-        mk('전체', '', '');
-    }
     cats.forEach((c) => mk(c, c, getOutfitCategoryIconMarkup(c)));
-    if (cats.length === 1) {
-        outfitWardrobePickerCatFilter = cats[0];
+}
+
+const OUTFIT_RENAME_ICON =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+
+async function renameWriteWardrobePickerItem(it, btn) {
+    if (outfitWardrobeRenameBusy) return;
+    const cat = String(it.category || '').trim();
+    const oldVal = String(it.value || '').trim();
+    if (!cat || !oldVal) return;
+
+    const next = await showPrompt('품목 이름을 수정할까요?', {
+        defaultValue: oldVal,
+        confirmText: '변경',
+        hint: '이름을 바꾸면 지난 기록과 옷장에도 반영돼요.',
+        maxLength: OUTFIT_ITEM_VALUE_MAX_LEN
+    });
+    const pickerStillOpen = document
+        .getElementById('outfitWardrobePickerSheet')
+        ?.classList.contains('active');
+    if (pickerStillOpen) document.body.style.overflow = 'hidden';
+    if (next == null) return;
+
+    const newVal = String(next).trim();
+    if (!newVal) {
+        await showAlert('품목명을 입력해 주세요.');
+        if (pickerStillOpen) document.body.style.overflow = 'hidden';
+        return;
+    }
+    if (newVal === oldVal) return;
+    if (
+        getActiveWriteWardrobeItems().some(
+            (row) => row.category === cat && row.value === newVal
+        )
+    ) {
+        await showAlert('이미 옷장에 있는 이름이에요.');
+        if (pickerStillOpen) document.body.style.overflow = 'hidden';
+        return;
+    }
+
+    outfitWardrobeRenameBusy = true;
+    if (btn) btn.disabled = true;
+    try {
+        const res = renameOutfitSuggestionInPicker(cat, oldVal, newVal);
+        if (!res.ok) return;
+        await StyleLogAPI.renameOutfitItemValueAcrossLogs({
+            category: cat,
+            oldValue: oldVal,
+            newValue: res.newVal
+        });
+        refreshLocalDraftAfterRenamingOutfitSuggestion(cat, oldVal, res.newVal);
+        writeWardrobeCatalog.forEach((row) => {
+            if (row.category === cat && row.value === oldVal) row.value = res.newVal;
+        });
+        await loadWriteWardrobeCatalog();
+        renderOutfitItemRows();
+        if (document.getElementById('outfitWardrobePickerSheet')?.classList.contains('active')) {
+            renderOutfitWardrobePicker();
+        }
+    } catch (e) {
+        console.error(e);
+        await showAlert('이름을 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+        outfitWardrobeRenameBusy = false;
+        if (btn) btn.disabled = false;
+        if (document.getElementById('outfitWardrobePickerSheet')?.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        }
     }
 }
 
@@ -1373,10 +1449,13 @@ function renderOutfitWardrobePickerList() {
     if (emptyEl) emptyEl.hidden = items.length > 0;
 
     items.forEach((it) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
         const alreadyInOutfit =
             findOutfitItemIndexByCategoryValue(it.category, it.value) >= 0;
+        const row = document.createElement('div');
+        row.className = 'outfit-wardrobe-picker-row';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className =
             'outfit-wardrobe-picker-item' + (alreadyInOutfit ? ' is-selected' : '');
         btn.setAttribute('role', 'option');
@@ -1412,7 +1491,19 @@ function renderOutfitWardrobePickerList() {
                 refreshOutfitRowsAndWardrobePickerList();
             }
         });
-        listEl.appendChild(btn);
+
+        const renameBtn = document.createElement('button');
+        renameBtn.type = 'button';
+        renameBtn.className = 'outfit-wardrobe-picker-rename';
+        renameBtn.innerHTML = OUTFIT_RENAME_ICON;
+        renameBtn.setAttribute('aria-label', `${it.value} 이름 바꾸기`);
+        renameBtn.addEventListener('click', () => {
+            void renameWriteWardrobePickerItem(it, renameBtn);
+        });
+
+        row.appendChild(btn);
+        row.appendChild(renameBtn);
+        listEl.appendChild(row);
     });
 }
 
@@ -1423,15 +1514,10 @@ function renderOutfitWardrobePicker() {
     if (hint) {
         if (outfitWardrobePickerRowIndex != null) {
             setUiCopyLines(hint, ['고른 옷이 이 착장 품목 줄에 들어가요.']);
-        } else if (outfitWardrobePickerAllowedCats && outfitWardrobePickerAllowedCats.length) {
-            setUiCopyLines(hint, [
-                '탭하면 착장 품목에 추가돼요.',
-                '다시 탭하면 빼요. 끝나면 선택 완료.'
-            ]);
         } else {
             setUiCopyLines(hint, [
-                '탭하면 착장 품목에 추가돼요.',
-                '다시 탭하면 빼요.'
+                '구분을 고른 뒤 옷을 탭하세요. 연필로 이름을 바꿔요.',
+                '다시 탭하면 빼요. 끝나면 선택 완료.'
             ]);
         }
     }
@@ -1468,6 +1554,7 @@ function openOutfitWardrobePicker(options = {}) {
     } else {
         outfitWardrobePickerCatFilter = '';
     }
+    ensureOutfitWardrobePickerCategory();
 
     outfitWardrobePickerReturnEl = options.returnFocusEl || null;
     showOutfitWardrobePickerSheet();
@@ -1902,7 +1989,10 @@ function confirmOutfitCategorySheet() {
 
 function addOutfitItemRow(openSheetAfter = false) {
     if (openSheetAfter) {
-        openOutfitCategorySheetForAdd();
+        const addBtn = document.getElementById('outfitItemsAddBtn');
+        openOutfitWardrobePicker({
+            returnFocusEl: addBtn
+        });
         return;
     }
     outfitItems.push({ category: '', value: '', valueDraft: '' });
@@ -2020,8 +2110,18 @@ function handlePhotoSelect(e) {
 
     filesToAdd.forEach((file, index) => {
         const reader = new FileReader();
-        reader.onload = (event) => {
-            results[index] = { file, dataUrl: event.target.result };
+        reader.onload = async (event) => {
+            const raw = typeof event.target?.result === 'string' ? event.target.result : '';
+            const dataUrl = raw ? await dataUrlForCropEditor(raw) : '';
+            results[index] = dataUrl ? { file, dataUrl } : null;
+            loadedCount++;
+            if (loadedCount === filesToAdd.length) {
+                cropUploadQueue.push(...results.filter((r) => r?.dataUrl));
+                processNextCropInQueue();
+            }
+        };
+        reader.onerror = () => {
+            results[index] = null;
             loadedCount++;
             if (loadedCount === filesToAdd.length) {
                 cropUploadQueue.push(...results.filter((r) => r?.dataUrl));
@@ -2334,6 +2434,11 @@ function removePhoto(index) {
 
 // 크롭 편집 모달 — 코디 표시와 동일한 세로 3:4만 허용
 const OUTFIT_PHOTO_CROP_ASPECT = 3 / 4;
+/** 편집기에 넣기 전 긴 변. 초대형 원본은 캔버스 한도를 넘어 잘린 결과로 나온다. */
+const CROP_SOURCE_MAX_EDGE = 2048;
+/** 저장 캔버스. 가로·세로를 따로 강제하면 맞춘 박스와 비율이 어긋난다. */
+const CROP_OUTPUT_MAX_WIDTH = 1200;
+const CROP_OUTPUT_MAX_HEIGHT = 1600;
 
 let cropModalCropper = null;
 /** selectedPhotos 인덱스. 신규 업로드 대기 중이면 null */
@@ -2341,10 +2446,50 @@ let cropModalPhotoIndex = null;
 /** 앨범에서 고른 뒤 아직 selectedPhotos에 넣기 전 */
 let cropPendingNewPhoto = null;
 let cropUploadQueue = [];
+let cropperInitTries = 0;
+
+function loadHtmlImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('load'));
+        img.src = src;
+    });
+}
+
+/** 편집 전에만 축소. 브라우저가 방향을 반영한 뒤라 결과 JPEG에는 회전 정보가 남지 않는다. */
+async function dataUrlForCropEditor(dataUrl) {
+    try {
+        const img = await loadHtmlImage(dataUrl);
+        const nw = img.naturalWidth || img.width;
+        const nh = img.naturalHeight || img.height;
+        if (!nw || !nh || Math.max(nw, nh) <= CROP_SOURCE_MAX_EDGE) return dataUrl;
+        const scale = CROP_SOURCE_MAX_EDGE / Math.max(nw, nh);
+        const w = Math.max(1, Math.round(nw * scale));
+        const h = Math.max(1, Math.round(nh * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return dataUrl;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        return canvas.toDataURL('image/jpeg', 0.92);
+    } catch (_) {
+        return dataUrl;
+    }
+}
 
 function initCropperOnImage() {
     const img = document.getElementById('cropImage');
+    const container = document.querySelector('#cropModal .crop-container');
     if (!img || typeof Cropper === 'undefined') return;
+    if (!img.naturalWidth || !container || container.clientHeight < 40) {
+        if (cropperInitTries++ < 12) requestAnimationFrame(initCropperOnImage);
+        return;
+    }
+    cropperInitTries = 0;
     if (cropModalCropper) {
         cropModalCropper.destroy();
         cropModalCropper = null;
@@ -2354,33 +2499,37 @@ function initCropperOnImage() {
         viewMode: 1,
         dragMode: 'move',
         autoCropArea: 1,
-        responsive: true
+        responsive: true,
+        background: false,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        checkOrientation: true,
+        ready() {
+            const cropper = this.cropper;
+            if (cropper && typeof cropper.resize === 'function') {
+                requestAnimationFrame(() => cropper.resize());
+            }
+        }
     });
 }
 
-/** 크롭 결과 — 정확히 3:4 픽셀, JPEG용 불투명 배경 */
+/** 크롭 박스 비율을 유지한 채 긴 변만 제한. width·height를 같이 넘기면 다시 잘린다. */
 function getOutfitCropCanvas(cropper) {
     if (!cropper) return null;
-    const data = cropper.getData(true);
-    let w = Math.max(1, Math.round(Number(data.width) || 900));
-    let h = Math.max(1, Math.round(w / OUTFIT_PHOTO_CROP_ASPECT));
-    const maxW = 1920;
-    const maxH = 2560;
-    if (w > maxW) {
-        w = maxW;
-        h = Math.round(w / OUTFIT_PHOTO_CROP_ASPECT);
-    }
-    if (h > maxH) {
-        h = maxH;
-        w = Math.round(h * OUTFIT_PHOTO_CROP_ASPECT);
-    }
-    return cropper.getCroppedCanvas({
-        width: w,
-        height: h,
+    const canvas = cropper.getCroppedCanvas({
+        maxWidth: CROP_OUTPUT_MAX_WIDTH,
+        maxHeight: CROP_OUTPUT_MAX_HEIGHT,
         fillColor: '#ffffff',
         imageSmoothingEnabled: true,
         imageSmoothingQuality: 'high'
     });
+    if (!canvas || canvas.width < 2 || canvas.height < 2) return null;
+    return canvas;
 }
 
 function isCropModalOpen() {
@@ -2398,6 +2547,28 @@ function processNextCropInQueue() {
     if (next?.dataUrl) openCropModalForNewUpload(next);
 }
 
+function mountCropImage(src) {
+    const img = document.getElementById('cropImage');
+    if (!img || !src) return;
+    cropperInitTries = 0;
+    const start = () => {
+        if (!img.naturalWidth) return;
+        requestAnimationFrame(() => requestAnimationFrame(() => initCropperOnImage()));
+    };
+    img.onload = start;
+    img.onerror = () => {
+        void showAlert('사진을 불러오지 못했어요. 다시 선택해 주세요.');
+        closeCropModal();
+    };
+    if (/^https?:\/\//i.test(src)) img.crossOrigin = 'anonymous';
+    else img.removeAttribute('crossorigin');
+    if (img.getAttribute('src') === src && img.complete && img.naturalWidth) {
+        start();
+        return;
+    }
+    img.src = src;
+}
+
 function openCropModalForNewUpload(pending) {
     if (typeof Cropper === 'undefined') {
         void showAlert('편집 기능을 불러올 수 없습니다. 페이지를 새로고침해 주세요.');
@@ -2409,13 +2580,11 @@ function openCropModalForNewUpload(pending) {
 
     const modal = document.getElementById('cropModal');
     const img = document.getElementById('cropImage');
-    if (!modal || !img) return;
+    if (!modal || !img || !pending?.dataUrl) return;
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
-
-    img.onload = () => initCropperOnImage();
-    img.src = pending.dataUrl;
+    mountCropImage(pending.dataUrl);
 }
 
 function openCropModal(index) {
@@ -2429,12 +2598,9 @@ function openCropModal(index) {
     cropPendingNewPhoto = null;
     cropModalPhotoIndex = index;
     const modal = document.getElementById('cropModal');
-    const img = document.getElementById('cropImage');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
-
-    img.onload = () => initCropperOnImage();
-    img.src = photo.dataUrl;
+    mountCropImage(photo.dataUrl);
 }
 
 function finishCropModalCleanup() {
@@ -2463,15 +2629,21 @@ function closeCropModal() {
 
 function applyCrop() {
     if (!cropModalCropper) {
-        closeCropModal();
+        void showAlert('사진 맞추기를 준비하고 있어요. 잠시 뒤 다시 적용해 주세요.');
         return;
     }
     const canvas = getOutfitCropCanvas(cropModalCropper);
     if (!canvas) {
-        void showAlert('사진을 3:4 영역에 맞춰 주세요. 다시 드래그·확대한 뒤 적용해 주세요.');
+        void showAlert('사진 맞추기를 준비하고 있어요. 잠시 뒤 다시 적용해 주세요.');
         return;
     }
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    let dataUrl;
+    try {
+        dataUrl = canvas.toDataURL('image/jpeg', 0.86);
+    } catch (_) {
+        void showAlert('이 사진은 다시 자를 수 없어요. 앨범에서 다시 골라 주세요.');
+        return;
+    }
 
     if (cropPendingNewPhoto) {
         const pending = cropPendingNewPhoto;
@@ -2515,41 +2687,11 @@ function initCropModal() {
     applyBtn?.addEventListener('click', applyCrop);
 }
 
-// 태그 추가
-function addTag(tagText) {
-    if (!tagText) return;
-    
-    // # 제거
-    tagText = tagText.replace(/^#/, '');
-    
-    if (tags.includes(tagText)) {
-        return; // 중복 방지
-    }
-    
-    tags.push(tagText);
-    renderTags();
-}
-
-// 태그 렌더링
-function renderTags() {
-    const tagsDisplay = document.getElementById('tagsDisplay');
-    tagsDisplay.innerHTML = '';
-    
-    tags.forEach((tag, index) => {
-        const tagItem = document.createElement('div');
-        tagItem.className = 'tag-item';
-        tagItem.innerHTML = `
-            #${tag}
-            <button type="button" class="tag-remove" onclick="removeTag(${index})">×</button>
-        `;
-        tagsDisplay.appendChild(tagItem);
+function syncTpoButtons() {
+    const allowed = new Set(selectedTpo);
+    document.querySelectorAll('#tpoBtns .weather-fit-btn').forEach((btn) => {
+        btn.classList.toggle('active', allowed.has(btn.dataset.value));
     });
-}
-
-// 태그 제거
-function removeTag(index) {
-    tags.splice(index, 1);
-    renderTags();
 }
 
 // 폼 유효성 검사
@@ -2580,7 +2722,7 @@ async function handleSubmit() {
     
     // 버튼 비활성화
     saveBtn.disabled = true;
-    saveBtn.textContent = isEditMode ? '완료 중...' : '저장 중...';
+    saveBtn.textContent = isEditMode ? '수정 중...' : '저장 중...';
 
     try {
         sortOutfitItemsInPlace();
@@ -2663,7 +2805,8 @@ async function handleSubmit() {
             weather_fit: weatherFit,
             photos: photoUrls.length > 0 ? photoUrls : null,
             thumb_url: thumbUrl,
-            tags: tags.length > 0 ? tags : null,
+            tags: preservedTags.length > 0 ? preservedTags : null,
+            tpo: selectedTpo.length > 0 ? [...selectedTpo] : [],
             items: (() => {
                 const savedItems = outfitItemsForSave();
                 return savedItems.length > 0 ? savedItems : null;
@@ -2688,9 +2831,6 @@ async function handleSubmit() {
             debugLog('✅ 저장 성공:', result);
         }
 
-        /** api.js 에서 DB items 정상 반영 시 제거함 — 같은 키로 맞출 것 */
-        const SS_ITEMS_MIGRATION_MODAL_SHOWN = 'stylelog_items_migration_modal_shown';
-
         const outfitItemsWereDropped =
             hadOutfitItemsToSave &&
             result &&
@@ -2700,33 +2840,13 @@ async function handleSubmit() {
             delete result.__stylelogItemsDropped;
         }
 
-        let doneMsg = isEditMode ? '수정되었습니다!' : '저장되었습니다!';
-        if (outfitItemsWereDropped) {
-            let migrationDetailedAlreadyShown = false;
-            try {
-                migrationDetailedAlreadyShown =
-                    sessionStorage.getItem(SS_ITEMS_MIGRATION_MODAL_SHOWN) === '1';
-            } catch (_) {
-                migrationDetailedAlreadyShown = false;
-            }
-
-            const longHelp =
-                '착장 품목은 데이터베이스에 style_logs.items 칼럼이 없어 저장되지 않았습니다.\n\n' +
-                'Supabase → SQL에서 docs/supabase/style_logs_add_items.sql 내용을 실행한 뒤, 같은 편집기에서 아래 한 줄도 실행하고 10~60초 정도 기다려 주세요.\n\n' +
-                "notify pgrst, 'reload schema';\n\n" +
-                '그다음 브라우저를 새로고침한 뒤 다시 수정·저장하면 착장 품목도 함께 저장됩니다.';
-
-            if (!migrationDetailedAlreadyShown) {
-                doneMsg += `\n\n${longHelp}`;
-                try {
-                    sessionStorage.setItem(SS_ITEMS_MIGRATION_MODAL_SHOWN, '1');
-                } catch (_) {
-                    /* private mode 등 */
-                }
-            } else {
-                doneMsg +=
-                    '\n\n착장 품목은 DB에 아직 반영되지 않았습니다. (마이그레이션 방법은 방금처럼 첫 저장 때 안내했어요)';
-            }
+        let doneMsg = isEditMode ? '수정되었습니다.' : '저장되었습니다.';
+        if (outfitItemsWereDropped && result && result.__stylelogContextDropped) {
+            doneMsg = '저장되었지만, 착장과 상황은 빠졌어요.';
+        } else if (outfitItemsWereDropped) {
+            doneMsg = '저장되었지만, 착장 품목은 빠졌어요.';
+        } else if (result && result.__stylelogContextDropped) {
+            doneMsg = '저장되었지만, 상황은 빠졌어요.';
         }
 
         await showAlert(doneMsg);

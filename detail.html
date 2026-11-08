@@ -12,35 +12,76 @@
     </script>
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    /* 홈에서 넘긴 스크롤 위치가 상세에 붙지 않게, 읽기 시작할 때까지 맨 위에 둔다.
+       history.scrollRestoration 은 세션 값이라 여기서 manual 로 바꾸지 않는다. 홈 복귀 스크롤을 브라우저가 그대로 복원해야 한다. */
+    (function () {
+        var PIN_KEY = 'stylelog_detail_pin_top';
+        var userMoved = false;
+        function markMoved() { userMoved = true; }
+        function pin() {
+            if (userMoved) return;
+            if (window.scrollX || window.scrollY || document.documentElement.scrollTop || (document.body && document.body.scrollTop)) {
+                window.scrollTo(0, 0);
+            }
+        }
+        window.__stylelogPinDetailTop = pin;
+        function takePinRequest() {
+            try {
+                if (sessionStorage.getItem(PIN_KEY) !== '1') return false;
+                sessionStorage.removeItem(PIN_KEY);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        pin();
+        window.addEventListener('pageshow', function (event) {
+            var force = takePinRequest();
+            if (event.persisted && !force) return;
+            userMoved = false;
+            pin();
+            requestAnimationFrame(pin);
+        });
+        window.addEventListener('load', function () {
+            pin();
+            requestAnimationFrame(pin);
+        });
+        window.addEventListener('scroll', pin, { passive: true });
+        ['pointerdown', 'wheel', 'touchmove', 'keydown'].forEach(function (type) {
+            window.addEventListener(type, markMoved, { capture: true, passive: true });
+        });
+    })();
+    </script>
     <title>스타일로그 - 상세</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/variables.css?v=9">
     <link rel="stylesheet" href="styles/utils.css?v=8">
     <link rel="stylesheet" href="styles/dialog.css">
-    <link rel="stylesheet" href="styles/detail.css?v=6">
+    <link rel="stylesheet" href="styles/detail.css?v=10">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/photo-gallery.css?v=2">
-    <link rel="stylesheet" href="styles/outfit-photo.css?v=6">
+    <link rel="stylesheet" href="styles/outfit-photo.css?v=7">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/require-birthdate.css">
     <!-- Supabase 클라이언트 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <!-- 설정 및 API -->
-    <script src="scripts/config.js?v=6"></script>
-    <script src="scripts/api.js?v=3"></script>
-    <script src="scripts/common.js?v=13"></script>
+    <script src="scripts/config.js?v=7"></script>
+    <script src="scripts/api.js?v=9"></script>
+    <script src="scripts/common.js?v=16"></script>
 </head>
 <body class="has-bottom-nav">
     <!-- 상세 화면 - 사진 포함 -->
     <div class="container" id="detailView">
         <!-- 헤더 (사진 위에 오버레이) -->
         <header class="detail-header">
-            <button class="icon-btn back-btn">
+            <button type="button" class="icon-btn back-btn" aria-label="뒤로">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 12H5M12 19l-7-7 7-7"></path>
                 </svg>
             </button>
-            <button class="icon-btn menu-btn">
+            <button type="button" class="icon-btn menu-btn" aria-label="메뉴">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="5" r="1.5"></circle>
                     <circle cx="12" cy="12" r="1.5"></circle>
@@ -63,6 +104,8 @@
 
             <!-- 날씨 -->
             <div class="weather-info"></div>
+
+            <div class="log-context" id="logContextSection" hidden></div>
 
             <!-- 본문 -->
             <div class="content-body"></div>
@@ -205,7 +248,7 @@
 
     <script src="scripts/require-birthdate.js"></script>
     <script src="scripts/auth.js"></script>
-    <script src="scripts/detail.js?v=9"></script>
+    <script src="scripts/detail.js?v=15"></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

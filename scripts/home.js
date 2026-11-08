@@ -11,6 +11,7 @@ const INFINITE_SCROLL_ROOT_MARGIN = 400;
 const WEATHER_API_DELAY_MS = 250;
 const HOME_STYLE_LOG_SELECT_BASE =
     'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at';
+const HOME_STYLE_LOG_CONTEXT_COLUMNS = 'tpo';
 const HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS = HOME_STYLE_LOG_SELECT_BASE;
 const HOME_STYLE_LOG_SELECT_WITH_ITEMS = `${HOME_STYLE_LOG_SELECT_BASE},items`;
 
@@ -21,6 +22,7 @@ const HOME_FILTER_PANEL_ID_BY_TAB = Object.freeze({
     weatherFit: 'filterPanelWeatherFit',
     temp: 'filterPanelTemp',
     outfit: 'filterPanelOutfit',
+    tpo: 'filterPanelTpo',
     favorites: 'filterPanelFavorites'
 });
 
@@ -41,7 +43,10 @@ let weatherFilterHigh = TEMP_FILTER_MAX;
 let filterYears = [];
 let filterMonths = [];
 let filterWeatherFit = [];
+let filterTpo = [];
 let filterFavoritesOnly = false;
+/** tpo 컬럼이 없으면 목록 조회에서 빼고 상황 필터를 숨긴다 */
+let homeListSelectIncludesContext = true;
 /** 착장 필터 선택 키 (`["구분","품목명"]` JSON 문자열 배열 — OR 매칭) */
 let filterOutfitSelectionKeys = [];
 /** 목록 조회에 `items` 포함 (컬럼 없으면 API 오류 후 끔) */
@@ -51,6 +56,9 @@ let homeListSelectIncludesItems = true;
 const RECOMMEND_MODE_STORAGE_KEY = 'stylelog_home_recommend_mode';
 /** 상세 → 홈 복귀 시 필터·맞춤 토글 복원 (homeScrollY 와 쌍) */
 const HOME_FILTER_STATE_STORAGE_KEY = 'stylelog_home_filter_state';
+const HOME_RETURN_LOG_KEY = 'homeReturnLogId';
+/** 상세 첫 화면을 맨 위로. 홈 스크롤 복원 키와 따로 둔다. */
+const DETAIL_PIN_TOP_KEY = 'stylelog_detail_pin_top';
 let recommendationModeEnabled = localStorage.getItem(RECOMMEND_MODE_STORAGE_KEY) !== 'false';
 /** 맞춤 켤 때 복원할 필터 스냅샷 */
 let manualFilterSnapshot = null;
@@ -115,7 +123,26 @@ function getDayListContainer() {
 }
 
 function homeStyleLogSelectColumns() {
-    return homeListSelectIncludesItems ? HOME_STYLE_LOG_SELECT_WITH_ITEMS : HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS;
+    const base = homeListSelectIncludesItems
+        ? HOME_STYLE_LOG_SELECT_WITH_ITEMS
+        : HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS;
+    return homeListSelectIncludesContext ? `${base},${HOME_STYLE_LOG_CONTEXT_COLUMNS}` : base;
+}
+
+function isStyleLogContextSelectUnavailable(error) {
+    const flat = String(error?.message || error?.details || error?.hint || '').toLowerCase();
+    if (!/\btpo\b/.test(flat)) return false;
+    return /does not exist|schema cache|could not find|42703|pgrst204/.test(flat);
+}
+
+function syncHomeContextFilterVisibility() {
+    document
+        .querySelectorAll(
+            '.filter-category-chip[data-tab="tpo"], .filter-tab[data-tab="tpo"], #filterPanelTpo'
+        )
+        .forEach((el) => {
+            el.hidden = !homeListSelectIncludesContext;
+        });
 }
 
 function syncHomeOutfitFilterTabVisibility() {
@@ -275,6 +302,7 @@ function snapshotCurrentFilters() {
         filterYears: [...filterYears],
         filterMonths: [...filterMonths],
         filterWeatherFit: [...filterWeatherFit],
+        filterTpo: [...filterTpo],
         filterFavoritesOnly,
         filterOutfitSelectionKeys: [...filterOutfitSelectionKeys]
     };
@@ -287,6 +315,9 @@ function restoreFiltersFromSnapshot(s) {
     filterYears = [...s.filterYears];
     filterMonths = [...s.filterMonths];
     filterWeatherFit = [...s.filterWeatherFit];
+    filterTpo = typeof normalizeTpoValues === 'function'
+        ? normalizeTpoValues(s.filterTpo)
+        : (Array.isArray(s.filterTpo) ? [...s.filterTpo] : []);
     filterFavoritesOnly = s.filterFavoritesOnly;
     filterOutfitSelectionKeys = Array.isArray(s.filterOutfitSelectionKeys)
         ? [...s.filterOutfitSelectionKeys]
@@ -341,6 +372,7 @@ async function applyTodayWeatherRecommendationFilters() {
             filterYears = [];
             filterMonths = [];
             filterWeatherFit = [];
+            filterTpo = [];
             filterFavoritesOnly = false;
             filterOutfitSelectionKeys = [];
             if (window.__stylelogHomeApplyFilters) window.__stylelogHomeApplyFilters();
@@ -372,6 +404,7 @@ async function setRecommendationMode(on) {
             filterYears = [];
             filterMonths = [];
             filterWeatherFit = [];
+            filterTpo = [];
             filterFavoritesOnly = false;
             filterOutfitSelectionKeys = [];
         }
@@ -442,11 +475,9 @@ async function initPage() {
 
     if (restoredFiltersFromDetail) {
         await initRecommendModeOnLoad({ skipAutoApply: true });
-        if (typeof window.__stylelogHomeApplyFilters === 'function') {
-            window.__stylelogHomeApplyFilters();
-        } else {
-            const filtered = getFilteredLogs();
-            renderFullDayList(filtered);
+        /* 목록을 비우고 전체를 다시 받지 않는다. 칩만 맞춘다. */
+        if (typeof window.__stylelogHomeSyncFilterChrome === 'function') {
+            window.__stylelogHomeSyncFilterChrome();
         }
     } else {
         await initRecommendModeOnLoad();
@@ -460,35 +491,42 @@ async function initPage() {
     updateMenuUserInfo();
 }
 
+function findHomeReturnCard(logId) {
+    if (!logId) return null;
+    const safeId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(logId)) : String(logId);
+    return document.querySelector(`.day-item[data-log-id="${safeId}"]`);
+}
+
+function scrollHomeReturnCardIntoView(card) {
+    if (!card) return;
+    card.scrollIntoView({ block: 'center', inline: 'nearest' });
+}
+
+/** 상세에서 돌아온 위치. 픽셀보다 카드 id가 맞다. 사진 높이가 나중에 잡혀도 그 카드에 둔다. */
 async function restoreHomeScrollPosition() {
     const saved = sessionStorage.getItem('homeScrollY');
-    if (!saved) return;
-    sessionStorage.removeItem('homeScrollY');
-    const targetY = parseInt(saved, 10);
-    if (isNaN(targetY) || targetY <= 0) {
+    const logId = sessionStorage.getItem(HOME_RETURN_LOG_KEY);
+    if (saved == null && !logId) {
         document.body.classList.remove('scroll-restore-pending');
         return;
     }
+    sessionStorage.removeItem('homeScrollY');
+    sessionStorage.removeItem(HOME_RETURN_LOG_KEY);
+    const targetY = parseInt(saved || '0', 10);
 
-    const doScroll = () => window.scrollTo(0, targetY);
+    let guard = 0;
+    while (!findHomeReturnCard(logId) && hasMoreData && guard < 40) {
+        guard += 1;
+        if (!isLoading) await loadMoreDayList(PAGE_SIZE);
+        else await new Promise((resolve) => setTimeout(resolve, 40));
+    }
 
-    await new Promise(resolve => {
-        requestAnimationFrame(async () => {
-            doScroll();
-            while (hasMoreData && !isLoading) {
-                const { scrollHeight, clientHeight } = document.documentElement;
-                const maxScroll = scrollHeight - clientHeight;
-                if (maxScroll >= targetY - SCROLL_TOLERANCE) break;
-                const gap = targetY - maxScroll;
-                const batchSize = Math.min(SCROLL_RESTORE_MAX_BATCH, Math.max(PAGE_SIZE, Math.ceil(gap / PX_PER_DAY_ITEM)));
-                await loadMoreDayList(batchSize);
-                doScroll();
-            }
-            resolve();
-        });
-    });
+    const card = findHomeReturnCard(logId);
+    if (card) scrollHomeReturnCardIntoView(card);
+    else if (!Number.isNaN(targetY) && targetY > 0) window.scrollTo(0, targetY);
 
     document.body.classList.remove('scroll-restore-pending');
+    requestAnimationFrame(() => scrollHomeReturnCardIntoView(findHomeReturnCard(logId)));
 }
 
 // 일기가 있는 연도 목록 로드
@@ -609,6 +647,19 @@ async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
             queryRes = await supabaseClient
                 .from('style_logs')
                 .select(HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS)
+                .order('date', { ascending: false })
+                .range(currentOffset, currentOffset + limit - 1);
+            data = queryRes.data;
+            error = queryRes.error;
+        }
+
+        if (error && homeListSelectIncludesContext && isStyleLogContextSelectUnavailable(error)) {
+            homeListSelectIncludesContext = false;
+            filterTpo = [];
+            syncHomeContextFilterVisibility();
+            queryRes = await supabaseClient
+                .from('style_logs')
+                .select(homeStyleLogSelectColumns())
                 .order('date', { ascending: false })
                 .range(currentOffset, currentOffset + limit - 1);
             data = queryRes.data;
@@ -928,13 +979,28 @@ function removeHomeLogFromUi(logId) {
     if (filtered.length > 0 && !hasMoreData) showEndMessage();
 }
 
-function dayCardWeatherFitChip(log) {
+/** 카드에는 칩 대신 한 줄. 길면 앞 3개와 나머지만 보여 주고, 전체는 title에 둔다. */
+function dayCardTpoLineHtml(log) {
+    const tpo = typeof normalizeTpoValues === 'function' ? normalizeTpoValues(log.tpo) : [];
+    if (!tpo.length) return '';
+    const labels = tpo.map(
+        (value) => (typeof TPO_LABELS !== 'undefined' && TPO_LABELS[value]) || value
+    );
+    const shown = labels.slice(0, 3);
+    const extra = labels.length - shown.length;
+    const text = extra > 0 ? `${shown.join(' · ')} 외 ${extra}` : shown.join(' · ');
+    const full = labels.join(' · ');
+    return `<p class="day-card-tpo" title="${escapeHtmlForDayCard(full)}">${escapeHtmlForDayCard(text)}</p>`;
+}
+
+function dayCardWeatherFitText(log) {
     if (!log.weather_fit || !['cold', 'good', 'hot'].includes(log.weather_fit)) return '';
     const label =
         typeof WEATHER_FIT_LABELS !== 'undefined' && WEATHER_FIT_LABELS[log.weather_fit]
             ? WEATHER_FIT_LABELS[log.weather_fit]
-            : log.weather_fit;
-    return `<span class="day-weather-fit-chip day-weather-fit-chip--${log.weather_fit}">${label}</span>`;
+            : '';
+    if (!label) return '';
+    return `<span class="day-card-fit">${escapeHtmlForDayCard(label)}</span>`;
 }
 
 function dayCardDateLabel(date) {
@@ -954,7 +1020,7 @@ function dayCardDateLabel(date) {
 }
 
 function dayCardWeatherInlineHtml(log) {
-    const fit = dayCardWeatherFitChip(log);
+    const fit = dayCardWeatherFitText(log);
     const hasTemps =
         log.weather_temp_min !== null &&
         log.weather_temp_min !== undefined &&
@@ -991,9 +1057,12 @@ function dayCardSummaryHtml(date, log, options = {}) {
         actions && logForActions ? dayCardActionsHtml(logForActions) : '';
     return `
         <div class="day-card-summary">
-            <span class="day-card-date-label sl-date">${dayCardDateLabel(date)}</span>
-            ${dayCardWeatherInlineHtml(log)}
-            ${actionsBlock}
+            <div class="day-card-summary-top">
+                <span class="day-card-date-label sl-date">${dayCardDateLabel(date)}</span>
+                ${dayCardWeatherInlineHtml(log)}
+                ${actionsBlock}
+            </div>
+            ${dayCardTpoLineHtml(log)}
         </div>`;
 }
 
@@ -1169,9 +1238,11 @@ function attachDayListEventListeners() {
         const logId = dayItem.dataset.logId;
         if (logId) {
             sessionStorage.setItem('homeScrollY', String(window.scrollY || document.documentElement.scrollTop));
+            sessionStorage.setItem(HOME_RETURN_LOG_KEY, String(logId));
             sessionStorage.setItem('detailFrom', 'home');
+            sessionStorage.setItem(DETAIL_PIN_TOP_KEY, '1');
             saveHomeFilterStateForDetailReturn();
-            window.location.href = `detail.html?id=${logId}`;
+            window.location.href = `detail.html?id=${encodeURIComponent(logId)}`;
         }
     });
 }
@@ -1185,6 +1256,7 @@ function logPassesHomeFilters(log, c) {
     const high = c.high ?? TEMP_FILTER_MAX;
     const favOnly = !!c.favOnly;
     const outfitKeys = c.outfitKeys ?? [];
+    const tpo = c.tpo ?? [];
 
     const isFullRange = low <= TEMP_FILTER_MIN && high >= TEMP_FILTER_MAX;
     if (!isFullRange) {
@@ -1203,6 +1275,11 @@ function logPassesHomeFilters(log, c) {
         const fit = log.weather_fit || 'good';
         if (!weatherFit.includes(fit)) return false;
     }
+    if (tpo.length > 0) {
+        const want = typeof normalizeTpoValues === 'function' ? normalizeTpoValues(tpo) : tpo;
+        const have = new Set(typeof normalizeTpoValues === 'function' ? normalizeTpoValues(log.tpo) : []);
+        if (want.length > 0 && !want.some((value) => have.has(value))) return false;
+    }
     if (favOnly && !log.is_favorite) return false;
     return logPassesOutfitFilterKeys(log, outfitKeys);
 }
@@ -1216,7 +1293,8 @@ function passesWeatherFilter(log) {
         low: weatherFilterLow,
         high: weatherFilterHigh,
         favOnly: filterFavoritesOnly,
-        outfitKeys: filterOutfitSelectionKeys
+        outfitKeys: filterOutfitSelectionKeys,
+        tpo: filterTpo
     });
 }
 
@@ -1247,6 +1325,7 @@ function buildHomeFilteredEmptyHtml() {
         filterYears.length === 0 &&
         filterMonths.length === 0 &&
         filterWeatherFit.length === 0 &&
+        filterTpo.length === 0 &&
         filterOutfitSelectionKeys.length === 0 &&
         weatherFilterLow <= TEMP_FILTER_MIN &&
         weatherFilterHigh >= TEMP_FILTER_MAX &&
@@ -1309,6 +1388,11 @@ function getActiveFilterChips() {
         const labels = filterWeatherFit.map(v => WEATHER_FIT_LABELS[v]).filter(Boolean);
         chips.push({ key: 'weatherFit', label: labels.join(', '), value: 'weatherFit' });
     }
+    const tpoValues = typeof normalizeTpoValues === 'function' ? normalizeTpoValues(filterTpo) : filterTpo;
+    if (tpoValues.length > 0) {
+        const labels = tpoValues.map((value) => (typeof TPO_LABELS !== 'undefined' && TPO_LABELS[value]) || value);
+        chips.push({ key: 'tpo', label: labels.join(', '), value: 'tpo' });
+    }
     const isFullRange = weatherFilterLow <= TEMP_FILTER_MIN && weatherFilterHigh >= TEMP_FILTER_MAX;
     if (!recommendationModeEnabled && !isFullRange) {
         chips.push({ key: 'temp', label: `${weatherFilterLow}°~${weatherFilterHigh}°`, value: 'temp' });
@@ -1352,6 +1436,7 @@ function renderFullDayList(logs) {
 
 // 필터 모달 초기화
 function initFilterModal() {
+    syncHomeContextFilterVisibility();
     const modal = document.getElementById('filterModal');
     const closeBtn = document.getElementById('filterModalClose');
     const overlay = modal?.querySelector('.filter-modal-overlay');
@@ -1468,6 +1553,10 @@ function initFilterModal() {
         document.querySelectorAll('#filterWeatherFitOptions input:checked').forEach(cb => {
             weatherFit.push(cb.value);
         });
+        const tpo = [];
+        document.querySelectorAll('#filterTpoOptions input:checked').forEach((cb) => {
+            tpo.push(cb.value);
+        });
         const low = parseInt(sliderLow?.value ?? TEMP_FILTER_MIN);
         const high = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
@@ -1476,7 +1565,7 @@ function initFilterModal() {
         document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]:checked').forEach((cb) => {
             if (cb.value) outfitKeys.push(cb.value);
         });
-        return { years, months, weatherFit, low, high, favOnly, outfitKeys };
+        return { years, months, weatherFit, low, high, favOnly, outfitKeys, tpo };
     }
 
     function passesFilterWithState(log, state) {
@@ -1487,7 +1576,8 @@ function initFilterModal() {
             low: state.low,
             high: state.high,
             favOnly: state.favOnly,
-            outfitKeys: state.outfitKeys ?? []
+            outfitKeys: state.outfitKeys ?? [],
+            tpo: state.tpo ?? []
         });
     }
 
@@ -1503,17 +1593,31 @@ function initFilterModal() {
         const state = getFilterStateFromModalUI();
         const hasSelection = state.years.length > 0 || state.months.length > 0 || state.weatherFit.length > 0 ||
             state.low > TEMP_FILTER_MIN || state.high < TEMP_FILTER_MAX || state.favOnly ||
-            (state.outfitKeys && state.outfitKeys.length > 0);
+            (state.outfitKeys && state.outfitKeys.length > 0) ||
+            (state.tpo && state.tpo.length > 0);
+
+        const setApplyReady = (label) => {
+            applyBtn.disabled = false;
+            applyBtn.classList.remove('is-pending');
+            applyBtn.removeAttribute('aria-busy');
+            applyBtn.textContent = label;
+        };
+        const setApplyPending = () => {
+            applyBtn.disabled = true;
+            applyBtn.classList.add('is-pending');
+            applyBtn.setAttribute('aria-busy', 'true');
+            applyBtn.textContent = '세는 중';
+        };
 
         if (!hasSelection) {
             clearTimeout(_applyCountDebounce);
-            applyBtn.textContent = '적용하기';
+            setApplyReady('적용하기');
             return;
         }
 
         const doUpdate = async () => {
             if (hasMoreData && !isLoading) {
-                applyBtn.textContent = '개수 세는 중…';
+                setApplyPending();
                 if (_applyCountLoadAbort) _applyCountLoadAbort.abort = true;
                 _applyCountLoadAbort = { abort: false };
                 const token = _applyCountLoadAbort;
@@ -1524,8 +1628,9 @@ function initFilterModal() {
                 if (token.abort) return;
             }
             const count = getFilteredCountFromModalUI();
-            applyBtn.textContent = `${count}개 보기`;
+            setApplyReady(`${count}개 보기`);
         };
+        setApplyPending();
 
         clearTimeout(_applyCountDebounce);
         _applyCountDebounce = setTimeout(doUpdate, 150);
@@ -1550,6 +1655,13 @@ function initFilterModal() {
                 (v) => (typeof WEATHER_FIT_LABELS !== 'undefined' && WEATHER_FIT_LABELS[v]) || v
             );
             chips.push({ key: 'weatherFit', label: labels.join(', '), value: 'weatherFit' });
+        }
+        const tpoChecked = document.querySelectorAll('#filterTpoOptions input:checked');
+        if (tpoChecked.length > 0) {
+            const labels = Array.from(tpoChecked).map(
+                (cb) => (typeof TPO_LABELS !== 'undefined' && TPO_LABELS[cb.value]) || cb.value
+            );
+            chips.push({ key: 'tpo', label: labels.join(', '), value: 'tpo' });
         }
         const low = parseInt(sliderLow?.value ?? TEMP_FILTER_MIN), high = parseInt(sliderHigh?.value ?? TEMP_FILTER_MAX);
         if (low > TEMP_FILTER_MIN || high < TEMP_FILTER_MAX) chips.push({ key: 'temp', label: `${low}°~${high}°`, value: 'temp' });
@@ -1589,6 +1701,8 @@ function initFilterModal() {
             document.querySelectorAll('#filterMonthOptions input').forEach(cb => { cb.checked = false; });
         } else if (key === 'weatherFit') {
             document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => { cb.checked = false; });
+        } else if (key === 'tpo') {
+            document.querySelectorAll('#filterTpoOptions input').forEach((cb) => { cb.checked = false; });
         } else if (key === 'temp') {
             if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
             if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
@@ -1625,6 +1739,9 @@ function initFilterModal() {
         document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => {
             cb.checked = filterWeatherFit.includes(cb.value);
         });
+        document.querySelectorAll('#filterTpoOptions input').forEach((cb) => {
+            cb.checked = filterTpo.includes(cb.value);
+        });
         document.querySelectorAll('input[name="filterFavorites"]').forEach(r => {
             r.checked = (r.value === 'only' && filterFavoritesOnly) || (r.value === '' && !filterFavoritesOnly);
         });
@@ -1645,6 +1762,10 @@ function initFilterModal() {
         filterWeatherFit = [];
         document.querySelectorAll('#filterWeatherFitOptions input:checked').forEach(cb => {
             filterWeatherFit.push(cb.value);
+        });
+        filterTpo = [];
+        document.querySelectorAll('#filterTpoOptions input:checked').forEach((cb) => {
+            filterTpo.push(cb.value);
         });
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         filterFavoritesOnly = favChecked?.value === 'only';
@@ -1703,6 +1824,7 @@ function initFilterModal() {
                 weatherFit: 'weatherFit',
                 temp: 'temp',
                 outfit: 'outfit',
+                tpo: 'tpo',
                 favorites: 'fav'
             };
             chip.classList.toggle('has-filter', keyMap[tab] && activeKeys.includes(keyMap[tab]));
@@ -1717,6 +1839,7 @@ function initFilterModal() {
         if (key === 'year') filterYears = [];
         else if (key === 'months') filterMonths = [];
         else if (key === 'weatherFit') filterWeatherFit = [];
+        else if (key === 'tpo') filterTpo = [];
         else if (key === 'temp') {
             weatherFilterLow = TEMP_FILTER_MIN;
             weatherFilterHigh = TEMP_FILTER_MAX;
@@ -1791,6 +1914,7 @@ function initFilterModal() {
     }
 
     function doApply() {
+        if (applyBtn?.disabled) return;
         syncStateFromModal();
         clearRecommendIfAppliedTempNotToday(weatherFilterLow, weatherFilterHigh);
         closeModal();
@@ -1802,6 +1926,7 @@ function initFilterModal() {
         document.querySelectorAll('#filterYearOptions input').forEach(cb => { cb.checked = false; });
         document.querySelectorAll('#filterMonthOptions input').forEach(cb => { cb.checked = false; });
         document.querySelectorAll('#filterWeatherFitOptions input').forEach(cb => { cb.checked = false; });
+        document.querySelectorAll('#filterTpoOptions input').forEach((cb) => { cb.checked = false; });
         if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
         if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         if (valueLow) valueLow.textContent = `${TEMP_FILTER_MIN}° 이상`;
@@ -1824,6 +1949,7 @@ function initFilterModal() {
         filterYears = [];
         filterMonths = [];
         filterWeatherFit = [];
+        filterTpo = [];
         weatherFilterLow = TEMP_FILTER_MIN;
         weatherFilterHigh = TEMP_FILTER_MAX;
         filterFavoritesOnly = false;
@@ -1994,7 +2120,7 @@ function initFilterModal() {
     modal?.addEventListener('change', (e) => {
         if (
             e.target.matches(
-                '#filterYearOptions input, #filterMonthOptions input, #filterWeatherFitOptions input, input[name="filterFavorites"], #filterOutfitOptions input[name="filterOutfitPair"]'
+                '#filterYearOptions input, #filterMonthOptions input, #filterWeatherFitOptions input, #filterTpoOptions input, input[name="filterFavorites"], #filterOutfitOptions input[name="filterOutfitPair"]'
             )
         ) {
             updateModalChipsFromUI();
@@ -2069,6 +2195,11 @@ function initFilterModal() {
             });
         }
     }
+
+    window.__stylelogHomeSyncFilterChrome = () => {
+        syncModalFromState();
+        renderActiveChips();
+    };
 
     window.__stylelogHomeApplyFilters = () => {
         syncModalFromState();
@@ -2300,6 +2431,14 @@ function _handleHeaderScroll() {
 window.addEventListener('scroll', _handleHeaderScroll, { passive: true });
 
 // 페이지 로드 시 초기화
+window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    sessionStorage.removeItem('homeScrollY');
+    sessionStorage.removeItem(HOME_RETURN_LOG_KEY);
+    sessionStorage.removeItem(HOME_FILTER_STATE_STORAGE_KEY);
+    document.body.classList.remove('scroll-restore-pending');
+});
+
 window.addEventListener('load', async () => {
     updateMenuUserInfo();
     await initPage();

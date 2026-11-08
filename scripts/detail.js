@@ -200,7 +200,9 @@ function renderLogDetail(log) {
     // 제목
     const titleEl = document.querySelector('.content-title');
     if (titleEl) {
-        titleEl.textContent = log.title || '제목 없음';
+        const title = String(log.title || '').trim();
+        titleEl.textContent = title;
+        titleEl.hidden = !title;
     }
     
     // 날씨
@@ -234,6 +236,7 @@ function renderLogDetail(log) {
         }
     }
 
+    renderLogContext(log);
     renderOutfitItemsDetail(log);
     
     // 본문
@@ -271,6 +274,30 @@ function renderLogDetail(log) {
         }
     }
 
+    if (typeof window.__stylelogPinDetailTop === 'function') {
+        window.__stylelogPinDetailTop();
+        document.querySelectorAll('.photo-section img').forEach((img) => {
+            if (img.complete) return;
+            img.addEventListener('load', () => window.__stylelogPinDetailTop(), { once: true });
+        });
+    }
+}
+
+function renderLogContext(log) {
+    const root = document.getElementById('logContextSection');
+    if (!root) return;
+    const tpo = typeof normalizeTpoValues === 'function' ? normalizeTpoValues(log.tpo) : [];
+    if (tpo.length === 0) {
+        root.innerHTML = '';
+        root.hidden = true;
+        return;
+    }
+    root.hidden = false;
+    const labels = tpo.map(
+        (value) => (typeof TPO_LABELS !== 'undefined' && TPO_LABELS[value]) || value
+    );
+    root.innerHTML = `
+        <p class="log-context-line"><span class="log-context-label">상황</span> ${escapeHtml(labels.join(' · '))}</p>`;
 }
 
 /** items(jsonb): 비어있으면 상세 섹션에서 숨김 */
@@ -589,18 +616,22 @@ async function updateWeatherDisplay(weather) {
 }
 
 // 스크롤 효과
-function initScrollEffect() {
+function syncDetailHeaderForScroll() {
     const header = document.querySelector('.detail-header');
-    
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            header?.classList.remove('transparent');
-            header?.classList.add('scrolled');
-        } else {
-            header?.classList.add('transparent');
-            header?.classList.remove('scrolled');
-        }
-    });
+    if (!header) return;
+    const hasPhoto = !!document.querySelector('.photo-section');
+    if (window.scrollY > 50) {
+        header.classList.remove('transparent');
+        header.classList.add('scrolled');
+    } else if (hasPhoto) {
+        header.classList.add('transparent');
+        header.classList.remove('scrolled');
+    }
+}
+
+function initScrollEffect() {
+    syncDetailHeaderForScroll();
+    window.addEventListener('scroll', syncDetailHeaderForScroll, { passive: true });
 }
 
 // 이벤트 리스너 등록
@@ -611,9 +642,11 @@ function attachEventListeners() {
         backBtn.addEventListener('click', () => {
             if (sessionStorage.getItem('detailFrom') === 'home') {
                 sessionStorage.removeItem('detailFrom');
-                const scrollY = sessionStorage.getItem('homeScrollY');
-                const url = scrollY != null ? `home.html#restoreScroll` : 'home.html';
-                window.location.href = url;
+                if (window.history.length > 1) {
+                    window.history.back();
+                    return;
+                }
+                window.location.href = 'home.html#restoreScroll';
                 return;
             }
             window.history.back();
@@ -764,8 +797,17 @@ function initDetailContentSwipeNavigation() {
     const zone = document.querySelector('.content-section');
     if (!zone || !currentLog) return;
 
-    const THRESH_PX = 56;
-    const H_DOMINANCE = 1.2;
+    const THRESH_PX = 80;
+    const H_DOMINANCE = 1.6;
+
+    function gestureBlocked(target) {
+        return !!(target && target.closest && target.closest('a, button, input, textarea, select, label'));
+    }
+
+    function selectingText() {
+        const sel = window.getSelection();
+        return !!(sel && !sel.isCollapsed && String(sel).length > 0);
+    }
 
     let startX = 0;
     let startY = 0;
@@ -787,7 +829,10 @@ function initDetailContentSwipeNavigation() {
         'touchstart',
         (e) => {
             if (!e.touches || e.touches.length !== 1) return;
-            if (detailLogSwipeBusy) return;
+            if (detailLogSwipeBusy || gestureBlocked(e.target)) {
+                tracking = false;
+                return;
+            }
             startX = lastX = e.touches[0].clientX;
             startY = lastY = e.touches[0].clientY;
             tracking = true;
@@ -810,6 +855,7 @@ function initDetailContentSwipeNavigation() {
         (e) => {
             if (!tracking) return;
             tracking = false;
+            if (selectingText()) return;
             const dx = lastX - startX;
             const dy = lastY - startY;
             tryNavigate(dx, dy);
@@ -828,7 +874,7 @@ function initDetailContentSwipeNavigation() {
     let mouseDown = false;
 
     zone.addEventListener('mousedown', (e) => {
-        if (e.button !== 0 || detailLogSwipeBusy) return;
+        if (e.button !== 0 || detailLogSwipeBusy || gestureBlocked(e.target)) return;
         mouseDown = true;
         tracking = true;
         startX = lastX = e.clientX;
@@ -846,6 +892,7 @@ function initDetailContentSwipeNavigation() {
         mouseDown = false;
         if (!tracking) return;
         tracking = false;
+        if (selectingText()) return;
         const dx = lastX - startX;
         const dy = lastY - startY;
         tryNavigate(dx, dy);
@@ -872,6 +919,7 @@ async function navigateToAdjacentDetailLog(direction) {
 
         const d = encodeURIComponent(next.date || '');
         const idEnc = encodeURIComponent(next.id);
+        try { sessionStorage.setItem('stylelog_detail_pin_top', '1'); } catch (_) { /* ignore */ }
         window.location.href = `detail.html?id=${idEnc}&date=${d}`;
     } catch (err) {
         detailLogSwipeBusy = false;

@@ -8,6 +8,12 @@
     box-sizing: border-box;
 }
 
+html,
+body {
+    /* 사진을 위에 끼워 넣을 때 브라우저가 스크롤을 아래로 밀지 않게 */
+    overflow-anchor: none;
+}
+
 body {
     font-family: var(--font-sans);
     background-color: var(--color-bg-secondary);
@@ -41,6 +47,14 @@ body {
 /* 투명 헤더 (사진 위에) */
 .detail-header.transparent {
     background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 100%);
+}
+
+.detail-header .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icon-btn {
@@ -264,6 +278,52 @@ body {
     border-top: 1px solid var(--color-border-lighter);
     margin: var(--spacing-xl) 0;
 }
+.log-context {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.log-context-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.log-context-label {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.log-context-line {
+    margin: 0;
+    font-size: var(--font-size-base);
+    line-height: var(--type-body-line);
+    color: var(--color-text-primary);
+}
+
+.log-context-line .log-context-label {
+    margin-right: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-tertiary);
+}
+
+.day-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--chip-radius);
+    border: var(--chip-border);
+    background: var(--chip-idle-bg);
+    color: var(--chip-idle-color);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
 .tags {
     display: flex;
     flex-wrap: wrap;

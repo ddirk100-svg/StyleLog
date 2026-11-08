@@ -51,6 +51,19 @@ StyleLog_1.1V/
 - `util-infinite-loader`, `util-end-message`: 무한스크롤용
 - home.js 등에서 인라인 `style` 대신 위 클래스를 사용
 
+### 2.3 버튼·글자
+
+글꼴은 Pretendard 하나다. 크기는 `--font-size-xs`부터 `--font-size-4xl`, 역할은 `--type-*`만 쓴다. 스타일시트에 px 글자 크기를 새로 적지 않는다.
+
+- 화면을 확정하는 채움 버튼(필터 적용, 크롭 적용, 빈 화면의 주요 동작)은 `--color-btn-solid-bg`와 `--color-btn-solid-fg`다. 높이 `--btn-height-md`, 모서리 `--btn-radius`, 글자 `--font-size-base`에 semibold.
+- 헤더의 저장·뒤로 옆 링크·포커스 링은 `--color-link-action`(파랑)이다. 채움 버튼을 파랑으로 칠하지 않는다.
+- 아직 누를 수 없으면 `disabled`다. 배경은 `--color-bg-muted`, 글자는 `--color-text-tertiary`라서 눌러도 되는 검정 버튼과 구분된다.
+- 스위치 트랙은 `--radius-pill`이다. `--radius-full`(50%)은 정사각형에만 쓴다. 가로로 긴 트랙에 50%를 주면 타원이 된다. 켜진 트랙은 `--switch-track-on`(본문색)이다.
+- 필수 아님 표시 `(선택)`, `(추천)`은 `.form-label-optional`이다. 색은 `--color-text-tertiary`, 굵기는 보통, 크기는 `--font-size-sm`. 라벨 문장 안에 괄호만 붙여 쓰지 않는다.
+- 상황 칩은 다섯 개다. 회사, 일상/데이트, 여행, 운동, 경조사. 예전 출근·면접은 회사로, 일상·데이트·약속은 일상/데이트로, 하객은 경조사로 묶여 보인다.
+- 착장 품목 추가는 구분 시트를 거치지 않고 옷장 선택으로 바로 들어간다. 옷장 선택에는 전체 구분이 없다. 구분을 고른 뒤 그 안의 옷을 고른다. 연필로 이름을 바꾸면 작성 중인 줄, 옷장, 지난 기록에 같이 반영된다.
+- 홈에서 상세로 들어가면 상세는 맨 위다. 상세에서 홈으로 돌아오면 보던 카드와 필터 위치를 유지한다.
+
 ---
 
 ## 3. 헤더 유형 (Page Header)

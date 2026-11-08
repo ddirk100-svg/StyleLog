@@ -727,35 +727,35 @@ a.menu-item-link {
     max-width: calc(var(--container-max-width) - 2 * var(--home-inset-x));
     margin: var(--spacing-md) auto 0;
     background: var(--color-bg-primary);
-    border: none;
-    border-radius: var(--home-surface-radius);
+    border: 1px solid var(--color-border-lighter);
+    border-radius: var(--radius-xl);
     padding: var(--surface-padding-lg) var(--surface-padding-lg) var(--spacing-lg);
     flex-shrink: 0;
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
     transition: background var(--transition-fast);
 }
 
 .bottom-section.weather-sunny {
-    background: linear-gradient(165deg, var(--color-weather-sunny-start) 0%, var(--color-bg-primary) 72%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-weather-sunny-start) 42%, var(--color-bg-primary)) 0%, var(--color-bg-primary) 42%);
 }
 
 .bottom-section.weather-clear,
 .bottom-section.weather-cloudy {
-    background: linear-gradient(165deg, var(--color-weather-cloudy-start) 0%, var(--color-bg-primary) 72%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-weather-cloudy-start) 42%, var(--color-bg-primary)) 0%, var(--color-bg-primary) 42%);
 }
 
 .bottom-section.weather-rainy {
-    background: linear-gradient(165deg, var(--color-weather-rainy-start) 0%, var(--color-bg-primary) 72%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-weather-rainy-start) 42%, var(--color-bg-primary)) 0%, var(--color-bg-primary) 42%);
 }
 
 .bottom-section.weather-snowy {
-    background: linear-gradient(165deg, var(--color-weather-snowy-start) 0%, var(--color-bg-primary) 72%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-weather-snowy-start) 42%, var(--color-bg-primary)) 0%, var(--color-bg-primary) 42%);
 }
 
 .bottom-section.weather-lightning {
-    background: linear-gradient(165deg, var(--color-weather-lightning-start) 0%, var(--color-bg-primary) 72%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-weather-lightning-start) 38%, var(--color-bg-primary)) 0%, var(--color-bg-primary) 42%);
 }
 
 /* 날씨 카드 — 맞춤 코디 토글 */
@@ -787,10 +787,10 @@ a.menu-item-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md) var(--spacing-sm) 0;
-    margin-top: var(--spacing-md);
-    border-top: 1px solid var(--color-border-lighter);
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg) 0 0;
+    margin-top: var(--spacing-sm);
+    border-top: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
 }
 
 .weather-recommend-copy {
@@ -801,21 +801,29 @@ a.menu-item-link {
 }
 
 .weather-recommend-label {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
 }
 
 .weather-recommend-hint {
     display: block;
-    font-size: var(--type-caption-size);
-    line-height: 1.55;
-    color: var(--type-section-desc-color);
+    font-size: var(--font-size-xs);
+    line-height: 1.45;
+    color: var(--color-text-tertiary);
     letter-spacing: var(--type-letter-body);
     overflow-wrap: break-word;
     word-break: keep-all;
     text-wrap: pretty;
+}
+
+.weather-recommend-hint .write-ui-copy__line {
+    display: inline;
+}
+
+.weather-recommend-hint .write-ui-copy__line + .write-ui-copy__line::before {
+    content: ' ';
 }
 
 .weather-recommend-hint[hidden] {
@@ -920,16 +928,17 @@ a.menu-item-link {
 }
 
 .home-recommend-switch {
-    width: 44px;
-    height: 26px;
+    width: var(--switch-width);
+    height: var(--switch-height);
     margin: 0;
-    border-radius: var(--radius-full);
+    padding: 0;
     border: none;
-    background: var(--color-border-mid);
+    border-radius: var(--radius-pill);
+    background: var(--switch-track-off);
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
-    transition: background var(--transition-fast) var(--transition-ease);
+    transition: background 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -937,22 +946,27 @@ a.menu-item-link {
 .home-recommend-switch::after {
     content: '';
     position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: var(--radius-full);
-    background: var(--color-bg-primary);
+    width: var(--switch-knob);
+    height: var(--switch-knob);
+    border-radius: var(--radius-pill);
+    background: var(--switch-knob-bg);
     top: 2px;
     left: 2px;
-    box-shadow: 0 1px 2px var(--color-shadow-sm);
-    transition: transform var(--transition-fast) var(--transition-ease);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16), 0 1px 1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.22s cubic-bezier(0.2, 0.85, 0.2, 1);
 }
 
 .home-recommend-switch.is-on {
-    background: var(--color-btn-accent-bg);
+    background: var(--switch-track-on);
 }
 
 .home-recommend-switch.is-on::after {
-    transform: translateX(18px);
+    transform: translateX(calc(var(--switch-width) - var(--switch-knob) - 4px));
+}
+
+.home-recommend-switch:focus-visible {
+    outline: 2px solid var(--color-text-primary);
+    outline-offset: 3px;
 }
 
 /* 내 코디 — 필터·피드 묶음 상단 */
@@ -1751,8 +1765,14 @@ a.menu-item-link {
     letter-spacing: -0.02em;
     transition: background var(--transition-fast);
 }
-.filter-apply-btn:hover {
+.filter-apply-btn:hover:not(:disabled) {
     background: var(--color-btn-solid-hover);
+}
+.filter-apply-btn:disabled,
+.filter-apply-btn.is-pending {
+    background: var(--color-btn-disabled-bg);
+    color: var(--color-btn-disabled-fg);
+    cursor: default;
 }
 .filter-modal:not(.has-selection) .filter-reset-all-btn {
     display: none;
@@ -2163,15 +2183,22 @@ a.menu-item-link {
     border: 1px solid rgba(255, 107, 107, 0.35);
 }
 
-/* 날짜 · 날씨 요약 줄 */
+/* 날짜 · 날씨 한 줄, 상황은 아래 한 줄 */
 .day-card-summary {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
     padding: 10px 12px;
     min-height: 44px;
     box-sizing: border-box;
+}
+
+.day-card-summary-top {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
 }
 
 .day-item--photo .day-card-summary {
@@ -2187,6 +2214,7 @@ a.menu-item-link {
 }
 
 .day-card-date-label {
+    flex: 0 0 auto;
     white-space: nowrap;
 }
 
@@ -2194,11 +2222,35 @@ a.menu-item-link {
     display: inline-flex;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
     min-width: 0;
+    margin-left: auto;
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
+}
+
+.day-card-fit {
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+}
+
+.day-card-fit::before {
+    content: '·';
+    margin-right: 6px;
+    color: var(--color-text-disabled);
+}
+
+.day-card-tpo {
+    margin: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+    color: var(--color-text-tertiary);
 }
 
 .day-card-weather-inline svg {
@@ -2228,22 +2280,8 @@ a.menu-item-link {
     font-weight: var(--font-weight-medium);
 }
 
-.day-card-weather-inline .day-weather-fit-chip {
-    margin-top: 0;
-    padding: 2px 7px;
-    font-size: 9px;
-}
-
 .day-card-summary .day-card-actions {
-    grid-column: 3;
-}
-
-.day-card-weather-inline {
-    grid-column: 2;
-}
-
-.day-card-date-label {
-    grid-column: 1;
+    flex: 0 0 auto;
 }
 
 /* 메모 · 부가 텍스트 */
@@ -2408,7 +2446,7 @@ a.menu-item-link {
         width: 100%;
         margin: 0 0 12px;
         padding: 14px 18px;
-        border-radius: 14px;
+        border-radius: var(--radius-xl);
     }
     
     .weather-title {

@@ -70,6 +70,12 @@
     letter-spacing: var(--type-letter-body);
 }
 
+.form-label-optional {
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
 .form-hint {
     font-size: var(--type-caption-size);
     line-height: var(--type-caption-line);

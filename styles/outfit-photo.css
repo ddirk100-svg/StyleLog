@@ -1,4 +1,4 @@
-@import url('variables.css');
+@import url('variables.css?v=8');
 
 /*
  * 코디 사진 프레임 — 크롭(3:4) 결과가 letterbox 없이 꽉 차도록
@@ -72,18 +72,20 @@
 }
 
 .photo-section {
-    width: 100%;
+    width: min(100%, calc(var(--outfit-photo-max-height-detail) * 3 / 4));
     height: auto;
     min-height: 0;
     max-height: var(--outfit-photo-max-height-detail);
+    margin-inline: auto;
     aspect-ratio: var(--outfit-photo-aspect);
 }
 
 .photo-gallery {
-    width: 100%;
+    width: min(100%, calc(var(--outfit-photo-max-height-detail) * 3 / 4));
     height: auto;
     min-height: 0;
     max-height: var(--outfit-photo-max-height-detail);
+    margin-inline: auto;
     aspect-ratio: var(--outfit-photo-aspect);
 }
 

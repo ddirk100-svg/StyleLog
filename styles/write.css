@@ -75,6 +75,11 @@ body {
     border: none;
     cursor: pointer;
     padding: var(--spacing-sm);
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: var(--color-text-secondary);
     transition: opacity var(--transition-fast);
 }
@@ -134,9 +139,17 @@ body {
 }
 
 /* 날씨적합도 단일선택 버튼 */
+.form-section--quiet {
+    margin-top: var(--spacing-sm);
+}
+
+.form-section--quiet .form-hint {
+    margin-top: var(--spacing-sm);
+}
+
 .weather-fit-btns {
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-sm);
     flex-wrap: wrap;
 }
 
@@ -166,14 +179,14 @@ body {
 /* 날씨 표시 */
 .weather-display {
     background-color: var(--color-bg-secondary);
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: var(--surface-radius);
+    padding: var(--spacing-lg);
 }
 
 .weather-info-box {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-md);
 }
 
 .weather-icon-container {
@@ -189,14 +202,14 @@ body {
 }
 
 .weather-name {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-xs);
 }
 
 .weather-temp {
-    font-size: 14px;
+    font-size: var(--font-size-base);
     color: var(--color-text-secondary);
 }
 
@@ -432,8 +445,6 @@ input.form-input[readonly] {
 
 .photo-reorder-hint {
     margin: 0;
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
 }
 
 /* 드래그 중인 아이템 - "잡고 있다" 표시 */
@@ -571,8 +582,10 @@ input.form-input[readonly] {
 }
 
 .crop-container {
+    position: relative;
     width: 100%;
-    height: min(52vh, 420px);
+    height: min(58dvh, 480px);
+    min-height: 240px;
     background: var(--color-bg-secondary);
     overflow: hidden;
 }
@@ -583,10 +596,15 @@ input.form-input[readonly] {
     background-color: var(--color-bg-secondary) !important;
 }
 
-.crop-container img {
-    max-width: 100%;
-    max-height: 100%;
+/* 원본 img만 제한. Cropper가 만든 복제 img에 max-height를 주면 박스와 저장 결과가 어긋난다. */
+.crop-container > img {
     display: block;
+    max-width: 100%;
+}
+
+.crop-container .cropper-container img {
+    max-width: none;
+    max-height: none;
 }
 
 .crop-ratio-btns {
@@ -647,9 +665,9 @@ input.form-input[readonly] {
 }
 
 .crop-apply-btn {
-    background: var(--color-primary);
+    background: var(--color-btn-solid-bg);
     border: none;
-    color: white;
+    color: var(--color-btn-solid-fg);
 }
 
 .crop-apply-btn:hover {
@@ -891,12 +909,6 @@ input.form-input[readonly] {
 
 .form-label-row .form-label {
     margin-bottom: 0;
-}
-
-.form-label-optional {
-    font-weight: var(--font-weight-normal);
-    color: var(--color-text-tertiary);
-    font-size: var(--font-size-sm);
 }
 
 .outfit-items-count-badge {
@@ -1597,6 +1609,18 @@ input.form-input[readonly] {
     -webkit-overflow-scrolling: touch;
 }
 
+.outfit-wardrobe-picker-row {
+    display: flex;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+}
+
+.outfit-wardrobe-picker-row .outfit-wardrobe-picker-item {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+}
+
 .outfit-wardrobe-picker-item {
     display: flex;
     align-items: center;
@@ -1639,6 +1663,10 @@ input.form-input[readonly] {
 }
 
 .outfit-wardrobe-picker-item-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
@@ -1648,6 +1676,32 @@ input.form-input[readonly] {
     flex-shrink: 0;
     font-size: var(--font-size-xs);
     color: var(--color-text-tertiary);
+}
+
+.outfit-wardrobe-picker-rename {
+    flex-shrink: 0;
+    width: 44px;
+    min-height: 44px;
+    border: 1px solid var(--color-border-lighter);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-tertiary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.outfit-wardrobe-picker-rename:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+}
+
+.outfit-wardrobe-picker-rename svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
 }
 
 .outfit-wardrobe-picker-empty {

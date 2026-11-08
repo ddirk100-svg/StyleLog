@@ -1,7 +1,7 @@
 // 스타일로그 API 서비스
 
 // 리스트 조회용 컬럼 (photos·items 제외 — items 는 상세/작성에서만; 컬럼 없을 때 리스트 400 방지)
-const LIST_SELECT = 'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at';
+const LIST_SELECT = 'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,tpo,is_favorite,created_at,updated_at';
 
 /**
  * style_logs 의 items(jsonb) 배열을 구분(category)별 품목명 Set 맵으로 병합
@@ -254,6 +254,84 @@ function attachStylelogItemsDroppedMarker(row) {
         });
     }
     return row;
+}
+
+function isStyleLogContextColumnUnavailable(error) {
+    if (!error) return false;
+    const flat = flattenPostgrestError(error);
+    if (!/\btpo\b/.test(flat)) return false;
+    return /does not exist|schema cache|could not find|42703|pgrst204/.test(flat);
+}
+
+function omitContextFields(payload) {
+    if (!payload || typeof payload !== 'object') return {};
+    const { tpo: _tpo, ...rest } = payload;
+    return rest;
+}
+
+function payloadSendsContext(payload) {
+    if (!payload || typeof payload !== 'object') return false;
+    return (
+        Object.prototype.hasOwnProperty.call(payload, 'tpo')
+    );
+}
+
+function markStyleLogContextDropped(row) {
+    if (row && typeof row === 'object') {
+        Object.defineProperty(row, '__stylelogContextDropped', {
+            value: true,
+            enumerable: false,
+            configurable: true
+        });
+    }
+    return row;
+}
+
+/**
+ * items / tpo 컬럼이 아직 없을 때 해당 필드만 빼고 한 번 더 저장
+ * @param {'insert'|'update'} kind
+ */
+async function writeStyleLogRow(kind, id, row) {
+    let outgoing = { ...(row || {}) };
+    let itemsDropped = false;
+    let contextDropped = false;
+    const hadItems = payloadHasNontrivialItems(outgoing);
+
+    for (let attempt = 0; attempt < 4; attempt++) {
+        const query = supabaseClient.from('style_logs');
+        const req =
+            kind === 'insert'
+                ? query.insert([outgoing]).select().single()
+                : query.update(outgoing).eq('id', id).select().single();
+        const { data, error } = await req;
+        if (!error) {
+            let result = data;
+            if (itemsDropped && hadItems) result = attachStylelogItemsDroppedMarker(result);
+            if (contextDropped) result = markStyleLogContextDropped(result);
+            return result;
+        }
+        if (!contextDropped && payloadSendsContext(outgoing) && isStyleLogContextColumnUnavailable(error)) {
+            console.warn(
+                '[StyleLog] DB에 tpo 컬럼이 없어 상황을 제외하고 저장합니다. docs/supabase/style_logs_add_tpo.sql'
+            );
+            outgoing = omitContextFields(outgoing);
+            contextDropped = true;
+            continue;
+        }
+        if (!itemsDropped && shouldRetryWithoutItemsField(error, outgoing)) {
+            persistItemsColumnUnavailableFlag();
+            styleLogItemsSuggestionsQueryDisabled = true;
+            warnStyleLogBeforeOmitItemsRetry(error, kind === 'insert' ? '로그 저장(insert)' : '로그 수정(update)');
+            console.warn(
+                '[StyleLog] DB에 items 컬럼이 없어 착장 품목을 제외하고 저장합니다. docs/supabase/style_logs_add_items.sql 참고.'
+            );
+            outgoing = omitItemsFromPayload(outgoing);
+            itemsDropped = true;
+            continue;
+        }
+        throw error;
+    }
+    throw new Error('로그 저장에 실패했습니다.');
 }
 
 const StyleLogAPI = {
@@ -550,39 +628,11 @@ const StyleLogAPI = {
             const preemptiveItemsDropped =
                 hadNontrivialItems && skipItemsOnWire;
 
-            let { data, error } = await supabaseClient
-                .from('style_logs')
-                .insert([outgoing])
-                .select()
-                .single();
-
-            if (!error && preemptiveItemsDropped) {
-                debugLog('✅ 로그 생성 완료 (탭 상태상 items 생략, 착장 미저장 가능):', data);
-                return attachStylelogItemsDroppedMarker(data);
+            let data = await writeStyleLogRow('insert', null, outgoing);
+            if (preemptiveItemsDropped) data = attachStylelogItemsDroppedMarker(data);
+            if (!preemptiveItemsDropped && !(data && data.__stylelogItemsDropped)) {
+                clearItemsUnavailableHintsIfOutboundSentItemsPayload(outgoing);
             }
-
-            if (error && shouldRetryWithoutItemsField(error, dataWithUserId)) {
-                persistItemsColumnUnavailableFlag();
-                styleLogItemsSuggestionsQueryDisabled = true;
-                warnStyleLogBeforeOmitItemsRetry(error, '로그 저장(insert)');
-                console.warn(
-                    '[StyleLog] DB에 items 컬럼이 없어 착장 품목을 제외하고 저장합니다. docs/supabase/style_logs_add_items.sql 참고.'
-                );
-                const retryPayload = omitItemsFromPayload(dataWithUserId);
-                const r2 = await supabaseClient
-                    .from('style_logs')
-                    .insert([retryPayload])
-                    .select()
-                    .single();
-                if (r2.error) throw r2.error;
-                data = r2.data;
-                debugLog('✅ 로그 생성 완료 (items 제외):', data);
-                return attachStylelogItemsDroppedMarker(data);
-            }
-
-            if (error) throw error;
-
-            clearItemsUnavailableHintsIfOutboundSentItemsPayload(outgoing);
             debugLog('✅ 로그 생성 완료:', data);
             return data;
         } catch (error) {
@@ -609,42 +659,11 @@ const StyleLogAPI = {
             }
             const preemptiveItemsDropped = hadNontrivialItems && skipItemsOnWire;
 
-            let { data, error } = await supabaseClient
-                .from('style_logs')
-                .update(outgoing)
-                .eq('id', id)
-                .select()
-                .single();
-
-            if (!error && preemptiveItemsDropped) {
-                debugLog(
-                    '✅ 로그 수정 완료 (탭 상태상 items 생략, 착장 미저장 가능):',
-                    data
-                );
-                return attachStylelogItemsDroppedMarker(data);
+            let data = await writeStyleLogRow('update', id, outgoing);
+            if (preemptiveItemsDropped) data = attachStylelogItemsDroppedMarker(data);
+            if (!preemptiveItemsDropped && !(data && data.__stylelogItemsDropped)) {
+                clearItemsUnavailableHintsIfOutboundSentItemsPayload(outgoing);
             }
-
-            if (error && shouldRetryWithoutItemsField(error, payload)) {
-                persistItemsColumnUnavailableFlag();
-                styleLogItemsSuggestionsQueryDisabled = true;
-                warnStyleLogBeforeOmitItemsRetry(error, '로그 수정(update)');
-                console.warn(
-                    '[StyleLog] DB에 items 컬럼이 없어 착장 품목 필드를 제외하고 수정합니다. docs/supabase/style_logs_add_items.sql 참고.'
-                );
-                const retryPayload = omitItemsFromPayload(payload);
-                const r2 = await supabaseClient
-                    .from('style_logs')
-                    .update(retryPayload)
-                    .eq('id', id)
-                    .select()
-                    .single();
-                if (r2.error) throw r2.error;
-                return attachStylelogItemsDroppedMarker(r2.data);
-            }
-
-            if (error) throw error;
-
-            clearItemsUnavailableHintsIfOutboundSentItemsPayload(outgoing);
             return data;
         } catch (error) {
             console.error('로그 수정 오류:', error);

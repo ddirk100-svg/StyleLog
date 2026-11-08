@@ -14,9 +14,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 작성</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="styles/variables.css">
-    <link rel="stylesheet" href="styles/utils.css?v=8">
-    <link rel="stylesheet" href="styles/write.css?v=19">
+    <link rel="stylesheet" href="styles/variables.css?v=9">
+    <link rel="stylesheet" href="styles/utils.css?v=9">
+    <link rel="stylesheet" href="styles/write.css?v=22">
     <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/require-birthdate.css">
@@ -28,13 +28,13 @@
 
         <!-- 헤더 -->
         <header class="write-header">
-            <button class="icon-btn cancel-btn">
+            <button type="button" class="icon-btn cancel-btn" aria-label="뒤로">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M19 12H5M12 19l-7-7 7-7"></path>
                 </svg>
             </button>
             <h1 class="header-title">새 기록</h1>
-            <button class="text-btn save-btn" disabled>저장</button>
+            <button type="button" class="text-btn save-btn" disabled>저장</button>
         </header>
 
         <!-- 본문 폼 -->
@@ -68,7 +68,7 @@
                         <span class="write-ui-copy__line">사진은 세로 3:4로 맞춰 저장돼요.</span>
                         <span class="write-ui-copy__line">사진 없이 메모만 남겨도 괜찮아요.</span>
                     </p>
-                    <p class="form-hint photo-reorder-hint" id="photoReorderHint" style="display: none;">드래그하여 순서 변경</p>
+                    <p class="form-hint write-ui-copy photo-reorder-hint" id="photoReorderHint" style="display: none;">끌어다 놓으면 순서가 바뀌어요.</p>
                     <div class="photo-preview-list" id="photoPreviewList"></div>
                 </div>
             </div>
@@ -91,21 +91,21 @@
                         <span class="temp-min">최저 --°C</span>
                     </div>
                 </div>
-                <p class="form-hint write-ui-copy">날짜를 바꾸면 날씨도 같이 바뀌어요.</p>
+                <p class="form-hint write-ui-copy">날짜를 바꾸면 날씨도 바뀌어요.</p>
                 <input type="hidden" id="weatherInput" name="weather" required>
                 <input type="hidden" id="weatherTempInput" name="weather_temp">
                 <input type="hidden" id="weatherDescInput" name="weather_description">
             </div>
 
             <!-- 날씨적합도 -->
-            <div class="form-section">
+            <div class="form-section form-section--quiet">
                 <label class="form-label">옷차림 체감</label>
-                <div class="weather-fit-btns" role="group" aria-label="옷차림 체감">
+                <div class="weather-fit-btns" id="weatherFitBtns" role="group" aria-label="옷차림 체감">
                     <button type="button" class="weather-fit-btn" data-value="cold">추움</button>
                     <button type="button" class="weather-fit-btn active" data-value="good">적당</button>
                     <button type="button" class="weather-fit-btn" data-value="hot">더움</button>
                 </div>
-                <p class="form-hint write-ui-copy">홈 「체감」 필터로 찾을 때 써요.</p>
+                <p class="form-hint write-ui-copy">홈 체감 필터로 다시 찾아요.</p>
                 <input type="hidden" id="weatherFitInput" name="weather_fit" value="good">
             </div>
 
@@ -118,11 +118,7 @@
                     <label class="form-label" for="outfitItemsAddBtn">착장 품목 <span class="form-label-optional">(선택)</span></label>
                     <span class="outfit-items-count-badge" id="outfitItemsCountBadge" aria-live="polite">0개</span>
                 </div>
-                <ul class="form-hint-list outfit-items-hint write-ui-copy">
-                    <li><strong>착장 품목 추가</strong> → 구분 선택</li>
-                    <li><strong>내 옷장</strong>에서 고르기</li>
-                    <li>옷이 없으면 그 자리에서 등록</li>
-                </ul>
+                <p class="form-hint write-ui-copy">추가를 누르면 구분과 옷을 바로 고를 수 있어요.</p>
                 <div class="outfit-items-list-region">
                     <div class="outfit-items-list" id="outfitItemsList"></div>
                 </div>
@@ -132,25 +128,29 @@
 
             <!-- 제목 -->
             <div class="form-section">
-                <label class="form-label">제목 (선택)</label>
+                <label class="form-label">제목 <span class="form-label-optional">(선택)</span></label>
                 <input type="text" class="form-input title-input" id="titleInput" placeholder="예: 출근룩, 데이트 코디" maxlength="100">
             </div>
 
             <!-- 본문 -->
             <div class="form-section">
-                <label class="form-label">메모 (선택)</label>
+                <label class="form-label">메모 <span class="form-label-optional">(선택)</span></label>
                 <textarea class="form-textarea" id="contentInput" placeholder="기분, 장소, 코디 포인트 등 자유롭게" rows="8"></textarea>
             </div>
 
-            <!-- 태그 -->
-            <div class="form-section">
-                <label class="form-label">태그 (선택)</label>
-                <div class="tags-input-wrapper">
-                    <div class="tags-display" id="tagsDisplay"></div>
-                    <input type="text" class="form-input tags-input" id="tagsInput" placeholder="#태그를 입력하고 엔터">
+            <!-- 상황 (TPO) -->
+            <div class="form-section form-section--quiet">
+                <label class="form-label">상황 <span class="form-label-optional">(선택)</span></label>
+                <div class="weather-fit-btns" id="tpoBtns" role="group" aria-label="상황">
+                    <button type="button" class="weather-fit-btn" data-value="work">회사</button>
+                    <button type="button" class="weather-fit-btn" data-value="daily">일상/데이트</button>
+                    <button type="button" class="weather-fit-btn" data-value="travel">여행</button>
+                    <button type="button" class="weather-fit-btn" data-value="workout">운동</button>
+                    <button type="button" class="weather-fit-btn" data-value="guest">경조사</button>
                 </div>
-                <p class="form-hint write-ui-copy">엔터·쉼표로 태그 추가</p>
+                <p class="form-hint write-ui-copy">여러 개 고를 수 있고, 홈 상황 필터로 찾아요.</p>
             </div>
+
         </form>
     </div>
 
@@ -192,9 +192,8 @@
             <div class="outfit-category-sheet__handle"></div>
             <h2 class="outfit-category-sheet__title" id="outfitWardrobePickerTitle">옷장에서 선택</h2>
             <p class="outfit-category-sheet__hint write-ui-copy" id="outfitWardrobePickerHint">
-                <span class="write-ui-copy__line">구분을 고른 뒤 옷을 탭하세요.</span>
-                <span class="write-ui-copy__line">탭하면 착장 품목에 추가돼요.</span>
-                <span class="write-ui-copy__line">다시 탭하면 빼요.</span>
+                <span class="write-ui-copy__line">구분을 고른 뒤 옷을 탭하세요. 연필로 이름을 바꿔요.</span>
+                <span class="write-ui-copy__line">다시 탭하면 빼요. 끝나면 선택 완료.</span>
             </p>
             <input type="search" class="outfit-wardrobe-picker-search" id="outfitWardrobePickerSearch" placeholder="이름 검색" autocomplete="off" enterkeyhint="search">
             <div class="outfit-wardrobe-picker-chips" id="outfitWardrobePickerChips" role="tablist" aria-label="구분 필터"></div>
@@ -253,7 +252,7 @@
                     <img id="cropImage" src="" alt="크롭할 이미지">
                 </div>
                 <p class="crop-modal-hint write-ui-copy">
-                    <span class="write-ui-copy__line">코디용 세로 <strong>3:4</strong>로 저장돼요.</span>
+                    <span class="write-ui-copy__line">박스 안이 그대로 저장돼요.</span>
                     <span class="write-ui-copy__line">드래그·핀치로 맞춘 뒤 적용해 주세요.</span>
                 </p>
             </div>
@@ -266,13 +265,13 @@
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
-    <script src="scripts/config.js?v=6" defer></script>
+    <script src="scripts/config.js?v=7" defer></script>
     <script src="scripts/photo-storage.js" defer></script>
-    <script src="scripts/api.js?v=7" defer></script>
+    <script src="scripts/api.js?v=9" defer></script>
     <script src="scripts/require-birthdate.js" defer></script>
     <script src="scripts/auth.js" defer></script>
-    <script src="scripts/common.js?v=13" defer></script>
-    <script src="scripts/write.js?v=20" defer></script>
+    <script src="scripts/common.js?v=16" defer></script>
+    <script src="scripts/write.js?v=27" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

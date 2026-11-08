@@ -92,10 +92,19 @@
     --color-btn-solid-bg: var(--color-text-primary);
     --color-btn-solid-hover: #262626;
     --color-btn-solid-fg: var(--color-text-inverse);
+    --color-btn-disabled-bg: var(--color-bg-muted);
+    --color-btn-disabled-fg: var(--color-text-tertiary);
     --color-btn-accent-bg: var(--color-primary);
     --color-btn-accent-hover: var(--color-primary-dark);
     --color-btn-outline-border: var(--color-border-light);
     --color-link-action: var(--color-primary);
+    /* 스위치 — 가로가 긴 트랙에 50%를 주면 타원이 된다. 캡슐만 쓴다. */
+    --switch-width: 51px;
+    --switch-height: 31px;
+    --switch-knob: 27px;
+    --switch-track-off: #e9e9eb;
+    --switch-track-on: var(--color-text-primary);
+    --switch-knob-bg: #fff;
     --btn-height-md: 44px;
     --btn-padding-y: var(--spacing-md);
     --btn-padding-x: var(--spacing-xl);

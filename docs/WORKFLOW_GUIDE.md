@@ -21,11 +21,16 @@ Vercel (자동 배포)
   - 데이터: 테스트용 더미 데이터
 - **용도**: 개발, 테스트, 실험
 
-### 2. 프로덕션 환경 (리얼 서버)
-- **URL**: `https://style-log.vercel.app` (또는 설정한 도메인)
-- **Supabase**: 프로덕션 (리얼) 서버
-  - URL: `https://zymszibiwojzrtxhiesc.supabase.co`
-  - 데이터: 실제 사용자 데이터
+### 2. Alpha
+- **URL**: `https://alpha.stylelog.co.kr`
+- **브랜치**: `alpha` 를 푸시하면 Vercel이 Alpha에 배포한다
+- **Supabase**: 테스트 DB
+- **용도**: 리얼에 올리기 전에 확인
+
+### 3. 프로덕션 (리얼)
+- **URL**: `https://www.stylelog.co.kr`
+- **브랜치**: `main` 을 푸시하면 Vercel이 리얼에 배포한다
+- **Supabase**: 프로덕션 DB (`https://zymszibiwojzrtxhiesc.supabase.co`)
 - **용도**: 실제 서비스
 
 ## 자동 환경 전환
@@ -33,13 +38,12 @@ Vercel (자동 배포)
 `scripts/config.js`에서 자동으로 환경을 감지합니다:
 
 ```javascript
-// localhost면 → 개발 환경
-// 실제 도메인이면 → 프로덕션 환경
-const isDevelopment = window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1';
+// localhost·사설 IP → 테스트 DB
+// 호스트에 alpha → 테스트 DB
+// www.stylelog.co.kr → 리얼 DB
 ```
 
-**코드 수정 불필요!** 환경에 따라 자동으로 DB가 전환됩니다.
+**코드에서 DB 주소를 바꾸지 않는다.** `scripts/config.js`가 호스트로 고른다.
 
 ## 📋 일반적인 작업 흐름
 
@@ -170,17 +174,15 @@ git push
 const SUPABASE_URL = process.env.SUPABASE_URL || '기본값';
 ```
 
-### 3. 테스트 서버에서 리얼로 배포할 때
+### 3. Alpha에서 리얼로 배포할 때
 
-**현재는 자동으로 처리됩니다!**
+호스트가 DB를 고른다. `alpha`가 들어간 주소는 테스트 DB, `www.stylelog.co.kr`은 리얼 DB다. 코드에서 DB 주소를 갈아끼우지 않는다.
 
-- 로컬 (`localhost`) → 개발용 Supabase
-- 리얼 서버 (Vercel URL) → 프로덕션 Supabase
+1. `main`에 커밋한다.
+2. `alpha`에 `main`을 머지하고 `git push origin alpha` 한다. Alpha에서 확인한다.
+3. 확인 후 `git push origin main` 한다. 리얼에 배포된다.
 
-**추가 작업 불필요:**
-- 코드 수정 불필요
-- 설정 변경 불필요
-- 그냥 `git push`만 하면 됨!
+스크립트는 `deploy-to-alpha.bat`, `deploy-alpha-to-real.bat` 이다. 리얼 스크립트는 확인 질문이 있다.
 
 ## 📝 체크리스트
 
