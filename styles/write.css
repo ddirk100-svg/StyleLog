@@ -1405,11 +1405,30 @@ input.form-input[readonly] {
 }
 
 .outfit-category-sheet__handle {
+    position: relative;
+    width: 100%;
+    height: var(--btn-height-md);
+    margin: 0 auto var(--spacing-xs);
+    flex-shrink: 0;
+    background: transparent;
+    touch-action: none;
+    cursor: grab;
+}
+
+.outfit-category-sheet__handle::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
     width: var(--outfit-sheet-handle-width);
     height: var(--outfit-sheet-handle-height);
+    transform: translate(-50%, -50%);
     border-radius: 2px;
-    background-color: var(--color-border-light);
-    margin: var(--spacing-sm) auto var(--spacing-lg);
+    background-color: var(--color-border-mid);
+}
+
+.outfit-category-sheet__panel.is-dragging {
+    animation: none;
 }
 
 .outfit-category-sheet__title {

@@ -77,6 +77,8 @@
 | 상세 진입 스크롤 | ✅ | 상세는 맨 위. 홈 복귀 스크롤·필터는 유지. `scrollRestoration`은 바꾸지 않음 |
 | 옷장 선택에서 이름 변경 | ✅ | `renameOutfitItemValueAcrossLogs` — 작성 줄·옷장·지난 기록 |
 | 홈 카드 id | ✅ | 상세 URL은 `encodeURIComponent`, 복귀 카드 선택은 `CSS.escape` |
+| 홈 사진 카드 | ✅ | 흰 판 + 안쪽 사진. 새 스타일은 간격·글자 토큰만 사용 |
+| 작성 시트 쓸어 닫기 | ✅ | 손잡이 `transform`만 갱신. 리스너는 시트당 한 번 |
 | Dead code | ✅ | `createThumbnail` 제거 (미사용) |
 
 ## 성능 · 한계 (의도적)

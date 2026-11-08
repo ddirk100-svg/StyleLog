@@ -518,6 +518,14 @@ a.menu-item-link {
     margin-bottom: var(--feed-item-gap);
 }
 
+.day-list-container.day-list-view > .day-item.day-item--photo {
+    margin-bottom: var(--spacing-3xl);
+}
+
+.day-list-container.day-list-view > .day-item.day-item--photo:last-child {
+    margin-bottom: 0;
+}
+
 .day-list-container.day-list-view > *:last-child {
     margin-bottom: 0;
 }
@@ -2097,6 +2105,18 @@ a.menu-item-link {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* 사진 코디 — 흰 판 안에 사진과 설명이 같이 들어 있다.
+   day-list.css 의 .day-item 여백보다 여기가 우선한다. */
+.day-item.day-item--photo,
+.day-item.day-item--photo:hover {
+    gap: 0;
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-primary);
+    border: none;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 1px 2px var(--color-shadow-sm), 0 10px 28px var(--color-shadow-sm);
+}
+
 .day-item--memo {
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border-lighter);
@@ -2109,12 +2129,13 @@ a.menu-item-link {
     }
 }
 
-/* 사진 카드 — 히어로 */
-.day-item--photo .day-card-hero {
+/* 사진 카드 — 히어로. 카드 여백 안에 따로 둥글게 앉힌다 */
+.day-item--photo .day-card-hero,
+.day-item.day-item--photo .day-card-hero.day-content.photo {
     position: relative;
     width: 100%;
     overflow: hidden;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: var(--outfit-photo-bg, var(--color-bg-subtle));
     -webkit-tap-highlight-color: transparent;
 }
@@ -2202,10 +2223,42 @@ a.menu-item-link {
 }
 
 .day-item--photo .day-card-summary {
+    order: 2;
     border-top: none;
-    padding-left: 2px;
-    padding-right: 2px;
-    padding-top: var(--spacing-sm);
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-xs) 0;
+    background: transparent;
+}
+
+.day-item--photo:has(.day-card-note) .day-card-summary {
+    padding-top: var(--spacing-xs);
+}
+
+.day-item--photo .day-card-note {
+    order: 1;
+    padding: var(--spacing-md) var(--spacing-xs) 0;
+    background: transparent;
+}
+
+.day-item--photo .day-card-note-title {
+    font-size: var(--font-size-md);
+    letter-spacing: var(--type-letter-body);
+}
+
+.day-item--photo .day-card-date-label {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+}
+
+.day-item--photo:has(.day-card-note) .day-card-date-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.day-item--photo .day-card-tpo {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
 }
 
 .day-item--memo .day-card-summary {

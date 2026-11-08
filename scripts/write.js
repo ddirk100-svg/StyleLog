@@ -1577,6 +1577,98 @@ function openOutfitWardrobePickerForRow(rowIndex) {
     });
 }
 
+function clearOutfitSheetMotion(sheet) {
+    const panel = sheet?.querySelector('.outfit-category-sheet__panel');
+    if (!panel) return;
+    panel.classList.remove('is-dragging');
+    panel.style.transition = '';
+    panel.style.transform = '';
+}
+
+/** 손잡이를 아래로 끌면 시트를 닫는다. 조금만 움직이면 제자리로 돌아온다. */
+function bindOutfitSheetSwipeDismiss(sheet, closeFn) {
+    const panel = sheet?.querySelector('.outfit-category-sheet__panel');
+    const handle = sheet?.querySelector('.outfit-category-sheet__handle');
+    if (!panel || !handle || sheet.dataset.swipeBound === '1') return;
+    sheet.dataset.swipeBound = '1';
+
+    const DISMISS_PX = 88;
+    let startY = 0;
+    let lastY = 0;
+    let lastT = 0;
+    let dragY = 0;
+    let velocity = 0;
+    let dragging = false;
+    let pointerId = null;
+    let gesture = 0;
+
+    handle.addEventListener('pointerdown', (e) => {
+        if (!sheet.classList.contains('active')) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        dragging = true;
+        pointerId = e.pointerId;
+        gesture += 1;
+        startY = e.clientY;
+        lastY = e.clientY;
+        lastT = e.timeStamp;
+        dragY = 0;
+        velocity = 0;
+        panel.classList.add('is-dragging');
+        panel.style.transition = 'none';
+        panel.style.transform = 'translateY(0px)';
+        try {
+            handle.setPointerCapture(e.pointerId);
+        } catch (_) {
+            /* 캡처를 못 해도 move/up 은 핸들 위에서 이어진다 */
+        }
+    });
+
+    handle.addEventListener('pointermove', (e) => {
+        if (!dragging || e.pointerId !== pointerId) return;
+        const dy = Math.max(0, e.clientY - startY);
+        const dt = e.timeStamp - lastT;
+        if (dt > 0) velocity = (e.clientY - lastY) / dt;
+        lastY = e.clientY;
+        lastT = e.timeStamp;
+        dragY = dy;
+        panel.style.transform = `translateY(${dy}px)`;
+    });
+
+    const endDrag = (e) => {
+        if (!dragging || e.pointerId !== pointerId) return;
+        dragging = false;
+        pointerId = null;
+        const token = gesture;
+        const shouldClose = dragY > DISMISS_PX || (dragY > 36 && velocity > 0.65);
+        let settled = false;
+        const settle = () => {
+            if (settled || token !== gesture) return;
+            settled = true;
+            window.clearTimeout(timer);
+            panel.removeEventListener('transitionend', done);
+            if (shouldClose) {
+                closeFn();
+                return;
+            }
+            panel.style.transition = '';
+            panel.style.transform = '';
+        };
+        const done = (ev) => {
+            if (ev.propertyName !== 'transform') return;
+            settle();
+        };
+        const timer = window.setTimeout(settle, 280);
+        panel.style.transition = shouldClose
+            ? 'transform 0.2s ease'
+            : 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+        panel.style.transform = shouldClose ? 'translateY(110%)' : 'translateY(0px)';
+        panel.addEventListener('transitionend', done);
+    };
+
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+}
+
 function closeOutfitWardrobePickerSheet() {
     const sheet = document.getElementById('outfitWardrobePickerSheet');
     if (!sheet) return;
@@ -1586,6 +1678,7 @@ function closeOutfitWardrobePickerSheet() {
     }
     sheet.classList.remove('active');
     sheet.setAttribute('aria-hidden', 'true');
+    clearOutfitSheetMotion(sheet);
     document.body.style.overflow = '';
     outfitWardrobePickerRowIndex = null;
     outfitWardrobePickerAllowedCats = null;
@@ -1652,6 +1745,7 @@ function closeWriteWardrobeAddSheet() {
     if (!sheet || !sheet.classList.contains('active')) return;
     sheet.classList.remove('active');
     sheet.setAttribute('aria-hidden', 'true');
+    clearOutfitSheetMotion(sheet);
     const picker = document.getElementById('outfitWardrobePickerSheet');
     if (picker?.classList.contains('active')) {
         document.body.style.overflow = 'hidden';
@@ -1710,6 +1804,18 @@ async function submitWriteWardrobeAdd() {
 }
 
 function initOutfitWardrobePickerUI() {
+    bindOutfitSheetSwipeDismiss(
+        document.getElementById('outfitWardrobePickerSheet'),
+        closeOutfitWardrobePickerSheet
+    );
+    bindOutfitSheetSwipeDismiss(
+        document.getElementById('writeWardrobeAddSheet'),
+        closeWriteWardrobeAddSheet
+    );
+    bindOutfitSheetSwipeDismiss(
+        document.getElementById('outfitCategorySheet'),
+        closeOutfitCategorySheet
+    );
     document.getElementById('outfitWardrobePickerOverlay')?.addEventListener('click', () => {
         closeOutfitWardrobePickerSheet();
     });
@@ -1934,6 +2040,7 @@ function closeOutfitCategorySheet() {
 
     sheet.classList.remove('active');
     sheet.setAttribute('aria-hidden', 'true');
+    clearOutfitSheetMotion(sheet);
     document.body.style.overflow = '';
     outfitCategorySheetRowIndex = null;
     outfitCategoryPending = new Set();
