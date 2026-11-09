@@ -236,8 +236,11 @@ function renderLogDetail(log) {
         }
     }
 
+    renderLogKindDetail(log);
+    renderReferenceActions(log);
     renderLogContext(log);
     renderOutfitItemsDetail(log);
+    void renderReferenceWardrobeSubstitute(log);
     
     // 본문
     const contentBody = document.querySelector('.content-body');
@@ -281,6 +284,151 @@ function renderLogDetail(log) {
             img.addEventListener('load', () => window.__stylelogPinDetailTop(), { once: true });
         });
     }
+}
+
+const WRITE_OUTFIT_SEED_SS = 'stylelog_write_outfit_seed';
+
+function renderLogKindDetail(log) {
+    const root = document.getElementById('logKindDetailSection');
+    if (!root) return;
+    const kind =
+        typeof normalizeLogKind === 'function' ? normalizeLogKind(log?.log_kind) : 'my_outfit';
+    const label = typeof logKindLabel === 'function' ? logKindLabel(kind) : kind;
+    root.innerHTML = '';
+    const badge = document.createElement('span');
+    badge.className = 'log-kind-badge';
+    badge.textContent = label;
+    root.appendChild(badge);
+    if (kind === 'reference') {
+        const safeUrl =
+            typeof safeExternalUrl === 'function'
+                ? safeExternalUrl(log.reference_source_url)
+                : '';
+        if (safeUrl) {
+            const a = document.createElement('a');
+            a.className = 'log-kind-source-link';
+            a.href = safeUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            try {
+                a.textContent = new URL(safeUrl).host;
+            } catch (_) {
+                a.textContent = '원문 링크';
+            }
+            root.appendChild(a);
+        }
+        const scrap = String(log.scrap_group || '').trim();
+        if (scrap) {
+            const span = document.createElement('span');
+            span.className = 'log-kind-scrap-label';
+            span.textContent = scrap;
+            root.appendChild(span);
+        }
+    }
+    root.hidden = false;
+}
+
+function renderReferenceActions(log) {
+    const root = document.getElementById('referenceActionsSection');
+    if (!root) return;
+    const kind =
+        typeof normalizeLogKind === 'function' ? normalizeLogKind(log?.log_kind) : 'my_outfit';
+    if (kind !== 'reference' || !log?.id) {
+        root.hidden = true;
+        root.innerHTML = '';
+        return;
+    }
+    root.hidden = false;
+    const btn = document.createElement('a');
+    btn.className = 'util-btn-secondary detail-move-outfit-btn';
+    btn.href = `write.html?fromRef=${encodeURIComponent(log.id)}`;
+    btn.textContent = '내 코디로 옮기기';
+    root.innerHTML = '';
+    root.appendChild(btn);
+}
+
+async function renderReferenceWardrobeSubstitute(log) {
+    const section = document.getElementById('referenceWardrobeSubstituteSection');
+    if (!section) return;
+    const kind =
+        typeof normalizeLogKind === 'function' ? normalizeLogKind(log?.log_kind) : 'my_outfit';
+    const items = normalizeOutfitItemsFromLog(log.items);
+    if (kind !== 'reference' || items.length === 0) {
+        section.hidden = true;
+        section.innerHTML = '';
+        return;
+    }
+    let catalog = [];
+    try {
+        if (typeof StyleLogAPI?.getWardrobeCatalog === 'function') {
+            const raw = await StyleLogAPI.getWardrobeCatalog();
+            catalog =
+                typeof mergeWardrobeCatalogWithExtras === 'function'
+                    ? mergeWardrobeCatalogWithExtras(raw)
+                    : raw || [];
+        }
+    } catch (_) {
+        catalog = [];
+    }
+    const byCat = new Map();
+    (catalog || []).forEach((row) => {
+        const c = String(row?.category || '').trim();
+        const v = String(row?.value || '').trim();
+        if (!c || !v) return;
+        if (!byCat.has(c)) byCat.set(c, []);
+        const list = byCat.get(c);
+        if (!list.includes(v)) list.push(v);
+    });
+
+    section.hidden = false;
+    section.innerHTML = '';
+    const heading = document.createElement('h3');
+    heading.className = 'reference-substitute-title';
+    heading.textContent = '가진 옷으로 대체';
+    section.appendChild(heading);
+    const hint = document.createElement('p');
+    hint.className = 'reference-substitute-hint util-sub';
+    hint.textContent = '같은 구분의 내 옷을 골라 새 코디 초안을 열어요.';
+    section.appendChild(hint);
+
+    items.forEach(({ category, value }) => {
+        const block = document.createElement('div');
+        block.className = 'reference-substitute-row';
+        const refLabel = document.createElement('p');
+        refLabel.className = 'reference-substitute-ref';
+        refLabel.textContent = `${category} · ${value}`;
+        block.appendChild(refLabel);
+        const opts = byCat.get(category) || [];
+        const chipWrap = document.createElement('div');
+        chipWrap.className = 'reference-substitute-chips';
+        if (!opts.length) {
+            const empty = document.createElement('span');
+            empty.className = 'reference-substitute-empty';
+            empty.textContent = '옷장에 같은 구분이 없어요';
+            chipWrap.appendChild(empty);
+        } else {
+            opts.slice(0, 8).forEach((wardrobeVal) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'reference-substitute-chip';
+                btn.textContent = wardrobeVal;
+                btn.addEventListener('click', () => {
+                    try {
+                        sessionStorage.setItem(
+                            WRITE_OUTFIT_SEED_SS,
+                            JSON.stringify({ category, value: wardrobeVal })
+                        );
+                    } catch (_) {
+                        /* ignore */
+                    }
+                    window.location.href = `write.html?fromRef=${encodeURIComponent(log.id)}`;
+                });
+                chipWrap.appendChild(btn);
+            });
+        }
+        block.appendChild(chipWrap);
+        section.appendChild(block);
+    });
 }
 
 function renderLogContext(log) {

@@ -1,7 +1,8 @@
 // 스타일로그 API 서비스
 
 // 리스트 조회용 컬럼 (photos·items 제외 — items 는 상세/작성에서만; 컬럼 없을 때 리스트 400 방지)
-const LIST_SELECT = 'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,tpo,is_favorite,created_at,updated_at';
+const LIST_SELECT =
+    'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,tpo,log_kind,reference_source_url,scrap_group,source_reference_id,is_favorite,created_at,updated_at';
 
 /**
  * style_logs 의 items(jsonb) 배열을 구분(category)별 품목명 Set 맵으로 병합
@@ -276,6 +277,38 @@ function payloadSendsContext(payload) {
     );
 }
 
+function isStyleLogLogKindColumnUnavailable(error) {
+    if (typeof isLogKindColumnError === 'function' && isLogKindColumnError(error)) return true;
+    return false;
+}
+
+const LOG_KIND_PAYLOAD_KEYS = ['log_kind', 'reference_source_url', 'scrap_group', 'source_reference_id'];
+
+function omitLogKindFields(payload) {
+    if (!payload || typeof payload !== 'object') return {};
+    const rest = { ...payload };
+    LOG_KIND_PAYLOAD_KEYS.forEach((k) => {
+        if (Object.prototype.hasOwnProperty.call(rest, k)) delete rest[k];
+    });
+    return rest;
+}
+
+function payloadSendsLogKindFields(payload) {
+    if (!payload || typeof payload !== 'object') return false;
+    return LOG_KIND_PAYLOAD_KEYS.some((k) => Object.prototype.hasOwnProperty.call(payload, k));
+}
+
+function markStyleLogLogKindDropped(row) {
+    if (row && typeof row === 'object') {
+        Object.defineProperty(row, '__stylelogLogKindDropped', {
+            value: true,
+            enumerable: false,
+            configurable: true
+        });
+    }
+    return row;
+}
+
 function markStyleLogContextDropped(row) {
     if (row && typeof row === 'object') {
         Object.defineProperty(row, '__stylelogContextDropped', {
@@ -295,9 +328,10 @@ async function writeStyleLogRow(kind, id, row) {
     let outgoing = { ...(row || {}) };
     let itemsDropped = false;
     let contextDropped = false;
+    let logKindDropped = false;
     const hadItems = payloadHasNontrivialItems(outgoing);
 
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 6; attempt++) {
         const query = supabaseClient.from('style_logs');
         const req =
             kind === 'insert'
@@ -308,7 +342,20 @@ async function writeStyleLogRow(kind, id, row) {
             let result = data;
             if (itemsDropped && hadItems) result = attachStylelogItemsDroppedMarker(result);
             if (contextDropped) result = markStyleLogContextDropped(result);
+            if (logKindDropped) result = markStyleLogLogKindDropped(result);
             return result;
+        }
+        if (
+            !logKindDropped &&
+            payloadSendsLogKindFields(outgoing) &&
+            isStyleLogLogKindColumnUnavailable(error)
+        ) {
+            console.warn(
+                '[StyleLog] DB에 log_kind·레퍼런스 컬럼이 없어 해당 필드를 제외하고 저장합니다. docs/supabase/style_logs_add_log_kind.sql'
+            );
+            outgoing = omitLogKindFields(outgoing);
+            logKindDropped = true;
+            continue;
         }
         if (!contextDropped && payloadSendsContext(outgoing) && isStyleLogContextColumnUnavailable(error)) {
             console.warn(

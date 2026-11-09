@@ -52,7 +52,15 @@
     const api = global.StyleLogOutfitCombinations;
     if (!api?.aggregateOutfitCombinations) return [];
     const n = typeof limit === 'number' && limit > 0 ? limit : 3;
-    return api.aggregateOutfitCombinations(logs).slice(0, n);
+    const outfitOnly = (logs || []).filter((log) => {
+      if (typeof api.isMyOutfitLog === 'function') return api.isMyOutfitLog(log);
+      const norm =
+        typeof global.normalizeLogKind === 'function'
+          ? global.normalizeLogKind(log?.log_kind)
+          : 'my_outfit';
+      return norm !== 'reference';
+    });
+    return api.aggregateOutfitCombinations(outfitOnly).slice(0, n);
   }
 
   function partnersForItem(logs, category, value, limit) {

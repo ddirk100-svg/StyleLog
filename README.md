@@ -6,7 +6,7 @@
 
 스타일로그는 일상의 패션 선택을 기록하고, 날씨와 상황에 맞는 스타일을 찾아갈 수 있도록 돕는 서비스입니다.
 
-**기획 구조:** 전략(사업기획안) → 로드맵(Phase) → 버전 프로젝트 → 기능 티켓(Notion DB). 로컬 요약은 [docs/ROADMAP.md](docs/ROADMAP.md), Notion 허브는 [StyleLog 작업 구조](https://app.notion.com/p/413d7b163117819889b3ed9655de1c28). **현재 앱 버전 3.0V** — 개인화 추천(기온·날씨·즐겨찾기·조합).
+**기획 구조:** 전략(사업기획안) → 로드맵(Phase) → 버전 프로젝트 → 기능 티켓(Notion DB). 로컬 요약은 [docs/ROADMAP.md](docs/ROADMAP.md), Notion 허브는 [StyleLog 작업 구조](https://app.notion.com/p/413d7b163117819889b3ed9655de1c28). **현재 앱 버전 4.0V** — 레퍼런스·스크랩 묶음(`log_kind`), 내 착장 추천·조합은 3.0과 동일.
 
 ### v3.0 기능 (v2.3·이전 릴리스 포함)
 - ✅ **추천**: 맞춤 모드에서 즐겨찾기·같은 날씨 상태 우선 정렬, 오늘 입을 만한 조합 제안
@@ -16,7 +16,7 @@
 - ✅ **내 옷장**: 마이페이지에서 품목 집계·이름 변경·옷장에서 빼기/복원, 홈 착장 이력 필터
 - ✅ **착장 품목**: 구분별 품목 저장·작성·상세, 홈 **착장 필터**(구분→품목 depth)
 - ✅ **고객센터**: 1:1 문의(`support_inquiries`), 문의내역·답변 표시, FAQ(인앱 HTML)
-- ✅ **마이페이지**: 하단 앱 버전 표시 (`config.js`의 `APP_VERSION`, 현재 **3.0V**)
+- ✅ **마이페이지**: 하단 앱 버전 표시 (`config.js`의 `APP_VERSION`, 현재 **4.0V**)
 - ✅ 착장 기록 CRUD (사진, 날짜, 메모, 즐겨찾기)
 - ✅ 홈 화면: 연도 선택 + 일별 리스트
 - ✅ **날씨 필터**: 최저/최고 슬라이더 + 드롭다운(오늘/전체/커스텀)
@@ -143,6 +143,10 @@ npx http-server
 | thumb_url | TEXT | 리스트용 작은 썸네일 (base64 data URL) |
 | is_favorite | BOOLEAN | 즐겨찾기 |
 | tpo | TEXT[] | 상황 코드. 화면은 회사·일상/데이트·여행·운동·경조사. 예전 코드는 이 다섯으로 묶여 보인다 |
+| log_kind | TEXT | `my_outfit`(기본) 또는 `reference` |
+| reference_source_url | TEXT | 레퍼런스 원문 URL (http/https) |
+| scrap_group | TEXT | 스크랩 묶음 이름 |
+| source_reference_id | UUID | 내 착장으로 옮길 때 참고한 레퍼런스 id |
 | created_at, updated_at | TIMESTAMP | 생성/수정 시간 |
 
 ### 사진: Storage + 원본 보관
@@ -163,8 +167,9 @@ npx http-server
 
 ---
 
-**버전:** 3.0V (표기: `APP_VERSION` in `scripts/config.js`)
+**버전:** 4.0V (표기: `APP_VERSION` in `scripts/config.js`)
 
 지금 기능: [docs/PRODUCT.md](docs/PRODUCT.md) · 방향·로드맵: [docs/ROADMAP.md](docs/ROADMAP.md) · 화면: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · 점검: [docs/CODE_HEALTH.md](docs/CODE_HEALTH.md)
 
-상황 컬럼은 Alpha·리얼 DB에서 [docs/supabase/style_logs_add_tpo.sql](docs/supabase/style_logs_add_tpo.sql) 을 실행해야 저장됩니다.
+상황 컬럼은 Alpha·리얼 DB에서 [docs/supabase/style_logs_add_tpo.sql](docs/supabase/style_logs_add_tpo.sql) 을 실행해야 저장됩니다.  
+4.0V 레퍼런스 컬럼: [docs/supabase/style_logs_add_log_kind.sql](docs/supabase/style_logs_add_log_kind.sql)

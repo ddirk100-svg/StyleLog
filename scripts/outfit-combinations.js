@@ -63,9 +63,18 @@
    * @param {Array<{ items?: unknown }>} logs
    * @returns {Array<{ id: string, count: number, label: string, keys: string[] }>}
    */
+  function isMyOutfitLog(log) {
+    const norm =
+      typeof global.normalizeLogKind === 'function'
+        ? global.normalizeLogKind(log?.log_kind)
+        : 'my_outfit';
+    return norm !== 'reference';
+  }
+
   function aggregateOutfitCombinations(logs) {
     const map = new Map();
     (logs || []).forEach((log) => {
+      if (!isMyOutfitLog(log)) return;
       const pairs = parseLogItemsPairs(log?.items);
       if (pairs.length < 2) return;
       for (let i = 0; i < pairs.length; i++) {
@@ -103,13 +112,31 @@
     const pageSize = 400;
     let offset = 0;
     const all = [];
+    let selectCols = 'id, items, log_kind';
+    let withLogKind = true;
     for (;;) {
-      const { data, error } = await supabase
+      let query = supabase
         .from('style_logs')
-        .select('id, items')
+        .select(selectCols)
         .eq('user_id', userId)
         .order('date', { ascending: false })
         .range(offset, offset + pageSize - 1);
+      let { data, error } = await query;
+      if (
+        error &&
+        withLogKind &&
+        typeof global.isLogKindColumnError === 'function' &&
+        global.isLogKindColumnError(error)
+      ) {
+        withLogKind = false;
+        selectCols = 'id, items';
+        ({ data, error } = await supabase
+          .from('style_logs')
+          .select(selectCols)
+          .eq('user_id', userId)
+          .order('date', { ascending: false })
+          .range(offset, offset + pageSize - 1));
+      }
       if (error) throw error;
       const rows = data || [];
       all.push(...rows);
@@ -124,6 +151,7 @@
     outfitFilterPairKey,
     aggregateOutfitCombinations,
     homeUrlForCombination,
-    fetchUserLogsWithItems
+    fetchUserLogsWithItems,
+    isMyOutfitLog
   };
 })(typeof window !== 'undefined' ? window : globalThis);

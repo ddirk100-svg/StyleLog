@@ -4,8 +4,13 @@
 const urlParams = new URLSearchParams(window.location.search);
 const initialDate = urlParams.get('date');
 const editLogId = urlParams.get('id'); // 수정 모드인지 확인
+const writeModeParam = String(urlParams.get('mode') || '').trim().toLowerCase();
+const fromRefLogId = String(urlParams.get('fromRef') || '').trim();
 
 let currentWeather = null;
+/** @type {'my_outfit'|'reference'} */
+let writeLogKind = 'my_outfit';
+let writeSourceReferenceId = null;
 let selectedPhotos = [];
 /** 예전 자유 태그. 화면에서는 고치지 않고 저장 때 그대로 둔다 */
 let preservedTags = [];
@@ -170,11 +175,85 @@ async function initPage() {
     await loadOutfitValueSuggestions();
     await loadWriteWardrobeCatalog();
 
+    syncWriteLogKindUI();
+
     // 이벤트 리스너 등록
     attachEventListeners();
     
     // 폼 유효성 검사
     validateForm();
+}
+
+function syncWriteLogKindUI() {
+    const section = document.getElementById('logKindSection');
+    const refSection = document.getElementById('referenceFieldsSection');
+    const hint = document.getElementById('logKindHint');
+    const isRef = writeLogKind === 'reference';
+    document.querySelectorAll('#logKindBtns .weather-fit-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.value === writeLogKind);
+    });
+    if (refSection) refSection.hidden = !isRef;
+    if (hint) {
+        hint.textContent = isRef
+            ? '붙여 둔 코디·룩북 링크와 메모를 남겨요. 사진은 복사하지 않아요.'
+            : '내가 실제로 입은 코디를 남겨요.';
+    }
+    if (isEditMode && section) {
+        section.setAttribute('hidden', '');
+        if (refSection && isRef) refSection.removeAttribute('hidden');
+    }
+}
+
+function setWriteLogKind(kind) {
+    const next =
+        typeof normalizeLogKind === 'function'
+            ? normalizeLogKind(kind)
+            : kind === 'reference'
+              ? 'reference'
+              : 'my_outfit';
+    if (next === writeLogKind) return;
+    writeLogKind = next;
+    syncWriteLogKindUI();
+}
+
+const WRITE_OUTFIT_SEED_SS = 'stylelog_write_outfit_seed';
+
+async function applyFromReferencePrefill(refId) {
+    if (!refId || isEditMode) return;
+    try {
+        const ref = await StyleLogAPI.getById(refId);
+        if (!ref) return;
+        writeSourceReferenceId = ref.id;
+        const titleInput = document.getElementById('titleInput');
+        const refTitle = String(ref.title || '').trim();
+        if (titleInput && !String(titleInput.value || '').trim() && refTitle) {
+            titleInput.value = refTitle;
+        }
+        const scrapInput = document.getElementById('scrapGroupInput');
+        const refScrap = String(ref.scrap_group || '').trim();
+        if (scrapInput && !String(scrapInput.value || '').trim() && refScrap) {
+            scrapInput.value = refScrap;
+        }
+        try {
+            const seedRaw = sessionStorage.getItem(WRITE_OUTFIT_SEED_SS);
+            sessionStorage.removeItem(WRITE_OUTFIT_SEED_SS);
+            if (seedRaw) {
+                const seed = JSON.parse(seedRaw);
+                if (seed && seed.category && seed.value) {
+                    outfitItems.push({
+                        category: String(seed.category).trim(),
+                        value: String(seed.value).trim(),
+                        valueDraft: ''
+                    });
+                    renderOutfitItemRows();
+                }
+            }
+        } catch (_) {
+            /* ignore */
+        }
+    } catch (e) {
+        console.warn('fromRef prefill', e);
+    }
 }
 
 // 수정할 로그 데이터 로드
@@ -240,6 +319,19 @@ async function loadLogForEdit(logId) {
 
         // 착장 품목 로드
         hydrateOutfitItemsFromLog(currentLog.items);
+
+        writeLogKind =
+            typeof normalizeLogKind === 'function'
+                ? normalizeLogKind(currentLog.log_kind)
+                : 'my_outfit';
+        const refUrlInput = document.getElementById('referenceSourceUrlInput');
+        const scrapInput = document.getElementById('scrapGroupInput');
+        if (refUrlInput) {
+            refUrlInput.value = String(currentLog.reference_source_url || '').trim();
+        }
+        if (scrapInput) {
+            scrapInput.value = String(currentLog.scrap_group || '').trim();
+        }
         
         // 날씨 정보 로드
         currentWeather = {
@@ -271,6 +363,8 @@ async function loadLogForEdit(logId) {
         if (saveBtn) {
             saveBtn.textContent = '완료';
         }
+
+        syncWriteLogKindUI();
         
     } catch (error) {
         console.error('❌ 로그 로드 오류:', error);
@@ -301,6 +395,14 @@ async function initNewLog() {
         }
     });
     
+    if (writeModeParam === 'reference') {
+        writeLogKind = 'reference';
+    }
+    if (fromRefLogId) {
+        writeLogKind = 'my_outfit';
+        await applyFromReferencePrefill(fromRefLogId);
+    }
+
     // 초기 날씨 정보 로드
     await loadWeatherForDate(dateInput.value);
 }
@@ -511,6 +613,15 @@ function attachEventListeners() {
             } else {
                 selectedTpo = selectedTpo.filter((item) => item !== value);
             }
+        });
+    });
+
+    document.querySelectorAll('#logKindBtns .weather-fit-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            if (isEditMode) return;
+            const value = btn.dataset.value;
+            if (!value) return;
+            setWriteLogKind(value);
         });
     });
 
@@ -2921,6 +3032,28 @@ async function handleSubmit() {
             is_favorite: isEditMode ? currentLog.is_favorite : false // 수정 시에는 기존 값 유지, 신규는 false
         };
 
+        const effectiveKind = isEditMode
+            ? typeof normalizeLogKind === 'function'
+                ? normalizeLogKind(currentLog?.log_kind)
+                : 'my_outfit'
+            : writeLogKind;
+        logData.log_kind = effectiveKind;
+        if (effectiveKind === 'reference') {
+            const urlRaw = document.getElementById('referenceSourceUrlInput')?.value || '';
+            const safeUrl =
+                typeof safeExternalUrl === 'function' ? safeExternalUrl(urlRaw) : String(urlRaw).trim();
+            logData.reference_source_url = safeUrl || null;
+            const scrap = String(document.getElementById('scrapGroupInput')?.value || '').trim();
+            logData.scrap_group = scrap || null;
+            logData.source_reference_id = null;
+        } else if (!isEditMode) {
+            logData.reference_source_url = null;
+            logData.scrap_group = null;
+            if (writeSourceReferenceId) {
+                logData.source_reference_id = writeSourceReferenceId;
+            }
+        }
+
         if (!isEditMode && pendingNewStyleLogIdForUpload) {
             logData.id = pendingNewStyleLogIdForUpload;
         }
@@ -2954,6 +3087,13 @@ async function handleSubmit() {
             doneMsg = '저장되었지만, 착장 품목은 빠졌어요.';
         } else if (result && result.__stylelogContextDropped) {
             doneMsg = '저장되었지만, 상황은 빠졌어요.';
+        }
+        if (result && result.__stylelogLogKindDropped) {
+            doneMsg =
+                doneMsg.indexOf('빠졌') >= 0
+                    ? doneMsg.replace(/\.$/, '') + ', 레퍼런스 정보는 빠졌어요.'
+                    : '저장되었지만, 레퍼런스 정보는 빠졌어요.';
+            delete result.__stylelogLogKindDropped;
         }
 
         await showAlert(doneMsg);

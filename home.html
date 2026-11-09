@@ -162,6 +162,7 @@
                         <button type="button" class="filter-category-chip" data-tab="temp">기온</button>
                         <button type="button" class="filter-category-chip" data-tab="outfit" title="착장 품목">착장</button>
                         <button type="button" class="filter-category-chip" data-tab="tpo" title="상황">상황</button>
+                        <button type="button" class="filter-category-chip" data-tab="logKind" title="기록 종류">종류</button>
                         <button type="button" class="filter-category-chip" data-tab="favorites">즐겨찾기</button>
                     </div>
                 </div>
@@ -203,6 +204,7 @@
                     <button type="button" class="filter-tab" data-tab="temp">기온</button>
                     <button type="button" class="filter-tab" data-tab="outfit" title="착장 품목">착장</button>
                     <button type="button" class="filter-tab" data-tab="tpo" title="상황">상황</button>
+                    <button type="button" class="filter-tab" data-tab="logKind" title="기록 종류">종류</button>
                     <button type="button" class="filter-tab" data-tab="favorites">즐겨찾기</button>
                 </div>
                 <div class="filter-modal-active-row" id="filterModalActiveRow">
@@ -255,6 +257,19 @@
                             <label class="filter-option"><input type="checkbox" name="tpo" value="travel"><span>여행</span></label>
                             <label class="filter-option"><input type="checkbox" name="tpo" value="workout"><span>운동</span></label>
                             <label class="filter-option"><input type="checkbox" name="tpo" value="guest"><span>경조사</span></label>
+                        </div>
+                    </div>
+                    <div class="filter-tab-panel" id="filterPanelLogKind">
+                        <div class="filter-options filter-options-grid filter-options-column" id="filterLogKindOptions">
+                            <label class="filter-option filter-option-full">
+                                <input type="radio" name="filterLogKind" value="all"><span>전체</span>
+                            </label>
+                            <label class="filter-option filter-option-full">
+                                <input type="radio" name="filterLogKind" value="my_outfit" checked><span>내 착장</span>
+                            </label>
+                            <label class="filter-option filter-option-full">
+                                <input type="radio" name="filterLogKind" value="reference"><span>레퍼런스</span>
+                            </label>
                         </div>
                     </div>
                     <div class="filter-tab-panel" id="filterPanelFavorites">
@@ -313,6 +328,7 @@
     <script src="scripts/require-birthdate.js" defer></script>
     <script src="scripts/auth.js" defer></script>
     <script src="scripts/common.js?v=16" defer></script>
+    <script src="scripts/log-kind.js?v=1" defer></script>
     <script src="scripts/outfit-combinations.js?v=2" defer></script>
     <script src="scripts/recommendation.js?v=1" defer></script>
     <script src="scripts/feedback.js" defer></script>

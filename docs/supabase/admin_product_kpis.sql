@@ -22,6 +22,7 @@ DECLARE
   v_fav_users bigint;
   v_tpo_logs bigint;
   v_items_logs bigint;
+  v_reference_logs bigint;
   v_logs_recent bigint;
   v_active_writers bigint;
   v_repeat_writers bigint;
@@ -45,6 +46,7 @@ BEGIN
         AND jsonb_typeof(items) = 'array'
         AND jsonb_array_length(items) > 0
     ),
+    count(*) FILTER (WHERE coalesce(log_kind, 'my_outfit') = 'reference'),
     count(*) FILTER (WHERE created_at >= v_since),
     count(DISTINCT user_id) FILTER (WHERE user_id IS NOT NULL AND created_at >= v_since)
   INTO
@@ -54,6 +56,7 @@ BEGIN
     v_fav_users,
     v_tpo_logs,
     v_items_logs,
+    v_reference_logs,
     v_logs_recent,
     v_active_writers
   FROM public.style_logs;
@@ -94,6 +97,8 @@ BEGIN
     'tpoLogsPct', CASE WHEN v_logs > 0 THEN round(100.0 * v_tpo_logs / v_logs, 1) ELSE NULL END,
     'itemsLogs', v_items_logs,
     'itemsLogsPct', CASE WHEN v_logs > 0 THEN round(100.0 * v_items_logs / v_logs, 1) ELSE NULL END,
+    'referenceLogs', v_reference_logs,
+    'referenceLogsPct', CASE WHEN v_logs > 0 THEN round(100.0 * v_reference_logs / v_logs, 1) ELSE NULL END,
     'repeatWriters', v_repeat_writers,
     'repeatWritersPct', CASE WHEN v_writers > 0 THEN round(100.0 * v_repeat_writers / v_writers, 1) ELSE 0 END,
     'signupsRecent', v_signups_recent,

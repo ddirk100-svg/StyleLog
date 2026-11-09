@@ -652,6 +652,88 @@ body {
     line-height: 1.5;
 }
 
+.log-kind-detail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.log-kind-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: var(--font-size-xs);
+    border-radius: var(--chip-radius);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+.log-kind-source-link {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.log-kind-scrap-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.detail-reference-actions {
+    margin-bottom: var(--spacing-md);
+}
+
+.detail-move-outfit-btn {
+    display: inline-flex;
+    width: auto;
+}
+
+.reference-wardrobe-substitute {
+    margin-top: var(--section-gap-y);
+}
+
+.reference-substitute-title {
+    font-size: var(--type-section-title-size);
+    font-weight: var(--type-section-title-weight);
+    margin: 0 0 var(--spacing-xs);
+}
+
+.reference-substitute-hint {
+    margin: 0 0 var(--spacing-md);
+}
+
+.reference-substitute-row {
+    margin-bottom: var(--spacing-md);
+}
+
+.reference-substitute-ref {
+    margin: 0 0 var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.reference-substitute-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.reference-substitute-chip {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--chip-radius);
+    background: var(--color-bg-primary);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.reference-substitute-empty {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
 /* 반응형 */
 @media (max-width: 428px) {
     .container {
