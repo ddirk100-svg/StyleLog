@@ -6,14 +6,15 @@
 
 스타일로그는 일상의 패션 선택을 기록하고, 날씨와 상황에 맞는 스타일을 찾아갈 수 있도록 돕는 서비스입니다.
 
-**기획 구조:** 전략(사업기획안) → 로드맵(Phase) → 버전 프로젝트 → 기능 티켓(Notion DB). 로컬 요약은 [docs/ROADMAP.md](docs/ROADMAP.md), Notion 허브는 [StyleLog 작업 구조](https://app.notion.com/p/413d7b163117819889b3ed9655de1c28). **다음 개발 버전은 2.3V**(자주 입는 조합 분석).
+**기획 구조:** 전략(사업기획안) → 로드맵(Phase) → 버전 프로젝트 → 기능 티켓(Notion DB). 로컬 요약은 [docs/ROADMAP.md](docs/ROADMAP.md), Notion 허브는 [StyleLog 작업 구조](https://app.notion.com/p/413d7b163117819889b3ed9655de1c28). **현재 앱 버전 2.3V** — 자주 입는 조합 회고.
 
-### v2.2 기능 (v2.1·이전 릴리스 포함)
+### v2.3 기능 (v2.2·이전 릴리스 포함)
+- ✅ **자주 입는 조합**: 구분이 다른 착장 품목 쌍 집계, 탭 시 홈 착장 필터(AND)로 해당 코디만
 - ✅ **상황(TPO)**: 작성에서 칩 복수 선택(회사·일상/데이트·여행·운동·경조사), 홈 카드·상황 필터. 만족한 코디는 즐겨찾기로 모음
 - ✅ **내 옷장**: 마이페이지에서 품목 집계·이름 변경·옷장에서 빼기/복원, 홈 착장 이력 필터
 - ✅ **착장 품목**: 구분별 품목 저장·작성·상세, 홈 **착장 필터**(구분→품목 depth)
 - ✅ **고객센터**: 1:1 문의(`support_inquiries`), 문의내역·답변 표시, FAQ(인앱 HTML)
-- ✅ **마이페이지**: 하단 앱 버전 표시 (`config.js`의 `APP_VERSION`, 현재 **2.2V**)
+- ✅ **마이페이지**: 하단 앱 버전 표시 (`config.js`의 `APP_VERSION`, 현재 **2.3V**)
 - ✅ 착장 기록 CRUD (사진, 날짜, 메모, 즐겨찾기)
 - ✅ 홈 화면: 연도 선택 + 일별 리스트
 - ✅ **날씨 필터**: 최저/최고 슬라이더 + 드롭다운(오늘/전체/커스텀)
@@ -160,7 +161,7 @@ npx http-server
 
 ---
 
-**버전:** 2.2V (표기: `APP_VERSION` in `scripts/config.js`)
+**버전:** 2.3V (표기: `APP_VERSION` in `scripts/config.js`)
 
 지금 기능: [docs/PRODUCT.md](docs/PRODUCT.md) · 방향·로드맵: [docs/ROADMAP.md](docs/ROADMAP.md) · 화면: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · 점검: [docs/CODE_HEALTH.md](docs/CODE_HEALTH.md)
 

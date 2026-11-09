@@ -1,0 +1,89 @@
+@import url('variables.css');
+
+#combinationsView.container {
+  max-width: var(--container-max-width);
+  min-height: calc(100vh - var(--bottom-nav-height));
+  margin: 0 auto;
+  padding: 0 var(--page-inset-x) var(--page-padding-bottom-nav);
+  background: var(--color-bg-primary);
+}
+
+.combinations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xl) 0 var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.combinations-header .header-title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.combinations-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: 0 0 var(--spacing-lg);
+}
+
+.combinations-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.combo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  background: var(--color-bg-primary);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.combo-row:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.1);
+}
+
+.combo-row-label {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.45;
+  color: var(--color-text-primary);
+}
+
+.combo-row-count {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.combo-row-count span {
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.combo-empty {
+  padding: var(--spacing-3xl) var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}

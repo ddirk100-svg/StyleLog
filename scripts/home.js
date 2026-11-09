@@ -47,8 +47,10 @@ let filterTpo = [];
 let filterFavoritesOnly = false;
 /** tpo 컬럼이 없으면 목록 조회에서 빼고 상황 필터를 숨긴다 */
 let homeListSelectIncludesContext = true;
-/** 착장 필터 선택 키 (`["구분","품목명"]` JSON 문자열 배열 — OR 매칭) */
+/** 착장 필터 선택 키 (`["구분","품목명"]` JSON 문자열 배열 — 기본 OR, 조합 딥링크는 AND) */
 let filterOutfitSelectionKeys = [];
+/** true면 선택한 착장 품목을 모두 포함한 코디만 (2.3V 조합 화면 → 홈) */
+let filterOutfitMatchAll = false;
 /** 목록 조회에 `items` 포함 (컬럼 없으면 API 오류 후 끔) */
 let homeListSelectIncludesItems = true;
 
@@ -176,12 +178,15 @@ function outfitFilterKeyLabel(storageKey) {
 }
 
 /** 착장 활성 칩: 짧은 라벨 + 전체는 title 툴팁 */
-function summarizeOutfitFilterKeysForChip(keys) {
+function summarizeOutfitFilterKeysForChip(keys, matchAll) {
     const k = keys || [];
     const list = k.map(outfitFilterKeyLabel).filter(Boolean);
     const title = list.join(', ');
     const n = k.length;
     if (n === 0) return { label: '착장 품목', title: '' };
+    if (matchAll && n === 2) {
+        return { label: `조합 · ${list.join(' + ')}`, title };
+    }
     if (n >= 2) return { label: `착장 품목 ${n}`, title };
     return { label: `착장 품목 · ${list[0] || ''}`, title };
 }
@@ -219,11 +224,19 @@ function parseLogItemsPairs(itemsJson) {
     return out;
 }
 
-function logPassesOutfitFilterKeys(log, keys) {
+function logPassesOutfitFilterKeys(log, keys, matchAll) {
     if (!keys || keys.length === 0) return true;
     const pairs = parseLogItemsPairs(log.items);
     if (pairs.length === 0) return false;
     const set = new Set(keys);
+    const logKeys = new Set(
+        pairs
+            .map(([c, v]) => outfitFilterPairKey(c, v))
+            .filter(Boolean)
+    );
+    if (matchAll) {
+        return keys.every((key) => logKeys.has(key));
+    }
     return pairs.some(([c, v]) => {
         const k = outfitFilterPairKey(c, v);
         return k && set.has(k);
@@ -304,7 +317,8 @@ function snapshotCurrentFilters() {
         filterWeatherFit: [...filterWeatherFit],
         filterTpo: [...filterTpo],
         filterFavoritesOnly,
-        filterOutfitSelectionKeys: [...filterOutfitSelectionKeys]
+        filterOutfitSelectionKeys: [...filterOutfitSelectionKeys],
+        filterOutfitMatchAll: !!filterOutfitMatchAll
     };
 }
 
@@ -322,6 +336,7 @@ function restoreFiltersFromSnapshot(s) {
     filterOutfitSelectionKeys = Array.isArray(s.filterOutfitSelectionKeys)
         ? [...s.filterOutfitSelectionKeys]
         : [];
+    filterOutfitMatchAll = !!s.filterOutfitMatchAll;
 }
 
 function saveHomeFilterStateForDetailReturn() {
@@ -375,6 +390,7 @@ async function applyTodayWeatherRecommendationFilters() {
             filterTpo = [];
             filterFavoritesOnly = false;
             filterOutfitSelectionKeys = [];
+            filterOutfitMatchAll = false;
             if (window.__stylelogHomeApplyFilters) window.__stylelogHomeApplyFilters();
             else {
                 const filtered = getFilteredLogs();
@@ -407,6 +423,7 @@ async function setRecommendationMode(on) {
             filterTpo = [];
             filterFavoritesOnly = false;
             filterOutfitSelectionKeys = [];
+            filterOutfitMatchAll = false;
         }
         if (window.__stylelogHomeApplyFilters) window.__stylelogHomeApplyFilters();
     }
@@ -436,18 +453,41 @@ function outfitFilterKeyFromUrl(params = new URLSearchParams(location.search)) {
     return outfitFilterPairKey(cat, val);
 }
 
+function parseOutfitFilterFromUrl(params = new URLSearchParams(location.search)) {
+    const match = String(params.get('outfitMatch') || '').trim().toLowerCase();
+    const rawKeys = params.get('outfitKeys');
+    if (rawKeys) {
+        try {
+            const arr = JSON.parse(rawKeys);
+            if (Array.isArray(arr)) {
+                const keys = arr.map((k) => String(k).trim()).filter(Boolean);
+                return {
+                    keys,
+                    matchAll: match === 'all' && keys.length > 0
+                };
+            }
+        } catch (_) {
+            /* ignore */
+        }
+    }
+    const single = outfitFilterKeyFromUrl(params);
+    if (single) return { keys: [single], matchAll: false };
+    return { keys: [], matchAll: false };
+}
+
 async function initPage() {
     const params = new URLSearchParams(location.search);
     const restoredFiltersFromDetail = consumeHomeFilterStateIfReturningFromDetail();
     window.__stylelogHomeSkipUrlFilterParams = restoredFiltersFromDetail;
 
     if (!restoredFiltersFromDetail) {
-        const outfitFromUrl = outfitFilterKeyFromUrl(params);
-        if (params.get('filter') === 'fav' || outfitFromUrl) {
+        const outfitFromUrl = parseOutfitFilterFromUrl(params);
+        if (params.get('filter') === 'fav' || outfitFromUrl.keys.length > 0) {
             recommendationModeEnabled = false;
         }
-        if (outfitFromUrl) {
-            filterOutfitSelectionKeys = [outfitFromUrl];
+        if (outfitFromUrl.keys.length > 0) {
+            filterOutfitSelectionKeys = [...outfitFromUrl.keys];
+            filterOutfitMatchAll = outfitFromUrl.matchAll;
         }
     }
     /** Open-Meteo 지연 시 로그 목록까지 막히지 않도록 비차단 — 완료 후 토글만 동기화 */
@@ -643,6 +683,7 @@ async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
         ) {
             homeListSelectIncludesItems = false;
             filterOutfitSelectionKeys = [];
+            filterOutfitMatchAll = false;
             syncHomeOutfitFilterTabVisibility();
             queryRes = await supabaseClient
                 .from('style_logs')
@@ -1281,7 +1322,8 @@ function logPassesHomeFilters(log, c) {
         if (want.length > 0 && !want.some((value) => have.has(value))) return false;
     }
     if (favOnly && !log.is_favorite) return false;
-    return logPassesOutfitFilterKeys(log, outfitKeys);
+    const outfitMatchAll = !!c.outfitMatchAll;
+    return logPassesOutfitFilterKeys(log, outfitKeys, outfitMatchAll);
 }
 
 // 날씨 필터: 해당 날의 최저 ≥ low 이고 최고 ≤ high 인 기록만
@@ -1294,6 +1336,7 @@ function passesWeatherFilter(log) {
         high: weatherFilterHigh,
         favOnly: filterFavoritesOnly,
         outfitKeys: filterOutfitSelectionKeys,
+        outfitMatchAll: filterOutfitMatchAll,
         tpo: filterTpo
     });
 }
@@ -1398,7 +1441,7 @@ function getActiveFilterChips() {
         chips.push({ key: 'temp', label: `${weatherFilterLow}°~${weatherFilterHigh}°`, value: 'temp' });
     }
     if (filterOutfitSelectionKeys.length > 0 && homeListSelectIncludesItems) {
-        const s = summarizeOutfitFilterKeysForChip(filterOutfitSelectionKeys);
+        const s = summarizeOutfitFilterKeysForChip(filterOutfitSelectionKeys, filterOutfitMatchAll);
         chips.push({
             key: 'outfit',
             label: s.label,
@@ -1770,6 +1813,7 @@ function initFilterModal() {
         const favChecked = document.querySelector('input[name="filterFavorites"]:checked');
         filterFavoritesOnly = favChecked?.value === 'only';
         filterOutfitSelectionKeys = [];
+        filterOutfitMatchAll = false;
         document.querySelectorAll('#filterOutfitOptions input[name="filterOutfitPair"]:checked').forEach((cb) => {
             if (cb.value) filterOutfitSelectionKeys.push(cb.value);
         });
@@ -1846,7 +1890,10 @@ function initFilterModal() {
             if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
             if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         }
-        else if (key === 'outfit') filterOutfitSelectionKeys = [];
+        else if (key === 'outfit') {
+            filterOutfitSelectionKeys = [];
+            filterOutfitMatchAll = false;
+        }
         else if (key === 'fav') filterFavoritesOnly = false;
         syncModalFromState();
         renderActiveChips();
@@ -1954,6 +2001,7 @@ function initFilterModal() {
         weatherFilterHigh = TEMP_FILTER_MAX;
         filterFavoritesOnly = false;
         filterOutfitSelectionKeys = [];
+        filterOutfitMatchAll = false;
         if (sliderLow) sliderLow.value = TEMP_FILTER_MIN;
         if (sliderHigh) sliderHigh.value = TEMP_FILTER_MAX;
         syncModalFromState();
@@ -1961,10 +2009,16 @@ function initFilterModal() {
         applyFilterAndRender();
         closeModal();
         const urlAfterReset = new URLSearchParams(location.search);
-        if (urlAfterReset.get('filter') === 'fav' || urlAfterReset.get('outfitCat')) {
+        if (
+            urlAfterReset.get('filter') === 'fav' ||
+            urlAfterReset.get('outfitCat') ||
+            urlAfterReset.get('outfitKeys')
+        ) {
             urlAfterReset.delete('filter');
             urlAfterReset.delete('outfitCat');
             urlAfterReset.delete('outfitVal');
+            urlAfterReset.delete('outfitMatch');
+            urlAfterReset.delete('outfitKeys');
             const qs = urlAfterReset.toString();
             const next = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`;
             history.replaceState(null, '', next);
@@ -2176,17 +2230,18 @@ function initFilterModal() {
         });
     }
 
-    // URL 파라미터 ?filter=fav → 즐겨찾기, ?outfitCat=&outfitVal= → 착장 품목 (상세 복귀 시 스킵)
+    // URL 파라미터 ?filter=fav → 즐겨찾기, 착장 품목(단일·조합) (상세 복귀 시 스킵)
     if (!window.__stylelogHomeSkipUrlFilterParams) {
         const homeUrlParams = new URLSearchParams(location.search);
-        const outfitUrlKey = outfitFilterKeyFromUrl(homeUrlParams);
+        const outfitUrl = parseOutfitFilterFromUrl(homeUrlParams);
         if (homeUrlParams.get('filter') === 'fav') {
             filterFavoritesOnly = true;
             syncModalFromState();
             renderActiveChips();
             applyFilterAndRender();
-        } else if (outfitUrlKey) {
-            filterOutfitSelectionKeys = [outfitUrlKey];
+        } else if (outfitUrl.keys.length > 0) {
+            filterOutfitSelectionKeys = [...outfitUrl.keys];
+            filterOutfitMatchAll = outfitUrl.matchAll;
             syncModalFromState();
             renderActiveChips();
             applyFilterAndRender();
