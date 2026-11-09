@@ -274,8 +274,13 @@ async function loadAdminDashboard() {
   const meta = document.querySelector('.admin-topbar-meta');
 
   try {
-    const r = await fetch('/api/admin/summary?lite=1', { credentials: 'same-origin' });
+    const [summaryRes, kpisRes] = await Promise.all([
+      fetch('/api/admin/summary?lite=1', { credentials: 'same-origin' }),
+      fetch('/api/admin/kpis?days=30', { credentials: 'same-origin' })
+    ]);
+    const r = summaryRes;
     const j = await r.json().catch(() => ({}));
+    const kj = await kpisRes.json().catch(() => ({}));
     if (!r.ok) {
       if (j.error === 'supabase_not_configured') {
         globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(
@@ -325,6 +330,13 @@ async function loadAdminDashboard() {
       memb = j.membersCapped ? `${j.membersListed}+` : String(j.membersListed);
     }
     setText('[data-admin-metric="members"]', memb);
+
+    if (kpisRes.ok && kj.ok && kj.avgLogsPerMember != null) {
+      setText('[data-admin-metric="avg-logs"]', String(kj.avgLogsPerMember));
+    } else if (j.styleLogsTotal != null && j.membersListed != null && Number(j.membersListed) > 0) {
+      const approx = Math.round((Number(j.styleLogsTotal) / Number(j.membersListed)) * 100) / 100;
+      setText('[data-admin-metric="avg-logs"]', String(approx));
+    }
 
     globalThis.AdminEnvHint?.setDashHintLine?.(document.getElementById('admin-dash-banner'), '', false);
 

@@ -6,6 +6,8 @@
 
 스타일로그는 일상의 패션 선택을 기록하고, 날씨와 상황에 맞는 스타일을 찾아갈 수 있도록 돕는 서비스입니다.
 
+**기획 구조:** 전략(사업기획안) → 로드맵(Phase) → 버전 프로젝트 → 기능 티켓(Notion DB). 로컬 요약은 [docs/ROADMAP.md](docs/ROADMAP.md), Notion 허브는 [StyleLog 작업 구조](https://app.notion.com/p/413d7b163117819889b3ed9655de1c28). **다음 개발 버전은 2.3V**(자주 입는 조합 분석).
+
 ### v2.2 기능 (v2.1·이전 릴리스 포함)
 - ✅ **상황(TPO)**: 작성에서 칩 복수 선택(회사·일상/데이트·여행·운동·경조사), 홈 카드·상황 필터. 만족한 코디는 즐겨찾기로 모음
 - ✅ **내 옷장**: 마이페이지에서 품목 집계·이름 변경·옷장에서 빼기/복원, 홈 착장 이력 필터
@@ -160,6 +162,6 @@ npx http-server
 
 **버전:** 2.2V (표기: `APP_VERSION` in `scripts/config.js`)
 
-지금 기능 범위: [docs/PRODUCT.md](docs/PRODUCT.md) · 화면 규칙: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · 점검: [docs/CODE_HEALTH.md](docs/CODE_HEALTH.md)
+지금 기능: [docs/PRODUCT.md](docs/PRODUCT.md) · 방향·로드맵: [docs/ROADMAP.md](docs/ROADMAP.md) · 화면: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · 점검: [docs/CODE_HEALTH.md](docs/CODE_HEALTH.md)
 
 상황 컬럼은 Alpha·리얼 DB에서 [docs/supabase/style_logs_add_tpo.sql](docs/supabase/style_logs_add_tpo.sql) 을 실행해야 저장됩니다.

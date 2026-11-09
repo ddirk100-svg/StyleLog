@@ -3,7 +3,8 @@
   "private": true,
   "description": "StyleLog static site + Vercel serverless (admin API)",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "node scripts/local-api-dev.js",
+    "dev:vercel": "vercel dev",
     "admin:secrets": "node scripts/generate-admin-secrets.js"
   },
   "devDependencies": {

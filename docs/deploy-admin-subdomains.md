@@ -97,6 +97,7 @@ Vercel 이 준 비교 화면 기준으로 예시:
 2. `docs/supabase/user_feedback.sql`
 3. (성능·이메일용) `docs/supabase/admin_emails_and_dashboard_snapshot.sql`
 4. (성능용) `docs/supabase/style_log_counts_for_users.sql`
+5. (핵심 지표) `docs/supabase/admin_product_kpis.sql` — 관리자 **핵심 지표** 페이지용
 
 `style_logs` 테이블은 메인 앱과 같은 스키마가 이미 있어야 회원 **로그 수**·대시보드 **스타일 로그 카운트**가 맞습니다. 없으면 해당 쿼리만 에러 나거나 0으로 보일 수 있습니다.
 
@@ -119,7 +120,8 @@ npm run admin:secrets
 
 1. **의존성 설치(최초 1회):** `npm install`
 2. **환경 변수:** `.env.local.example` 을 참고해 프로젝트 루트에 `.env.local` 생성 (Git에 커밋하지 않음)
-3. **개발 서버:** `npm run dev` → 터미널에 나온 주소(보통 `http://localhost:3000`)에서 **`/admin/index.html`** 로 접속
+3. **개발 서버:** `npm run dev` (로컬 Node 서버, Vercel 로그인 불필요) → **`http://localhost:3000/admin/index.html`**  
+   Vercel CLI와 동일하게 맞추려면 `npm run dev:vercel` (`vercel login` 필요).
 
 **OTP 없이 로컬에서 API·UI 함께 확인:** `.env.local` 에 다음을 넣습니다.
 

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>StyleLog 관리자 · 핵심 지표</title>
+    <link rel="icon" href="/img/StyleLog_logo(favicon).png" type="image/png">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="/styles/variables.css">
+    <link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body class="admin-app" data-admin-page="metrics">
+    <aside class="admin-sidebar" aria-label="관리자 메뉴">
+        <div class="admin-brand">
+            <p class="admin-brand-name">StyleLog Admin</p>
+            <p class="admin-brand-sub">내부 관리 · DB 요약</p>
+            <span class="admin-env-badge">…</span>
+        </div>
+        <nav class="admin-nav">
+            <a href="index.html" data-admin-nav="dashboard"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3"/><rect width="7" height="7" x="14" y="3"/><rect width="7" height="7" x="14" y="14"/><rect width="7" height="7" x="3" y="14"/></svg></span>대시보드</a>
+            <a href="metrics.html" data-admin-nav="metrics"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-9"/></svg></span>핵심 지표</a>
+            <a href="members.html" data-admin-nav="members"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>회원 현황</a>
+            <a href="inquiries.html" data-admin-nav="inquiries"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>고객 문의</a>
+            <a href="feedback.html" data-admin-nav="feedback"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>고객 피드백</a>
+        </nav>
+    </aside>
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <div class="admin-topbar-title-wrap">
+                <h1 class="admin-page-title">핵심 지표</h1>
+                <p class="admin-topbar-meta">불러오는 중…</p>
+            </div>
+        </header>
+        <main class="admin-content">
+            <p class="admin-hint-line" id="admin-kpi-banner" hidden></p>
+
+            <div class="admin-toolbar admin-kpi-toolbar">
+                <label for="admin-kpi-days" class="admin-dash-toolbar-label">최근 활동 기준</label>
+                <select id="admin-kpi-days" class="admin-input admin-dash-range-select" aria-label="최근 활동 집계 일수">
+                    <option value="7">7일</option>
+                    <option value="30" selected>30일</option>
+                    <option value="90">90일</option>
+                </select>
+            </div>
+
+            <section aria-labelledby="admin-kpi-phase1-title">
+                <h2 class="admin-section-title" id="admin-kpi-phase1-title">Phase 1 · 기록</h2>
+                <p class="admin-kpi-phase-desc">로드맵: 회원가입, 스타일 로그 축적, 사용자당 평균 기록</p>
+                <div class="admin-grid admin-grid--metrics">
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">회원 수</div>
+                        <div class="admin-card-value"><span data-kpi="members">—</span></div>
+                        <div class="admin-card-hint">Auth 가입자</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">스타일 로그</div>
+                        <div class="admin-card-value"><span data-kpi="logs">—</span></div>
+                        <div class="admin-card-hint">누적 기록</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">기록 작성 회원</div>
+                        <div class="admin-card-value"><span data-kpi="writers">—</span></div>
+                        <div class="admin-card-hint">로그 1건 이상</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">회원당 평균 로그</div>
+                        <div class="admin-card-value"><span data-kpi="avg-member">—</span></div>
+                        <div class="admin-card-hint">전체 회원 ÷ 로그</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">작성자당 평균 로그</div>
+                        <div class="admin-card-value"><span data-kpi="avg-writer">—</span></div>
+                        <div class="admin-card-hint">기록 회원만</div>
+                    </div>
+                </div>
+            </section>
+
+            <section aria-labelledby="admin-kpi-phase2-title">
+                <h2 class="admin-section-title" id="admin-kpi-phase2-title">Phase 2 · 회고 (DB 대리 지표)</h2>
+                <p class="admin-kpi-phase-desc">홈 필터·재탐색 <strong>클릭</strong>은 아직 수집하지 않습니다. 기록 품질·즐겨찾기·반복 작성으로 회고를 봅니다.</p>
+                <div class="admin-grid admin-grid--metrics">
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">즐겨찾기 로그</div>
+                        <div class="admin-card-value"><span data-kpi="fav-logs">—</span></div>
+                        <div class="admin-card-hint">비율 <span data-kpi="fav-logs-pct">—</span>% (전체 로그)</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">즐겨찾기 사용 회원</div>
+                        <div class="admin-card-value"><span data-kpi="fav-users">—</span></div>
+                        <div class="admin-card-hint">비율 <span data-kpi="fav-users-pct">—</span>% (기록 회원)</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">상황(TPO) 있는 로그</div>
+                        <div class="admin-card-value"><span data-kpi="tpo-logs">—</span></div>
+                        <div class="admin-card-hint">비율 <span data-kpi="tpo-logs-pct">—</span></div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">착장 품목 있는 로그</div>
+                        <div class="admin-card-value"><span data-kpi="items-logs">—</span></div>
+                        <div class="admin-card-hint">비율 <span data-kpi="items-logs-pct">—</span></div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">2건 이상 기록 회원</div>
+                        <div class="admin-card-value"><span data-kpi="repeat-writers">—</span></div>
+                        <div class="admin-card-hint">비율 <span data-kpi="repeat-writers-pct">—</span>% · 재회고 대리</div>
+                    </div>
+                </div>
+            </section>
+
+            <section aria-labelledby="admin-kpi-recent-title">
+                <h2 class="admin-section-title" id="admin-kpi-recent-title">최근 활동</h2>
+                <div class="admin-grid admin-grid--metrics">
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">신규 가입</div>
+                        <div class="admin-card-value"><span data-kpi="signups-recent">—</span></div>
+                        <div class="admin-card-hint">선택한 기간</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">신규 로그</div>
+                        <div class="admin-card-value"><span data-kpi="logs-recent">—</span></div>
+                        <div class="admin-card-hint">선택한 기간</div>
+                    </div>
+                    <div class="admin-card admin-card--static">
+                        <div class="admin-card-label">활성 작성자</div>
+                        <div class="admin-card-value"><span data-kpi="active-writers">—</span></div>
+                        <div class="admin-card-hint">기간 내 로그 1건 이상</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="/scripts/admin-gate.js" defer></script>
+    <script src="/scripts/admin-shell.js" defer></script>
+    <script src="/scripts/admin-env-hint.js" defer></script>
+    <script src="/scripts/admin-page-metrics.js" defer></script>
+</body>
+</html>

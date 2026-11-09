@@ -20,6 +20,7 @@
         </div>
         <nav class="admin-nav">
             <a href="index.html" data-admin-nav="dashboard"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3"/><rect width="7" height="7" x="14" y="3"/><rect width="7" height="7" x="14" y="14"/><rect width="7" height="7" x="3" y="14"/></svg></span>대시보드</a>
+            <a href="metrics.html" data-admin-nav="metrics"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-9"/></svg></span>핵심 지표</a>
             <a href="members.html" data-admin-nav="members"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>회원 현황</a>
             <a href="inquiries.html" data-admin-nav="inquiries"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>고객 문의</a>
             <a href="feedback.html" data-admin-nav="feedback"><span class="admin-nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>고객 피드백</a>
@@ -42,6 +43,11 @@
                         <div class="admin-card-label">회원</div>
                         <div class="admin-card-value"><span data-admin-metric="members">—</span></div>
                         <div class="admin-card-hint">가입 회원 수 (Auth)</div>
+                    </a>
+                    <a class="admin-card" href="metrics.html">
+                        <div class="admin-card-label">핵심 지표</div>
+                        <div class="admin-card-value"><span data-admin-metric="avg-logs">—</span></div>
+                        <div class="admin-card-hint">회원당 평균 로그 · Phase 1·2 상세 보기</div>
                     </a>
                     <div class="admin-card admin-card--static">
                         <div class="admin-card-label">스타일 로그</div>

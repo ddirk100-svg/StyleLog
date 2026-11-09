@@ -52,7 +52,7 @@
     if (!bannerEl || !likelyStaticNoApi(httpStatus)) return;
     setDashHintLine(
       bannerEl,
-      '데이터 미로딩: Live Server(:5500)에는 /api 가 없습니다. npm run dev 로 연 뒤 /admin/index.html 을 여세요.',
+      '데이터 미로딩: Live Server(:5500)에는 /api 가 없습니다. 터미널에서 npm run dev 후 http://localhost:3000/admin/index.html 을 여세요.',
       true
     );
   }

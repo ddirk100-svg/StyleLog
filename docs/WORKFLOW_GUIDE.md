@@ -45,6 +45,16 @@ Vercel (자동 배포)
 
 **코드에서 DB 주소를 바꾸지 않는다.** `scripts/config.js`가 호스트로 고른다.
 
+## 기획·티켓 (Notion)
+
+코드 작업 전에 버전 범위를 Notion에서 맞춘다. 로컬에 같은 뼈대가 [ROADMAP.md](ROADMAP.md)에 있다.
+
+1. [3. 서비스 로드맵](https://app.notion.com/p/364d7b1631178007a63ed0eb7f8cf283) — Phase·버전 한 줄  
+2. [버전별 프로젝트](https://app.notion.com/p/413d7b16311781f0809be28ec9d623d5) → 예: [2.3V 프로젝트](https://app.notion.com/p/413d7b16311781b5aac6e69e3026f5fe)  
+3. [스타일로그 세부 프로젝트](https://app.notion.com/p/364d7b163117803fb1b1eb80ec8f4800) — `버전`·`상태`로 티켓 추적  
+
+버전 릴리스 때: 티켓 완료, `APP_VERSION`, 필요 SQL(Alpha·리얼), 약관 스냅샷, `alpha` → `main` 푸시. 체크리스트는 [ROADMAP.md](ROADMAP.md#버전-릴리스-체크리스트-개발자).
+
 ## 📋 일반적인 작업 흐름
 
 ### 시나리오 1: 새로운 기능 개발
@@ -61,18 +71,18 @@ Vercel (자동 배포)
    - 개발용 Supabase로 자동 연결
    - 마음껏 테스트, 삭제, 수정 가능
 
-3. **완료 후 배포**
+3. **Alpha 배포·확인**
    ```bash
-   git add .
-   git commit -m "새 기능 추가"
-   git push
+   git push origin alpha
    ```
-   → Vercel이 자동으로 재배포 시작 (1-2분 소요)
+   - `https://alpha.stylelog.co.kr` — 테스트 DB
 
-4. **리얼 서버 확인**
-   - `https://style-log.vercel.app` 접속
-   - 프로덕션 Supabase로 자동 연결
-   - 실제 사용자 데이터로 테스트
+4. **프로덕션 배포**
+   ```bash
+   git push origin main
+   ```
+   - `https://www.stylelog.co.kr` — 리얼 DB  
+   - 한글 커밋 메시지는 `scripts/_commit_msg.txt` + `git commit -F` (`.cursor/rules` 참고)
 
 ### 시나리오 2: 버그 수정
 

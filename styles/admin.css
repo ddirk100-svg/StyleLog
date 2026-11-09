@@ -192,6 +192,23 @@
     margin-bottom: var(--spacing-3xl);
 }
 
+.admin-kpi-toolbar {
+    margin-bottom: var(--spacing-xl);
+}
+
+.admin-kpi-phase-desc {
+    margin: -8px 0 var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    max-width: 52rem;
+}
+
+.admin-kpi-phase-desc strong {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
 .admin-dash-trends {
     margin-bottom: var(--spacing-3xl);
 }

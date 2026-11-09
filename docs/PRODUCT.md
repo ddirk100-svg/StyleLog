@@ -2,6 +2,8 @@
 
 하루 코디를 남기고, 날씨와 상황으로 다시 찾는 기록 앱이다. 버전 표기는 `scripts/config.js`의 `APP_VERSION`.
 
+전략·Phase·다음 버전·Notion 티켓 연결은 [ROADMAP.md](ROADMAP.md)에 정리되어 있다.
+
 ## 사용자가 하는 일
 
 1. 사진을 3:4로 맞추고, 그날 날씨·체감·상황·착장 품목·메모를 남긴다.
@@ -29,8 +31,17 @@
 - 조합 분석, 추천, 자유 태그 검색, 관리자 집계
 - 만족도 컬럼을 제품에서 다시 쓰지 않는다. 예전에 만들어 둔 컬럼이 있어도 화면은 즐겨찾기만 쓴다.
 
+## 다음 버전 (2.3V)
+
+로드맵 Phase 2의 남은 한 줄: **자주 입는 조합 분석**.
+
+- Notion: [2.3V 프로젝트](https://app.notion.com/p/413d7b16311781b5aac6e69e3026f5fe), 티켓 `[회고] 자주 같이 입은 조합`
+- 구현 시 재사용: 저장된 `items`, 홈 **착장 필터**, 옷장 착용 수 — 새 필터·점수 UI는 만들지 않는다
+- `APP_VERSION`은 2.3을 실제 배포할 때만 올린다
+
 ## 같이 보는 문서
 
+- 방향·로드맵·기획: `docs/ROADMAP.md`
 - 화면 규칙: `docs/DESIGN_SYSTEM.md`
 - 보안·성능 점검: `docs/CODE_HEALTH.md`
 - Alpha / 리얼 배포: `docs/WORKFLOW_GUIDE.md`, `README.md`
