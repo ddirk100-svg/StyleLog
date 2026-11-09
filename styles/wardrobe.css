@@ -364,3 +364,43 @@
     outline: none;
     border-color: var(--color-primary);
 }
+
+.wardrobe-card-pairs {
+    width: 100%;
+    padding: 0 var(--spacing-md) var(--spacing-md);
+    border-top: 1px solid var(--color-border-light);
+    margin-top: var(--spacing-xs);
+}
+
+.wardrobe-card-pairs-title {
+    margin: var(--spacing-sm) 0;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+}
+
+.wardrobe-pair-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--spacing-sm) 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: var(--color-text-primary);
+    text-align: left;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+}
+
+.wardrobe-pair-row:hover {
+    color: var(--color-primary);
+}
+
+.wardrobe-pair-count {
+    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    margin-left: var(--spacing-md);
+}

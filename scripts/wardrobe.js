@@ -1,4 +1,6 @@
 let wardrobeCatalog = [];
+/** @type {Array<{ id?: string, items?: unknown }>} */
+let wardrobeRecommendLogs = [];
 let wardrobeFilterCat = '';
 let wardrobeMode = 'closet';
 let wardrobeBusy = false;
@@ -97,6 +99,37 @@ function wardrobeLogsUrl(category, value) {
     return `home.html?${q.toString()}`;
 }
 
+function appendWardrobePartnerRows(card, it) {
+    const rec = globalThis.StyleLogRecommendation;
+    const combos = globalThis.StyleLogOutfitCombinations;
+    if (!rec || !combos || !wardrobeRecommendLogs.length || !(it.wearCount > 0)) return;
+    const partners = rec.partnersForItem(wardrobeRecommendLogs, it.category, it.value, 4);
+    if (!partners.length) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'wardrobe-card-pairs';
+    const title = document.createElement('p');
+    title.className = 'wardrobe-card-pairs-title';
+    title.textContent = '자주 같이 입은 옷';
+    wrap.appendChild(title);
+
+    partners.forEach((p) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'wardrobe-pair-row';
+        const label = `${p.category} · ${p.value}`;
+        btn.innerHTML =
+            typeof escapeHtml === 'function'
+                ? `<span>${escapeHtml(label)}</span><span class="wardrobe-pair-count">${p.count}회</span>`
+                : `<span>${label}</span><span class="wardrobe-pair-count">${p.count}회</span>`;
+        btn.addEventListener('click', () => {
+            window.location.href = combos.homeUrlForCombination(p.keys);
+        });
+        wrap.appendChild(btn);
+    });
+    card.appendChild(wrap);
+}
+
 function makeTextAction(label, extraClass, onClick) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -180,6 +213,7 @@ function createWardrobeCard(it, { hidden }) {
 
     card.appendChild(main);
     card.appendChild(actions);
+    if (!hidden) appendWardrobePartnerRows(card, it);
     return card;
 }
 
@@ -469,6 +503,17 @@ async function initPage() {
 
     try {
         await reloadWardrobeCatalog();
+        const user = await getCurrentUser();
+        const comboApi = globalThis.StyleLogOutfitCombinations;
+        if (user?.id && comboApi?.fetchUserLogsWithItems) {
+            try {
+                wardrobeRecommendLogs = await comboApi.fetchUserLogsWithItems(supabaseClient, user.id);
+                renderWardrobe();
+            } catch (pairErr) {
+                console.warn('wardrobe pairs', pairErr);
+                wardrobeRecommendLogs = [];
+            }
+        }
     } catch (e) {
         console.error(e);
         const emptyEl = document.getElementById('wardrobeEmpty');

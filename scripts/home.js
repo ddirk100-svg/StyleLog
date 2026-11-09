@@ -68,6 +68,8 @@ let manualFilterSnapshot = null;
 /** 오늘 예보 기온(최저·최고) — 필터 슬라이더와 맞춤 토글 일치 여부 판단용 */
 let cachedTodayTempLow = null;
 let cachedTodayTempHigh = null;
+/** 오늘 날씨 상태(sunny/rainy 등) — 3.0V 정렬·구분용 */
+let cachedTodayWeatherState = '';
 
 function setCachedTodayTempsFromWeather(weather) {
     if (!weather || weather.tempMin == null || weather.tempMax == null) return;
@@ -78,6 +80,7 @@ function setCachedTodayTempsFromWeather(weather) {
     if (low > high) [low, high] = [high, low];
     cachedTodayTempLow = low;
     cachedTodayTempHigh = high;
+    cachedTodayWeatherState = weather.weather ? String(weather.weather).trim().toLowerCase() : '';
 }
 
 async function refreshCachedTodayTemps() {
@@ -205,23 +208,9 @@ function buildHomeFilterActiveChipHtml(c) {
 
 /** 로그의 items 필드에서 `{ category, value }` 쌍 목록 */
 function parseLogItemsPairs(itemsJson) {
-    let arr = itemsJson;
-    if (typeof arr === 'string') {
-        try {
-            arr = JSON.parse(arr);
-        } catch (_) {
-            return [];
-        }
-    }
-    if (!Array.isArray(arr)) return [];
-    const out = [];
-    arr.forEach((it) => {
-        if (!it || typeof it !== 'object') return;
-        const c = String(it.category || '').trim();
-        const v = String(it.value || '').trim();
-        if (c && v) out.push([c, v]);
-    });
-    return out;
+    const api = globalThis.StyleLogOutfitCombinations;
+    if (api?.parseLogItemsPairs) return api.parseLogItemsPairs(itemsJson);
+    return [];
 }
 
 function logPassesOutfitFilterKeys(log, keys, matchAll) {
@@ -1350,6 +1339,65 @@ function isHomeListFiltered() {
     return getActiveFilterChips().length > 0;
 }
 
+function isRecommendPrimaryListMode() {
+    if (!recommendationModeEnabled) return false;
+    return (
+        filterYears.length === 0 &&
+        filterMonths.length === 0 &&
+        filterWeatherFit.length === 0 &&
+        filterTpo.length === 0 &&
+        filterOutfitSelectionKeys.length === 0 &&
+        !filterFavoritesOnly
+    );
+}
+
+function prepareLogsForHomeList(logs) {
+    if (!isRecommendPrimaryListMode() || !globalThis.StyleLogRecommendation) return logs;
+    return globalThis.StyleLogRecommendation.sortLogsForRecommendMode(logs, cachedTodayWeatherState);
+}
+
+function renderHomeRecommendCombos(filteredLogs) {
+    const section = document.getElementById('homeRecommendCombos');
+    const listEl = document.getElementById('homeRecommendCombosList');
+    if (!section || !listEl) return;
+    const rec = globalThis.StyleLogRecommendation;
+    const combosApi = globalThis.StyleLogOutfitCombinations;
+    if (!isRecommendPrimaryListMode() || !rec || !combosApi) {
+        section.hidden = true;
+        listEl.innerHTML = '';
+        return;
+    }
+    const rows = rec.topComboSuggestions(filteredLogs, 3);
+    if (!rows.length) {
+        section.hidden = true;
+        listEl.innerHTML = '';
+        return;
+    }
+    section.hidden = false;
+    listEl.innerHTML = '';
+    rows.forEach((row) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'home-recommend-combo-row';
+        const label =
+            typeof escapeHtml === 'function' ? escapeHtml(row.label) : String(row.label);
+        btn.innerHTML = `<span class="home-recommend-combo-label">${label}</span><span class="home-recommend-combo-count">${row.count}<span>회</span></span>`;
+        btn.addEventListener('click', () => {
+            window.location.href = combosApi.homeUrlForCombination(row.keys);
+        });
+        listEl.appendChild(btn);
+    });
+}
+
+function appendRecommendSectionLabel(fragment, text) {
+    const el = document.createElement('div');
+    el.className = 'home-recommend-section-label';
+    el.setAttribute('role', 'heading');
+    el.setAttribute('aria-level', '3');
+    el.textContent = text;
+    fragment.appendChild(el);
+}
+
 function buildHomeFirstEmptyHtml() {
     return `
                     <div class="util-empty">
@@ -1470,7 +1518,29 @@ function renderFullDayList(logs) {
     
     const fragment = document.createDocumentFragment();
     const continuation = { previousYear: null, previousMonth: null };
-    appendDayListChunksToFragment(fragment, logs, continuation);
+    const displayLogs = prepareLogsForHomeList(logs);
+    const rec = globalThis.StyleLogRecommendation;
+    const useWeatherSections =
+        isRecommendPrimaryListMode() &&
+        rec &&
+        cachedTodayWeatherState &&
+        displayLogs.length > 1;
+    if (useWeatherSections) {
+        const { stateBlock, tempOnlyBlock } = rec.splitLogsByWeatherState(
+            displayLogs,
+            cachedTodayWeatherState
+        );
+        if (stateBlock.length && tempOnlyBlock.length) {
+            appendRecommendSectionLabel(fragment, '날씨도 비슷했던 코디');
+            appendDayListChunksToFragment(fragment, stateBlock, continuation);
+            appendRecommendSectionLabel(fragment, '기온만 맞는 코디');
+            appendDayListChunksToFragment(fragment, tempOnlyBlock, continuation);
+        } else {
+            appendDayListChunksToFragment(fragment, displayLogs, continuation);
+        }
+    } else {
+        appendDayListChunksToFragment(fragment, displayLogs, continuation);
+    }
 
     container.appendChild(fragment);
     attachDayListEventListeners();
@@ -1934,11 +2004,13 @@ function initFilterModal() {
             ensureAllDataLoadedForFilter(true).then(() => {
                 const updated = getFilteredLogs();
                 renderFullDayList(updated);
+                renderHomeRecommendCombos(updated);
                 if (updated.length > 0 && !hasMoreData) showEndMessage();
             });
         } else {
             const filtered = getFilteredLogs();
             renderFullDayList(filtered);
+            renderHomeRecommendCombos(filtered);
             if (filtered.length > 0 && !hasMoreData) showEndMessage();
         }
     }

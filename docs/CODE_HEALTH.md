@@ -64,7 +64,9 @@
 
 | 영역 | 상태 | 비고 |
 |------|------|------|
-| `scripts/*.js` 구문 | ✅ `node --check` | 2.2 배포 전 재실행 |
+| `scripts/*.js` 구문 | ✅ `node --check` | 3.0 배포 전 재실행 |
+| 3.0 추천 UI | ✅ | `escapeHtml` on combo·옷장 페어 라벨 |
+| `parseLogItemsPairs` | ✅ | 홈은 `outfit-combinations.js` 위임 |
 | `common.js` / `utils.css` 캐시 | ✅ 작성·홈·상세는 common v16, utils는 작성 v9 | `(선택)` 스타일은 `utils.css` |
 | 디자인 토큰 | ✅ | 신규 UI는 `variables.css`·`utils.css` contract |
 | `write-ui-copy` | ✅ | write·wardrobe·home·mypage·inquiry·생년월일 |

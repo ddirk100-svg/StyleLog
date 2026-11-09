@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- StyleLog 2.3V · 자주 입는 조합 회고 -->
+<!-- StyleLog 3.0V · 개인화 추천 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -131,8 +131,8 @@
                         <div class="weather-recommend-copy">
                             <span class="weather-recommend-label" id="recommendModeLabel">오늘 기온에 맞춰 보기</span>
                             <span class="weather-recommend-hint write-ui-copy" id="recommendModeHint">
-                                <span class="write-ui-copy__line">내 코디 목록만 보여요.</span>
-                                <span class="write-ui-copy__line">오늘 최저·최고 기온으로 맞춰요.</span>
+                                <span class="write-ui-copy__line">오늘 기온·날씨에 맞춰 보여요.</span>
+                                <span class="write-ui-copy__line">즐겨찾기·비슷한 날씨 코디가 먼저 와요.</span>
                             </span>
                         </div>
                         <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
@@ -173,6 +173,11 @@
                 <button type="button" class="filter-reset-btn" id="filterBarResetBtn">초기화</button>
             </div>
         </div>
+
+        <section class="home-recommend-combos" id="homeRecommendCombos" hidden aria-label="오늘 입을 만한 조합">
+            <h3 class="home-recommend-combos-title sl-section-title">오늘 입을 만한 조합</h3>
+            <div class="home-recommend-combos-list" id="homeRecommendCombosList"></div>
+        </section>
 
         <!-- 일별 리스트 컨테이너 -->
         <div class="day-list-container" id="dayListContainer">
@@ -308,8 +313,10 @@
     <script src="scripts/require-birthdate.js" defer></script>
     <script src="scripts/auth.js" defer></script>
     <script src="scripts/common.js?v=16" defer></script>
+    <script src="scripts/outfit-combinations.js?v=2" defer></script>
+    <script src="scripts/recommendation.js?v=1" defer></script>
     <script src="scripts/feedback.js" defer></script>
-    <script src="scripts/home.js?v=47" defer></script>
+    <script src="scripts/home.js?v=48" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {
