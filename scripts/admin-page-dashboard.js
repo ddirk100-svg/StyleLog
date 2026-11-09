@@ -274,13 +274,12 @@ async function loadAdminDashboard() {
   const meta = document.querySelector('.admin-topbar-meta');
 
   try {
-    const [summaryRes, kpisRes] = await Promise.all([
+    const [summaryRes, trendsPayload] = await Promise.all([
       fetch('/api/admin/summary?lite=1', { credentials: 'same-origin' }),
-      fetch('/api/admin/kpis?days=30', { credentials: 'same-origin' })
+      loadTrends(trendsRange)
     ]);
     const r = summaryRes;
     const j = await r.json().catch(() => ({}));
-    const kj = await kpisRes.json().catch(() => ({}));
     if (!r.ok) {
       if (j.error === 'supabase_not_configured') {
         globalThis.AdminEnvHint?.applySupabaseNotConfigured?.(
@@ -331,9 +330,7 @@ async function loadAdminDashboard() {
     }
     setText('[data-admin-metric="members"]', memb);
 
-    if (kpisRes.ok && kj.ok && kj.avgLogsPerMember != null) {
-      setText('[data-admin-metric="avg-logs"]', String(kj.avgLogsPerMember));
-    } else if (j.styleLogsTotal != null && j.membersListed != null && Number(j.membersListed) > 0) {
+    if (j.styleLogsTotal != null && j.membersListed != null && Number(j.membersListed) > 0) {
       const approx = Math.round((Number(j.styleLogsTotal) / Number(j.membersListed)) * 100) / 100;
       setText('[data-admin-metric="avg-logs"]', String(approx));
     }
@@ -345,7 +342,17 @@ async function loadAdminDashboard() {
       `갱신 ${new Date().toLocaleString('ko-KR')} · 회원 수는 Auth 기준`
     );
 
-    await refreshTrendsChart(trendsRange);
+    if (trendsPayload && trendsPayload.ok !== false) {
+      renderTrendsCharts(trendsPayload);
+    } else {
+      renderTrendsCharts({
+        range: trendsRange,
+        buckets: [],
+        membersBefore: 0,
+        styleLogsBefore: 0,
+        hint: trendsPayload?.hint || '추이를 표시할 수 없습니다.'
+      });
+    }
   } catch {
     const H = globalThis.AdminEnvHint;
     if (H) {

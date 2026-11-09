@@ -161,21 +161,28 @@ module.exports = async function handler(req, res) {
   const lite = parseRequestUrl(req).searchParams.get('lite') === '1';
 
   try {
-    const countsPromise = fetchInquiryCountsByReply(supabase);
     const snap = await tryDashboardSnapshot(supabase);
-    const inqCounts = await countsPromise;
     if (snap) {
-      snap.inquiriesOpen = inqCounts.inquiriesOpen;
-      snap.inquiriesAnswered = inqCounts.inquiriesAnswered;
       if (lite) {
         snap.recentInquiries = [];
         snap.recentFeedback = [];
-      } else {
-        snap.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, snap.recentInquiries);
+        sendJson(res, 200, snap);
+        return;
       }
+      const countsPromise = fetchInquiryCountsByReply(supabase);
+      const [inqCounts, enriched] = await Promise.all([
+        countsPromise,
+        enrichRecentInquiriesAdminReply(supabase, snap.recentInquiries)
+      ]);
+      snap.inquiriesOpen = inqCounts.inquiriesOpen;
+      snap.inquiriesAnswered = inqCounts.inquiriesAnswered;
+      snap.recentInquiries = enriched;
       sendJson(res, 200, snap);
       return;
     }
+
+    const countsPromise = fetchInquiryCountsByReply(supabase);
+    const inqCounts = await countsPromise;
     const legacy = await loadSummaryLegacy(supabase, inqCounts, lite);
     if (!lite) {
       legacy.recentInquiries = await enrichRecentInquiriesAdminReply(supabase, legacy.recentInquiries);

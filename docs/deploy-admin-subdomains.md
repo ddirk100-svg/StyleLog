@@ -97,7 +97,8 @@ Vercel 이 준 비교 화면 기준으로 예시:
 2. `docs/supabase/user_feedback.sql`
 3. (성능·이메일용) `docs/supabase/admin_emails_and_dashboard_snapshot.sql`
 4. (성능용) `docs/supabase/style_log_counts_for_users.sql`
-5. (핵심 지표) `docs/supabase/admin_product_kpis.sql` — 관리자 **핵심 지표** 페이지용
+5. (핵심 지표) `docs/supabase/admin_product_kpis.sql` — 관리자 **핵심 지표** 페이지용 (업데이트 시 재실행)
+6. (선택·속도) `docs/supabase/admin_perf_indexes.sql`
 
 `style_logs` 테이블은 메인 앱과 같은 스키마가 이미 있어야 회원 **로그 수**·대시보드 **스타일 로그 카운트**가 맞습니다. 없으면 해당 쿼리만 에러 나거나 0으로 보일 수 있습니다.
 
