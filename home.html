@@ -18,8 +18,9 @@
     <link rel="stylesheet" href="styles/variables.css?v=11">
     <link rel="stylesheet" href="styles/utils.css?v=10">
     <link rel="stylesheet" href="styles/dialog.css">
-    <link rel="stylesheet" href="styles/home.css?v=20">
-    <link rel="stylesheet" href="styles/home-assistant.css?v=5">
+    <link rel="stylesheet" href="styles/home.css?v=21">
+    <link rel="stylesheet" href="styles/combinations.css?v=7">
+    <link rel="stylesheet" href="styles/home-assistant.css?v=6">
     <link rel="stylesheet" href="styles/bottom-nav.css?v=4">
     <link rel="stylesheet" href="styles/day-list.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
@@ -130,15 +131,17 @@
                     </button>
                 </form>
                 <div class="home-ai-panel" id="homeAiPanel" aria-hidden="true" role="dialog" aria-labelledby="homeAiPanelTitle">
+                    <div class="home-ai-panel-handle" id="homeAiHandle" aria-hidden="true"></div>
                     <header class="home-ai-panel-head">
                         <h2 class="home-ai-panel-title" id="homeAiPanelTitle">코디 어시스턴트</h2>
-                        <button type="button" class="home-ai-panel-close" id="homeAiClose">접기</button>
+                        <button type="button" class="home-ai-panel-close icon-btn" id="homeAiClose" aria-label="닫기">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                     </header>
                     <div class="home-ai-messages" id="homeAiMessages" aria-live="polite"></div>
-                    <div class="home-ai-thinking" id="homeAiThinking" hidden>
-                        <span class="home-ai-thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-                        <span id="homeAiThinkingText">Thinking…</span>
-                    </div>
                     <form class="home-ai-panel-compose" id="homeAiPanelForm">
                         <textarea id="homeAiPanelInput" rows="1" placeholder="메시지 입력…" aria-label="메시지"></textarea>
                         <button type="submit" class="home-ai-panel-send">보내기</button>
@@ -294,13 +297,13 @@
     <script src="scripts/auth.js" defer></script>
     <script src="scripts/common.js?v=16" defer></script>
     <script src="scripts/log-kind.js?v=1" defer></script>
-    <script src="scripts/outfit-combinations.js?v=2" defer></script>
+    <script src="scripts/outfit-combinations.js?v=3" defer></script>
     <script src="scripts/recommendation.js?v=1" defer></script>
     <script src="scripts/feedback.js" defer></script>
     <script src="scripts/bottom-nav.js?v=1" defer></script>
-    <script src="scripts/home.js?v=53" defer></script>
-    <script src="scripts/style-assistant-client.js?v=3" defer></script>
-    <script src="scripts/home-assistant-inline.js?v=4" defer></script>
+    <script src="scripts/home.js?v=54" defer></script>
+    <script src="scripts/style-assistant-client.js?v=4" defer></script>
+    <script src="scripts/home-assistant-inline.js?v=5" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

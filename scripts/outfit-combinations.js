@@ -184,12 +184,36 @@
     return all;
   }
 
+  function comboDisplayParts(keys) {
+    const rank =
+      typeof global.outfitCategorySortRank === 'function' ? global.outfitCategorySortRank : () => 0;
+    const parts = (keys || [])
+      .map((key) => {
+        try {
+          const arr = JSON.parse(key);
+          if (Array.isArray(arr) && arr.length >= 2) {
+            return { category: String(arr[0] || '').trim(), value: String(arr[1] || '').trim() };
+          }
+        } catch (_) {
+          /* ignore */
+        }
+        return null;
+      })
+      .filter(Boolean);
+    parts.sort((a, b) => {
+      const d = rank(a.category) - rank(b.category);
+      return d !== 0 ? d : a.category.localeCompare(b.category, 'ko');
+    });
+    return parts;
+  }
+
   global.StyleLogOutfitCombinations = {
     parseLogItemsPairs,
     outfitFilterPairKey,
     aggregateOutfitCombinations,
     homeUrlForCombination,
     fetchUserLogsWithItems,
-    isMyOutfitLog
+    isMyOutfitLog,
+    comboDisplayParts
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,27 +1,3 @@
-function comboDisplayParts(keys) {
-  const rank =
-    typeof outfitCategorySortRank === 'function' ? outfitCategorySortRank : () => 0;
-  const parts = (keys || [])
-    .map((key) => {
-      try {
-        const arr = JSON.parse(key);
-        if (Array.isArray(arr) && arr.length >= 2) {
-          return { category: String(arr[0] || '').trim(), value: String(arr[1] || '').trim() };
-        }
-      } catch (_) {
-        /* ignore */
-      }
-      return null;
-    })
-    .filter(Boolean);
-
-  parts.sort((a, b) => {
-    const d = rank(a.category) - rank(b.category);
-    return d !== 0 ? d : a.category.localeCompare(b.category, 'ko');
-  });
-  return parts;
-}
-
 async function initCombinationsPage() {
   const listEl = document.getElementById('combinationsList');
   if (!listEl) return;
@@ -51,7 +27,10 @@ async function initCombinationsPage() {
 
     listEl.innerHTML = '';
     rows.forEach((row, index) => {
-      const parts = comboDisplayParts(row.keys);
+      const parts =
+        typeof api.comboDisplayParts === 'function'
+          ? api.comboDisplayParts(row.keys)
+          : [];
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'combo-card';

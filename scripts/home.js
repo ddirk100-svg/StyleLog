@@ -1445,13 +1445,40 @@ function renderHomeRecommendCombos(filteredLogs) {
     }
     section.hidden = false;
     listEl.innerHTML = '';
-    rows.forEach((row) => {
+    rows.forEach((row, index) => {
+        const parts =
+            typeof combosApi.comboDisplayParts === 'function'
+                ? combosApi.comboDisplayParts(row.keys)
+                : [];
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'home-recommend-combo-row';
-        const label =
-            typeof escapeHtml === 'function' ? escapeHtml(row.label) : String(row.label);
-        btn.innerHTML = `<span class="home-recommend-combo-label">${label}</span><span class="home-recommend-combo-count">${row.count}<span>회</span></span>`;
+        btn.className = 'combo-card home-recommend-combo-card';
+        btn.setAttribute('role', 'listitem');
+
+        const rank = document.createElement('span');
+        rank.className = 'combo-card-rank';
+        rank.textContent = String(index + 1);
+
+        const pieces = document.createElement('div');
+        pieces.className = 'combo-card-pieces';
+        parts.forEach((part) => {
+            const chip = document.createElement('span');
+            chip.className = 'combo-piece';
+            const cat =
+                typeof escapeHtml === 'function' ? escapeHtml(part.category) : part.category;
+            const val = typeof escapeHtml === 'function' ? escapeHtml(part.value) : part.value;
+            chip.innerHTML = `<em>${cat}</em>${val}`;
+            pieces.appendChild(chip);
+        });
+
+        const count = document.createElement('span');
+        count.className = 'combo-card-count';
+        count.textContent = `${row.count}회`;
+
+        btn.appendChild(rank);
+        btn.appendChild(pieces);
+        btn.appendChild(count);
+
         btn.addEventListener('click', () => {
             window.location.href = combosApi.homeUrlForCombination(row.keys);
         });

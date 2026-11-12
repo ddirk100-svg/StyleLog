@@ -2713,45 +2713,11 @@ a.menu-item-link {
 .home-recommend-combos-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.home-recommend-combo-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: var(--spacing-md);
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border: 1px solid var(--color-border-light);
-    border-radius: 12px;
-    background: var(--color-bg-primary);
-    text-align: left;
-    cursor: pointer;
-    font: inherit;
-    color: inherit;
 }
 
-.home-recommend-combo-row:hover {
-    border-color: var(--color-primary);
-}
-
-.home-recommend-combo-label {
-    flex: 1;
-    font-size: var(--font-size-sm);
-    line-height: 1.45;
-}
-
-.home-recommend-combo-count {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-primary);
-}
-
-.home-recommend-combo-count span {
-    font-weight: var(--font-weight-normal);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
+.home-recommend-combo-card {
+    box-shadow: var(--shadow-surface);
 }
 
 .home-recommend-section-label {

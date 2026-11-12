@@ -5,7 +5,9 @@
   const ERROR_LABELS = {
     auth_required: '다시 로그인해 주세요.',
     invalid_session: '로그인이 만료됐어요. 다시 로그인해 주세요.',
-    openai_not_configured: 'AI 설정이 준비 중이에요. 잠시 후 다시 시도해 주세요.',
+    openai_not_configured:
+      'AI 키가 서버에 설정되지 않았어요. Vercel Production·Preview에 OPENAI_API_KEY가 있는지 확인해 주세요.',
+    openai_error: 'AI 서비스에 일시적 문제가 있어요. 잠시 후 다시 시도해 주세요.',
     assistant_failed: 'AI 응답을 만들지 못했어요. 잠시 후 다시 시도해 주세요.',
     supabase_not_configured: '서버 설정을 확인 중이에요.',
     message_required: '메시지를 입력해 주세요.',

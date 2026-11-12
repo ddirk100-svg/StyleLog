@@ -90,6 +90,10 @@ module.exports = async function handler(req, res) {
       sendJson(res, 503, { ok: false, error: 'openai_not_configured' });
       return;
     }
+    if (e && e.code === 'openai_error') {
+      sendJson(res, 502, { ok: false, error: 'openai_error' });
+      return;
+    }
     console.error('style-assistant/chat', e);
     sendJson(res, 500, { ok: false, error: 'assistant_failed' });
   }
