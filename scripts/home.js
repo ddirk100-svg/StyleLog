@@ -126,8 +126,8 @@ function syncWeatherRecommendToggleUI() {
     toggle.setAttribute('aria-checked', recommendationModeEnabled ? 'true' : 'false');
     if (label) {
         label.textContent = recommendationModeEnabled
-            ? '오늘 기온에 맞춰 보기'
-            : '내 코디 전체';
+            ? '오늘 기온 맞춤 목록'
+            : '전체 코디';
     }
     if (hint) {
         hint.hidden = !recommendationModeEnabled;
@@ -2745,7 +2745,7 @@ async function updateTodayInfo() {
             
             // 날씨 아이콘 (80px, 모바일 64px)
             if (iconWrapEl) {
-                iconWrapEl.innerHTML = getWeatherIconSVG(weather.weather, 80);
+                iconWrapEl.innerHTML = getWeatherIconSVG(weather.weather, 36);
             }
             
             // 날씨 상태 (맑음, 흐림 등)

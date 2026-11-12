@@ -13,11 +13,11 @@
     <title>스타일로그 - 자주 입는 조합</title>
     <link rel="icon" href="img/StyleLog_logo(favicon).png" type="image/png">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/variables.css?v=11">
     <link rel="stylesheet" href="styles/utils.css?v=8">
     <link rel="stylesheet" href="styles/bottom-nav.css">
     <link rel="stylesheet" href="styles/require-birthdate.css">
-    <link rel="stylesheet" href="styles/combinations.css?v=1">
+    <link rel="stylesheet" href="styles/combinations.css?v=2">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="scripts/config.js?v=8"></script>
     <script src="scripts/api.js?v=9"></script>
@@ -38,7 +38,10 @@
             <div style="width: 40px;" aria-hidden="true"></div>
         </header>
 
-        <p class="combinations-hint">구분이 다른 옷끼리, 같은 코디에 자주 나온 순서예요. 누르면 홈에서 그 조합 코디만 볼 수 있어요.</p>
+        <p class="combinations-hint">
+            <strong>자주 같이 입은 옷</strong> 순위예요. 서로 다른 구분(예: 상의+하의)이 한 코디에 여러 번 나올수록 위에 보여요.
+            카드를 누르면 그 조합이 들어간 <strong>내 코디 사진</strong>만 홈에서 모아볼 수 있어요.
+        </p>
 
         <div id="combinationsList" class="combinations-list" role="list" aria-busy="true">
             <p class="combo-empty">불러오는 중…</p>
@@ -60,7 +63,7 @@
         </a>
     </nav>
 
-    <script src="scripts/combinations-page.js?v=1"></script>
+    <script src="scripts/combinations-page.js?v=2"></script>
     <script>
         (async () => {
             try {

@@ -15,10 +15,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스타일로그 - 오늘 뭐입지?</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="styles/variables.css?v=10">
+    <link rel="stylesheet" href="styles/variables.css?v=11">
     <link rel="stylesheet" href="styles/utils.css?v=8">
     <link rel="stylesheet" href="styles/dialog.css">
-    <link rel="stylesheet" href="styles/home.css?v=18">
+    <link rel="stylesheet" href="styles/home.css?v=19">
     <link rel="stylesheet" href="styles/bottom-nav.css?v=2">
     <link rel="stylesheet" href="styles/day-list.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
@@ -67,6 +67,12 @@
                     <p>로딩 중...</p>
                 </div>
                 <div class="menu-items">
+                    <a href="assistant.html" class="menu-item menu-item-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>코디에게 물어보기</span>
+                    </a>
                     <a href="wardrobe.html" class="menu-item menu-item-link">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
@@ -105,38 +111,32 @@
         </div>
 
         <div class="home-main">
-        <!-- 오늘 날씨 (Apple Weather 톤) -->
-        <div class="bottom-section weather-clear" id="weatherBottomSection">
-            <div class="weather-widget">
+        <div class="bottom-section home-top-panel weather-clear" id="weatherBottomSection">
+            <a href="assistant.html" class="home-ai-cta" id="homeAiCta">
+                <span class="home-ai-cta-kicker">AI 코디</span>
+                <span class="home-ai-cta-title">오늘 뭐 입지? 내 기록으로 답해요</span>
+                <span class="home-ai-cta-action">대화 시작 →</span>
+            </a>
+            <div class="weather-widget weather-widget--compact">
                 <div class="weather-widget-top">
+                    <span class="weather-widget-icon" id="weatherIconWrap" aria-hidden="true">
+                        <svg class="weather-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                    </span>
                     <div class="weather-widget-temp-box">
-                        <p class="weather-widget-eyebrow">오늘</p>
                         <p class="weather-widget-date sl-date" id="weatherTodayDate" aria-label="오늘 날짜"></p>
                         <div class="weather-widget-temp-main">
                             <span class="weather-widget-current-temp" id="weatherCurrentTemp">--</span>
-                            <span class="weather-widget-avg-label" id="weatherAvgLabel" aria-label="평균 기온">평균</span>
+                            <span class="weather-widget-status" id="weatherStatus">--</span>
+                            <span class="weather-widget-avg-label" id="weatherAvgLabel" aria-hidden="true">평균</span>
                         </div>
                         <span class="weather-widget-temp-range" id="weatherTempRange">최고 --° · 최저 --°</span>
-                    </div>
-                    <span class="weather-widget-icon" id="weatherIconWrap">
-                        <svg class="weather-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-                    </span>
-                </div>
-                <div class="weather-widget-bottom">
-                    <div class="weather-widget-summary">
-                        <span class="weather-widget-status" id="weatherStatus">--</span>
                         <span class="weather-widget-diff" id="weatherDiff"></span>
                     </div>
-                    <div class="weather-recommend-row">
-                        <div class="weather-recommend-copy">
-                            <span class="weather-recommend-label" id="recommendModeLabel">오늘 기온에 맞춰 보기</span>
-                            <span class="weather-recommend-hint write-ui-copy" id="recommendModeHint">
-                                <span class="write-ui-copy__line">오늘 기온·날씨에 맞춰 보여요.</span>
-                                <span class="write-ui-copy__line">즐겨찾기·비슷한 날씨 코디가 먼저 와요.</span>
-                            </span>
-                        </div>
-                        <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
-                    </div>
+                </div>
+                <div class="weather-recommend-row weather-recommend-row--compact">
+                    <span class="weather-recommend-label" id="recommendModeLabel">오늘 기온 맞춤 목록</span>
+                    <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
+                    <span class="weather-recommend-hint" id="recommendModeHint" hidden></span>
                 </div>
             </div>
         </div>

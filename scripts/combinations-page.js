@@ -1,3 +1,19 @@
+function comboDisplayParts(keys) {
+  return (keys || [])
+    .map((key) => {
+      try {
+        const arr = JSON.parse(key);
+        if (Array.isArray(arr) && arr.length >= 2) {
+          return { category: String(arr[0] || '').trim(), value: String(arr[1] || '').trim() };
+        }
+      } catch (_) {
+        /* ignore */
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
 async function initCombinationsPage() {
   const listEl = document.getElementById('combinationsList');
   if (!listEl) return;
@@ -26,12 +42,48 @@ async function initCombinationsPage() {
     }
 
     listEl.innerHTML = '';
-    rows.forEach((row) => {
+    rows.forEach((row, index) => {
+      const parts = comboDisplayParts(row.keys);
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'combo-row';
+      btn.className = 'combo-card';
       btn.setAttribute('role', 'listitem');
-      btn.innerHTML = `<span class="combo-row-label">${escapeHtml(row.label)}</span><span class="combo-row-count">${row.count}<span>회</span></span>`;
+
+      const rank = document.createElement('span');
+      rank.className = 'combo-card-rank';
+      rank.textContent = String(index + 1);
+
+      const pieces = document.createElement('div');
+      pieces.className = 'combo-card-pieces';
+      parts.forEach((part, i) => {
+        if (i > 0) {
+          const plus = document.createElement('span');
+          plus.className = 'combo-card-plus';
+          plus.textContent = '+';
+          pieces.appendChild(plus);
+        }
+        const chip = document.createElement('span');
+        chip.className = 'combo-piece';
+        chip.innerHTML = `<em>${escapeHtml(part.category)}</em>${escapeHtml(part.value)}`;
+        pieces.appendChild(chip);
+      });
+
+      const meta = document.createElement('p');
+      meta.className = 'combo-card-meta';
+      meta.textContent =
+        row.count >= 2
+          ? `이 둘을 함께 입은 코디 ${row.count}번 — 눌러서 사진만 모아보기`
+          : `함께 입은 기록 ${row.count}번 — 눌러서 모아보기`;
+
+      const foot = document.createElement('span');
+      foot.className = 'combo-card-cta';
+      foot.textContent = '코디 보기 →';
+
+      btn.appendChild(rank);
+      btn.appendChild(pieces);
+      btn.appendChild(meta);
+      btn.appendChild(foot);
+
       btn.addEventListener('click', () => {
         window.location.href = api.homeUrlForCombination(row.keys);
       });
