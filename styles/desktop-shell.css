@@ -1,0 +1,36 @@
+/**
+ * PC(앱 폭 > 428px): 고정 UI를 모바일 앱 컬럼 안에 맞춤
+ */
+@media (min-width: 429px) {
+  .filter-modal.active {
+    left: 50%;
+    right: auto;
+    width: var(--container-max-width);
+    margin-left: calc(var(--container-max-width) / -2);
+  }
+
+  .filter-modal-content {
+    position: absolute;
+    left: 0;
+    right: 0;
+  }
+
+  .menu-popup {
+    left: 50%;
+    right: auto;
+    width: var(--container-max-width);
+    margin-left: calc(var(--container-max-width) / -2);
+  }
+
+  .outfit-category-sheet {
+    left: 50%;
+    right: auto;
+    width: var(--container-max-width);
+    margin-left: calc(var(--container-max-width) / -2);
+  }
+
+  .stylelog-dialog-backdrop {
+    padding-left: max(var(--spacing-xl), calc((100vw - var(--container-max-width)) / 2));
+    padding-right: max(var(--spacing-xl), calc((100vw - var(--container-max-width)) / 2));
+  }
+}

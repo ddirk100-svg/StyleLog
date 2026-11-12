@@ -16,9 +16,10 @@
     <title>스타일로그 - 오늘 뭐입지?</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <link rel="stylesheet" href="styles/variables.css?v=11">
-    <link rel="stylesheet" href="styles/utils.css?v=8">
+    <link rel="stylesheet" href="styles/utils.css?v=10">
     <link rel="stylesheet" href="styles/dialog.css">
     <link rel="stylesheet" href="styles/home.css?v=19">
+    <link rel="stylesheet" href="styles/home-assistant.css?v=4">
     <link rel="stylesheet" href="styles/bottom-nav.css?v=2">
     <link rel="stylesheet" href="styles/day-list.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
@@ -111,42 +112,48 @@
         </div>
 
         <div class="home-main">
-        <div class="bottom-section home-top-panel weather-clear" id="weatherBottomSection">
-            <a href="assistant.html" class="home-ai-cta" id="homeAiCta">
-                <span class="home-ai-cta-kicker">AI 코디</span>
-                <span class="home-ai-cta-title">오늘 뭐 입지? 내 기록으로 답해요</span>
-                <span class="home-ai-cta-action">대화 시작 →</span>
-            </a>
-            <div class="weather-widget weather-widget--compact">
-                <div class="weather-widget-top">
-                    <span class="weather-widget-icon" id="weatherIconWrap" aria-hidden="true">
-                        <svg class="weather-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-                    </span>
-                    <div class="weather-widget-temp-box">
-                        <p class="weather-widget-date sl-date" id="weatherTodayDate" aria-label="오늘 날짜"></p>
-                        <div class="weather-widget-temp-main">
-                            <span class="weather-widget-current-temp" id="weatherCurrentTemp">--</span>
-                            <span class="weather-widget-status" id="weatherStatus">--</span>
-                            <span class="weather-widget-avg-label" id="weatherAvgLabel" aria-hidden="true">평균</span>
-                        </div>
-                        <span class="weather-widget-temp-range" id="weatherTempRange">최고 --° · 최저 --°</span>
-                        <span class="weather-widget-diff" id="weatherDiff"></span>
-                    </div>
+        <section class="home-hero" id="weatherBottomSection">
+            <div class="home-day-banner weather-clear" id="homeWeatherChip" aria-label="오늘 날짜와 날씨">
+                <time class="home-day-banner-date sl-date" id="homeHeroDate" datetime=""></time>
+                <span class="home-day-banner-icon" id="weatherIconWrap" aria-hidden="true">
+                    <svg class="weather-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                </span>
+                <div class="home-day-banner-weather">
+                    <span class="home-day-banner-temp" id="weatherCurrentTemp">--</span>
+                    <span class="home-day-banner-status" id="weatherStatus">--</span>
                 </div>
-                <div class="weather-recommend-row weather-recommend-row--compact">
-                    <span class="weather-recommend-label" id="recommendModeLabel">오늘 기온 맞춤 목록</span>
-                    <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
-                    <span class="weather-recommend-hint" id="recommendModeHint" hidden></span>
+                <span class="home-day-banner-range" id="weatherTempRange">-- / --</span>
+                <span id="weatherTodayDate" hidden></span>
+            </div>
+            <div class="home-ai" id="homeAiRoot">
+                <form class="home-ai-bar" id="homeAiForm" aria-label="코디 AI에게 물어보기">
+                    <input type="text" id="homeAiInput" name="q" placeholder="오늘 뭐 입지? 내 코디 기록으로 답해요" autocomplete="off" enterkeyhint="send">
+                    <button type="submit" class="home-ai-bar-submit" aria-label="보내기">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                    </button>
+                </form>
+                <div class="home-ai-panel" id="homeAiPanel" aria-hidden="true" role="dialog" aria-labelledby="homeAiPanelTitle">
+                    <header class="home-ai-panel-head">
+                        <h2 class="home-ai-panel-title" id="homeAiPanelTitle">코디 어시스턴트</h2>
+                        <button type="button" class="home-ai-panel-close" id="homeAiClose">접기</button>
+                    </header>
+                    <div class="home-ai-messages" id="homeAiMessages" aria-live="polite"></div>
+                    <div class="home-ai-thinking" id="homeAiThinking" hidden>
+                        <span class="home-ai-thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                        <span id="homeAiThinkingText">Thinking…</span>
+                    </div>
+                    <form class="home-ai-panel-compose" id="homeAiPanelForm">
+                        <textarea id="homeAiPanelInput" rows="1" placeholder="메시지 입력…" aria-label="메시지"></textarea>
+                        <button type="submit" class="home-ai-panel-send">보내기</button>
+                    </form>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- 필터 + 일별 리스트 (하나의 세트) -->
         <div class="filter-list-section">
-        <section class="coordi-collection-heading" aria-labelledby="coordiCollectionHeading">
-            <h2 class="sl-section-title" id="coordiCollectionHeading">내 코디</h2>
-        </section>
-        <div class="filter-bar" id="filterBar">
+        <h2 class="visually-hidden" id="coordiCollectionHeading">내 코디</h2>
+        <div class="filter-bar home-filter-compact" id="filterBar">
             <div class="filter-row filter-row-category">
                 <button type="button" class="filter-btn filter-btn--with-label" id="filterOpenBtn" aria-label="필터 열기">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -164,6 +171,11 @@
                         <button type="button" class="filter-category-chip" data-tab="tpo" title="상황">상황</button>
                         <button type="button" class="filter-category-chip" data-tab="favorites">즐겨찾기</button>
                     </div>
+                </div>
+                <div class="home-filter-recommend" aria-label="오늘 기온 맞춤">
+                    <span class="weather-recommend-label" id="recommendModeLabel">기온 맞춤</span>
+                    <button type="button" class="home-recommend-switch is-on" id="recommendModeToggle" role="switch" aria-checked="true" aria-labelledby="recommendModeLabel"></button>
+                    <span class="weather-recommend-hint" id="recommendModeHint" hidden></span>
                 </div>
             </div>
             <div class="filter-row filter-row-active">
@@ -306,6 +318,7 @@
         </a>
         </nav>
     </div>
+    <div class="home-ai-backdrop" id="homeAiBackdrop" hidden aria-hidden="true"></div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="scripts/config.js?v=7" defer></script>
@@ -317,7 +330,9 @@
     <script src="scripts/outfit-combinations.js?v=2" defer></script>
     <script src="scripts/recommendation.js?v=1" defer></script>
     <script src="scripts/feedback.js" defer></script>
-    <script src="scripts/home.js?v=48" defer></script>
+    <script src="scripts/home.js?v=52" defer></script>
+    <script src="scripts/style-assistant-client.js?v=3" defer></script>
+    <script src="scripts/home-assistant-inline.js?v=4" defer></script>
     <script>
         // 페이지 로드 시 인증 체크
         window.addEventListener('DOMContentLoaded', async () => {

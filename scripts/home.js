@@ -496,6 +496,15 @@ function parseOutfitFilterFromUrl(params = new URLSearchParams(location.search))
 }
 
 async function initPage() {
+    if (typeof formatStyleLogDate === 'function') {
+        const today = new Date();
+        const heroDateEl = document.getElementById('homeHeroDate');
+        if (heroDateEl) {
+            heroDateEl.textContent = formatStyleLogDate(today, 'card');
+            heroDateEl.setAttribute('datetime', today.toISOString().slice(0, 10));
+        }
+    }
+
     const params = new URLSearchParams(location.search);
     const restoredFiltersFromDetail = consumeHomeFilterStateIfReturningFromDetail();
     window.__stylelogHomeSkipUrlFilterParams = restoredFiltersFromDetail;
@@ -516,7 +525,7 @@ async function initPage() {
     });
     syncWeatherRecommendToggleUI();
 
-    await loadYearsWithData();
+    const yearsPromise = loadYearsWithData();
     
     // 일별 리스트 모드용 클래스 추가
     const container = document.getElementById('homeView');
@@ -524,8 +533,9 @@ async function initPage() {
         container.classList.add('day-view-active');
     }
     
-    // 모든 연도의 데이터를 로드
+    // 목록을 먼저 그린 뒤 필터용 연도 목록은 백그라운드
     await loadAllDayList();
+    void yearsPromise;
     
     // 스와이프 기능 초기화
     initSwipe();
@@ -600,7 +610,7 @@ async function loadYearsWithData() {
             .from('style_logs')
             .select('date')
             .order('date', { ascending: false })
-            .limit(1000); // 최대 1000개만 조회
+            .limit(240);
         
         if (error) throw error;
         
@@ -620,6 +630,15 @@ async function loadYearsWithData() {
 
 // 레거시 월 카드·view-toggle·연도 단위 loadDayList 제거됨 (호출 경로 없음). 초기·추가 로드는 loadAllDayList / loadMoreDayList 만 사용.
 
+function renderHomeListSkeleton(count = 3) {
+    const n = Math.max(1, Math.min(count, 5));
+    let cards = '';
+    for (let i = 0; i < n; i++) {
+        cards += '<div class="home-skeleton-card" aria-hidden="true"></div>';
+    }
+    return `<div class="home-feed-skeleton" aria-busy="true" aria-label="코디 불러오는 중">${cards}</div>`;
+}
+
 // 모든 연도의 일별 리스트 로드 (초기 로드)
 async function loadAllDayList() {
     try {
@@ -638,7 +657,7 @@ async function loadAllDayList() {
         
         // day-list 스타일 적용
         container.classList.add('day-list-view');
-        container.innerHTML = '';
+        container.innerHTML = renderHomeListSkeleton(3);
         
         // 스크롤 복원 시 초기 로드량 확대 (API 호출 1회로 커버)
         const savedY = parseInt(sessionStorage.getItem('homeScrollY') || '0', 10);
@@ -680,7 +699,7 @@ async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
         showLoadingIndicator();
     }
     const loadStart = Date.now();
-    const MIN_LOADER_DISPLAY_MS = 400;
+    const MIN_LOADER_DISPLAY_MS = 0;
     
     try {
         debugLog(`📊 데이터 로딩... offset: ${currentOffset}, limit: ${limit}`);
@@ -769,6 +788,10 @@ async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
         // 날씨 데이터 업데이트 (비동기로 백그라운드 처리)
         updateWeatherDataInBackground(data);
         
+        if (currentOffset === 0) {
+            getDayListContainer()?.querySelector('.home-feed-skeleton')?.remove();
+        }
+
         // 날씨 필터 적용 후 렌더링
         const filtered = data.filter(passesWeatherFilter);
         await renderDayList(filtered);
@@ -2706,10 +2729,16 @@ window.addEventListener('load', async () => {
 async function updateTodayInfo() {
     debugLog('📅 날씨 업데이트 시작');
 
-    const todayDateEl = document.getElementById('weatherTodayDate');
-    if (todayDateEl && typeof formatStyleLogDate === 'function') {
-        todayDateEl.textContent = formatStyleLogDate(new Date(), 'card');
+    const today = new Date();
+    const dateLabel =
+        typeof formatStyleLogDate === 'function' ? formatStyleLogDate(today, 'card') : today.toLocaleDateString('ko-KR');
+    const heroDateEl = document.getElementById('homeHeroDate');
+    if (heroDateEl) {
+        heroDateEl.textContent = dateLabel;
+        heroDateEl.setAttribute('datetime', today.toISOString().slice(0, 10));
     }
+    const todayDateEl = document.getElementById('weatherTodayDate');
+    if (todayDateEl) todayDateEl.textContent = dateLabel;
 
     try {
         const weather = await getCurrentWeather();
@@ -2719,10 +2748,9 @@ async function updateTodayInfo() {
         const tempRangeEl = document.getElementById('weatherTempRange');
         const iconWrapEl = document.getElementById('weatherIconWrap');
         const statusEl = document.getElementById('weatherStatus');
-        const diffEl = document.getElementById('weatherDiff');
-        const bottomSection = document.getElementById('weatherBottomSection');
+        const weatherChip = document.getElementById('homeWeatherChip') || document.getElementById('weatherBottomSection');
         
-        if (weather && currentTempEl && bottomSection) {
+        if (weather && currentTempEl && weatherChip) {
             // 평균 기온: (최고 + 최저) / 2
             let displayTemp = null;
             if (weather.tempMin != null && weather.tempMax != null) {
@@ -2730,58 +2758,27 @@ async function updateTodayInfo() {
             }
             currentTempEl.textContent = displayTemp != null ? `${displayTemp}°` : '--';
 
-            // 평균 라벨 표시/숨김
-            const avgLabelEl = document.getElementById('weatherAvgLabel');
-            if (avgLabelEl) avgLabelEl.style.display = displayTemp != null ? 'inline' : 'none';
-            
             // 최고 · 최저
             if (tempRangeEl) {
                 if (weather.tempMin != null && weather.tempMax != null) {
-                    tempRangeEl.textContent = `최고 ${Math.round(weather.tempMax)}° · 최저 ${Math.round(weather.tempMin)}°`;
+                    tempRangeEl.textContent = `${Math.round(weather.tempMax)}° / ${Math.round(weather.tempMin)}°`;
                 } else {
-                    tempRangeEl.textContent = '최고 --° · 최저 --°';
+                    tempRangeEl.textContent = '-- / --';
                 }
             }
             
             // 날씨 아이콘 (80px, 모바일 64px)
             if (iconWrapEl) {
-                iconWrapEl.innerHTML = getWeatherIconSVG(weather.weather, 36);
+                iconWrapEl.innerHTML = getWeatherIconSVG(weather.weather, 28);
             }
             
-            // 날씨 상태 (맑음, 흐림 등)
             if (statusEl) {
                 statusEl.textContent = weather.description || '--';
             }
             
-            // 어제 대비 기온 차이 (오늘 평균 vs 어제 평균)
-            if (diffEl) {
-                let diffText = '';
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
-                try {
-                    const yesterdayWeather = await getWeatherByDate(yesterdayStr);
-                    const yesterdayAvg = yesterdayWeather?.tempMin != null && yesterdayWeather?.tempMax != null
-                        ? Math.round((yesterdayWeather.tempMax + yesterdayWeather.tempMin) / 2)
-                        : yesterdayWeather?.temp;
-                    if (yesterdayAvg != null && displayTemp != null) {
-                        const diff = displayTemp - yesterdayAvg;
-                        if (diff > 0) diffText = `어제 평균보다 ${diff}° 높아요`;
-                        else if (diff < 0) diffText = `어제 평균보다 ${Math.abs(diff)}° 낮아요`;
-                        else diffText = '어제와 비슷해요';
-                    } else if (displayTemp != null) {
-                        diffText = '오늘 예상 평균 기온';
-                    }
-                } catch {
-                    if (displayTemp != null) diffText = '오늘 예상 평균 기온';
-                }
-                diffEl.textContent = diffText;
-            }
-            
             // 날씨에 따라 배경 색상
-            bottomSection.classList.remove('weather-clear', 'weather-sunny', 'weather-cloudy', 'weather-rainy', 'weather-snowy', 'weather-lightning');
-            const weatherClass = `weather-${weather.weather}`;
-            bottomSection.classList.add(weatherClass);
+            weatherChip.classList.remove('weather-clear', 'weather-sunny', 'weather-cloudy', 'weather-rainy', 'weather-snowy', 'weather-lightning');
+            weatherChip.classList.add(`weather-${weather.weather}`);
             
             debugLog('✅ 날씨 표시 완료');
         } else {

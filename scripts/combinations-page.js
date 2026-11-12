@@ -53,6 +53,10 @@ async function initCombinationsPage() {
       rank.className = 'combo-card-rank';
       rank.textContent = String(index + 1);
 
+      const count = document.createElement('div');
+      count.className = 'combo-card-count';
+      count.innerHTML = `<span class="combo-card-count-num">${row.count}</span><span class="combo-card-count-label">코디</span>`;
+
       const pieces = document.createElement('div');
       pieces.className = 'combo-card-pieces';
       parts.forEach((part, i) => {
@@ -68,21 +72,9 @@ async function initCombinationsPage() {
         pieces.appendChild(chip);
       });
 
-      const meta = document.createElement('p');
-      meta.className = 'combo-card-meta';
-      meta.textContent =
-        row.count >= 2
-          ? `이 둘을 함께 입은 코디 ${row.count}번 — 눌러서 사진만 모아보기`
-          : `함께 입은 기록 ${row.count}번 — 눌러서 모아보기`;
-
-      const foot = document.createElement('span');
-      foot.className = 'combo-card-cta';
-      foot.textContent = '코디 보기 →';
-
       btn.appendChild(rank);
+      btn.appendChild(count);
       btn.appendChild(pieces);
-      btn.appendChild(meta);
-      btn.appendChild(foot);
 
       btn.addEventListener('click', () => {
         window.location.href = api.homeUrlForCombination(row.keys);

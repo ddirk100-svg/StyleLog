@@ -1805,6 +1805,211 @@ input.form-input[readonly] {
     line-height: 1;
 }
 
+/* 작성 — 필수 / 추천 / 선택 그룹 */
+.write-group {
+    margin: 0 var(--page-inset-x) var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-lighter);
+    background: var(--color-bg-elevated);
+    overflow: hidden;
+    box-shadow: var(--shadow-surface);
+}
+
+.write-group--required {
+    border-color: color-mix(in srgb, var(--color-primary) 22%, var(--color-border-lighter));
+}
+
+.write-group--optional {
+    border-style: dashed;
+    border-color: var(--color-border-mid);
+    background: var(--color-bg-primary);
+    box-shadow: none;
+}
+
+.write-group-header {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border-lighter);
+    background: color-mix(in srgb, var(--color-bg-secondary) 55%, transparent);
+}
+
+.write-group--optional .write-group-header {
+    background: transparent;
+}
+
+.write-group-badge {
+    flex-shrink: 0;
+    margin-top: 2px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.write-group-badge--required {
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+    color: var(--color-primary);
+}
+
+.write-group-badge--recommended {
+    background: color-mix(in srgb, #0d9488 12%, transparent);
+    color: #0f766e;
+}
+
+.write-group-badge--optional {
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+}
+
+.write-group-title {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.write-group-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+}
+
+.write-group-body {
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+}
+
+.write-group-body .form-section--in-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.write-group-body .form-section--in-group:last-child {
+    margin-bottom: 0;
+}
+
+.write-when-shell {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-lighter);
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.write-when-field {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+}
+
+.write-when-field-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+}
+
+.write-when-date {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    padding: 2px 0;
+}
+
+.write-when-date:focus {
+    outline: none;
+}
+
+.write-when-split {
+    width: 1px;
+    align-self: stretch;
+    margin: 10px 0;
+    background: var(--color-border-lighter);
+    flex-shrink: 0;
+}
+
+.write-when-weather {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+}
+
+.write-when-weather-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.write-when-weather-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.write-when-weather-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.25;
+}
+
+.write-when-weather-temp {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+.form-textarea--compact {
+    min-height: 96px;
+}
+
+@media (max-width: 360px) {
+    .write-when-shell {
+        flex-direction: column;
+    }
+
+    .write-when-split {
+        width: auto;
+        height: 1px;
+        margin: 0 12px;
+    }
+}
+
+.outfit-category-sheet__hint .outfit-hint-line {
+    display: block;
+    font-size: var(--font-size-sm);
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+}
+
+.outfit-category-sheet__hint .outfit-hint-line + .outfit-hint-line {
+    margin-top: 4px;
+}
+
+.photo-reorder-hint {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
 /* 반응형 */
 @media (max-width: 428px) {
     .container {

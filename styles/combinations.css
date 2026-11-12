@@ -28,18 +28,9 @@
 .combinations-hint {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin: 0 0 var(--spacing-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-surface);
-}
-
-.combinations-hint strong {
-  color: var(--color-text-primary);
-  font-weight: 600;
+  line-height: 1.5;
+  margin: 0 0 var(--spacing-md);
+  padding: 0 2px;
 }
 
 .combinations-list {
@@ -50,11 +41,12 @@
 
 .combo-card {
   display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto auto;
-  gap: 8px 12px;
+  grid-template-columns: auto auto 1fr;
+  grid-template-rows: auto;
+  gap: 10px 12px;
+  align-items: center;
   width: 100%;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-xl);
   background: var(--color-bg-elevated);
@@ -73,8 +65,6 @@
 }
 
 .combo-card-rank {
-  grid-row: 1 / span 2;
-  align-self: start;
   width: 28px;
   height: 28px;
   display: flex;
@@ -85,14 +75,42 @@
   color: var(--color-primary-dark);
   font-size: 13px;
   font-weight: 700;
+  flex-shrink: 0;
+}
+
+.combo-card-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-bg-muted));
+  flex-shrink: 0;
+}
+
+.combo-card-count-num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+
+.combo-card-count-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
 }
 
 .combo-card-pieces {
-  grid-column: 2;
+  grid-column: 3;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .combo-piece {
@@ -120,22 +138,6 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--color-text-tertiary);
-}
-
-.combo-card-meta {
-  grid-column: 1 / -1;
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-}
-
-.combo-card-cta {
-  grid-column: 2;
-  justify-self: end;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primary);
 }
 
 .combo-empty {

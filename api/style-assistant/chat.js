@@ -20,16 +20,20 @@ If context is empty or nothing matches, say honestly that there is not enough sa
 Never ask for API keys or private data outside the log list.`;
 
 module.exports = async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
+  const method = String(req.method || req.httpMethod || 'GET').toUpperCase();
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (method === 'OPTIONS') {
     res.statusCode = 204;
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.end();
     return;
   }
 
-  if (req.method !== 'POST') {
-    sendJson(res, 405, { ok: false, error: 'method_not_allowed' });
+  if (method !== 'POST') {
+    sendJson(res, 405, { ok: false, error: 'method_not_allowed', method });
     return;
   }
 

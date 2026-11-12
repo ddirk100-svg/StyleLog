@@ -241,18 +241,20 @@ function renderLogDetail(log) {
     
     // 본문
     const contentBody = document.querySelector('.content-body');
+    const contentDivider = document.querySelector('.detail-content-outfit-divider');
     if (contentBody) {
         contentBody.textContent = '';
-        if (log.content) {
+        const hasMemo = Boolean(String(log.content || '').trim());
+        if (hasMemo) {
+            contentBody.hidden = false;
+            if (contentDivider) contentDivider.hidden = false;
             const p = document.createElement('p');
             p.style.whiteSpace = 'pre-wrap';
             p.textContent = log.content;
             contentBody.appendChild(p);
         } else {
-            const p = document.createElement('p');
-            p.className = 'content-body-empty';
-            p.textContent = '메모 없음';
-            contentBody.appendChild(p);
+            contentBody.hidden = true;
+            if (contentDivider) contentDivider.hidden = true;
         }
     }
     
