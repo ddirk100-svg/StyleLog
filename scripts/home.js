@@ -12,7 +12,7 @@ const WEATHER_API_DELAY_MS = 250;
 const HOME_STYLE_LOG_SELECT_BASE =
     'id,user_id,date,title,content,weather,weather_temp,weather_temp_min,weather_temp_max,weather_description,weather_fit,thumb_url,tags,is_favorite,created_at,updated_at';
 const HOME_STYLE_LOG_CONTEXT_COLUMNS = 'tpo';
-const HOME_STYLE_LOG_KIND_COLUMNS = 'log_kind,reference_source_url,scrap_group';
+const HOME_STYLE_LOG_KIND_COLUMNS = 'log_kind';
 const HOME_STYLE_LOG_SELECT_WITHOUT_ITEMS = HOME_STYLE_LOG_SELECT_BASE;
 const HOME_STYLE_LOG_SELECT_WITH_ITEMS = `${HOME_STYLE_LOG_SELECT_BASE},items`;
 
@@ -24,7 +24,6 @@ const HOME_FILTER_PANEL_ID_BY_TAB = Object.freeze({
     temp: 'filterPanelTemp',
     outfit: 'filterPanelOutfit',
     tpo: 'filterPanelTpo',
-    logKind: 'filterPanelLogKind',
     favorites: 'filterPanelFavorites'
 });
 
@@ -49,13 +48,16 @@ let filterTpo = [];
 let filterFavoritesOnly = false;
 /** tpo 컬럼이 없으면 목록 조회에서 빼고 상황 필터를 숨긴다 */
 let homeListSelectIncludesContext = true;
-/** log_kind 등 4.0V 컬럼 — 없으면 종류 필터 숨기고 전체 표시 */
+/** log_kind 컬럼 — 있으면 reference 행은 목록에서 제외 */
 let homeListSelectIncludesLogKind = true;
-/** all | my_outfit | reference — 기본은 내 착장만 */
+/** @deprecated 4.1V — UI 제거, 필터 잔여 코드 호환용 */
 let filterLogKind = 'my_outfit';
-/** 홈 scrapGroup= URL 또는 스크랩 화면 딥링크 */
 let filterScrapGroup = '';
-const HOME_LOG_KIND_FILTER_STORAGE_KEY = 'stylelog_home_log_kind_filter';
+function persistLogKindFilter() {}
+function readPersistedLogKindFilter() {
+    return 'my_outfit';
+}
+function syncHomeLogKindFilterVisibility() {}
 /** 착장 필터 선택 키 (`["구분","품목명"]` JSON 문자열 배열 — 기본 OR, 조합 딥링크는 AND) */
 let filterOutfitSelectionKeys = [];
 /** true면 선택한 착장 품목을 모두 포함한 코디만 (2.3V 조합 화면 → 홈) */
@@ -146,41 +148,16 @@ function homeStyleLogSelectColumns() {
     return cols;
 }
 
-function readPersistedLogKindFilter() {
-    try {
-        const v = localStorage.getItem(HOME_LOG_KIND_FILTER_STORAGE_KEY);
-        if (v === 'all' || v === 'reference' || v === 'my_outfit') return v;
-    } catch (_) {
-        /* ignore */
-    }
-    return 'my_outfit';
-}
-
-function persistLogKindFilter() {
-    if (!homeListSelectIncludesLogKind) return;
-    try {
-        localStorage.setItem(HOME_LOG_KIND_FILTER_STORAGE_KEY, filterLogKind);
-    } catch (_) {
-        /* ignore */
-    }
-}
-
 function isStyleLogLogKindSelectUnavailable(error) {
     return typeof isLogKindColumnError === 'function' && isLogKindColumnError(error);
 }
 
-function syncHomeLogKindFilterVisibility() {
-    document
-        .querySelectorAll(
-            '.filter-category-chip[data-tab="logKind"], .filter-tab[data-tab="logKind"], #filterPanelLogKind'
-        )
-        .forEach((el) => {
-            el.hidden = !homeListSelectIncludesLogKind;
-        });
-}
-
 function normalizedLogKindFromRow(log) {
     return typeof normalizeLogKind === 'function' ? normalizeLogKind(log?.log_kind) : 'my_outfit';
+}
+
+function isLegacyReferenceLog(log) {
+    return homeListSelectIncludesLogKind && normalizedLogKindFromRow(log) === 'reference';
 }
 
 function isStyleLogContextSelectUnavailable(error) {
@@ -356,9 +333,7 @@ function snapshotCurrentFilters() {
         filterTpo: [...filterTpo],
         filterFavoritesOnly,
         filterOutfitSelectionKeys: [...filterOutfitSelectionKeys],
-        filterOutfitMatchAll: !!filterOutfitMatchAll,
-        filterLogKind,
-        filterScrapGroup
+        filterOutfitMatchAll: !!filterOutfitMatchAll
     };
 }
 
@@ -377,10 +352,6 @@ function restoreFiltersFromSnapshot(s) {
         ? [...s.filterOutfitSelectionKeys]
         : [];
     filterOutfitMatchAll = !!s.filterOutfitMatchAll;
-    if (s.filterLogKind === 'all' || s.filterLogKind === 'my_outfit' || s.filterLogKind === 'reference') {
-        filterLogKind = s.filterLogKind;
-    }
-    filterScrapGroup = typeof s.filterScrapGroup === 'string' ? s.filterScrapGroup : '';
 }
 
 function saveHomeFilterStateForDetailReturn() {
@@ -435,11 +406,6 @@ async function applyTodayWeatherRecommendationFilters() {
             filterFavoritesOnly = false;
             filterOutfitSelectionKeys = [];
             filterOutfitMatchAll = false;
-            if (homeListSelectIncludesLogKind) {
-                filterLogKind = 'my_outfit';
-                filterScrapGroup = '';
-                persistLogKindFilter();
-            }
             if (window.__stylelogHomeApplyFilters) window.__stylelogHomeApplyFilters();
             else {
                 const filtered = getFilteredLogs();
@@ -542,13 +508,6 @@ async function initPage() {
         if (outfitFromUrl.keys.length > 0) {
             filterOutfitSelectionKeys = [...outfitFromUrl.keys];
             filterOutfitMatchAll = outfitFromUrl.matchAll;
-        }
-        filterLogKind = readPersistedLogKindFilter();
-        const scrapFromUrl = String(params.get('scrapGroup') || '').trim();
-        if (scrapFromUrl) {
-            filterScrapGroup = scrapFromUrl;
-            filterLogKind = 'reference';
-            recommendationModeEnabled = false;
         }
     }
     /** Open-Meteo 지연 시 로그 목록까지 막히지 않도록 비차단 — 완료 후 토글만 동기화 */
@@ -770,9 +729,6 @@ async function loadMoreDayList(limit = PAGE_SIZE, quiet = false) {
 
         if (error && homeListSelectIncludesLogKind && isStyleLogLogKindSelectUnavailable(error)) {
             homeListSelectIncludesLogKind = false;
-            filterLogKind = 'all';
-            filterScrapGroup = '';
-            syncHomeLogKindFilterVisibility();
             queryRes = await supabaseClient
                 .from('style_logs')
                 .select(homeStyleLogSelectColumns())
@@ -1096,13 +1052,8 @@ function removeHomeLogFromUi(logId) {
 }
 
 /** 카드에는 칩 대신 한 줄. 길면 앞 3개와 나머지만 보여 주고, 전체는 title에 둔다. */
-function dayCardLogKindBadgeHtml(log) {
-    if (!homeListSelectIncludesLogKind) return '';
-    const kind = normalizedLogKindFromRow(log);
-    if (kind !== 'reference') return '';
-    const label =
-        typeof logKindLabel === 'function' ? logKindLabel(kind) : '레퍼런스';
-    return `<span class="day-card-log-kind-badge">${escapeHtmlForDayCard(label)}</span>`;
+function dayCardLogKindBadgeHtml(_log) {
+    return '';
 }
 
 function dayCardTpoLineHtml(log) {
@@ -1382,8 +1333,7 @@ function logPassesHomeFilters(log, c) {
     const favOnly = !!c.favOnly;
     const outfitKeys = c.outfitKeys ?? [];
     const tpo = c.tpo ?? [];
-    const logKind = c.logKind ?? 'my_outfit';
-    const scrapGroup = typeof c.scrapGroup === 'string' ? c.scrapGroup.trim() : '';
+    if (isLegacyReferenceLog(log)) return false;
 
     const isFullRange = low <= TEMP_FILTER_MIN && high >= TEMP_FILTER_MAX;
     if (!isFullRange) {
@@ -1408,15 +1358,6 @@ function logPassesHomeFilters(log, c) {
         if (want.length > 0 && !want.some((value) => have.has(value))) return false;
     }
     if (favOnly && !log.is_favorite) return false;
-    if (homeListSelectIncludesLogKind && logKind && logKind !== 'all') {
-        const have = normalizedLogKindFromRow(log);
-        if (logKind === 'my_outfit' && have !== 'my_outfit') return false;
-        if (logKind === 'reference' && have !== 'reference') return false;
-    }
-    if (scrapGroup) {
-        const g = String(log.scrap_group || '').trim();
-        if (g !== scrapGroup) return false;
-    }
     const outfitMatchAll = !!c.outfitMatchAll;
     return logPassesOutfitFilterKeys(log, outfitKeys, outfitMatchAll);
 }
@@ -1432,9 +1373,7 @@ function passesWeatherFilter(log) {
         favOnly: filterFavoritesOnly,
         outfitKeys: filterOutfitSelectionKeys,
         outfitMatchAll: filterOutfitMatchAll,
-        tpo: filterTpo,
-        logKind: filterLogKind,
-        scrapGroup: filterScrapGroup
+        tpo: filterTpo
     });
 }
 
@@ -1449,13 +1388,7 @@ function isHomeListFiltered() {
 
 function isRecommendPrimaryListMode() {
     if (!recommendationModeEnabled) return false;
-  const logKindOk =
-        !homeListSelectIncludesLogKind ||
-        filterLogKind === 'my_outfit';
-    const scrapOk = !filterScrapGroup;
     return (
-        logKindOk &&
-        scrapOk &&
         filterYears.length === 0 &&
         filterMonths.length === 0 &&
         filterWeatherFit.length === 0 &&

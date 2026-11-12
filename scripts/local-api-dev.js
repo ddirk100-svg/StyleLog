@@ -63,10 +63,10 @@ function safeResolveFile(urlPath) {
   return null;
 }
 
-/** 로컬에서는 관리자 API만 노출 (웹훅·기타 serverless는 Vercel에서만). */
+/** 로컬: /api/admin/* · /api/style-assistant/* (그 외 serverless는 Vercel) */
 function apiHandlerPath(urlPath) {
   const p = urlPath.split('?')[0];
-  if (!p.startsWith('/api/admin/')) return null;
+  if (!p.startsWith('/api/admin/') && !p.startsWith('/api/style-assistant/')) return null;
   const rel = p.slice('/api/'.length).replace(/\/$/, '');
   if (!rel || rel.includes('..') || rel.includes('\\')) return null;
   const file = path.join(ROOT, 'api', `${rel}.js`);

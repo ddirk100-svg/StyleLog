@@ -45,6 +45,10 @@ Vercel (자동 배포)
 
 **코드에서 DB 주소를 바꾸지 않는다.** `scripts/config.js`가 호스트로 고른다.
 
+## OpenAI (5.0V, 서버 전용)
+
+로컬 `.env.local` · Vercel `OPENAI_API_KEY` — 자세한 위치·모델: [AI_ASSISTANT.md](AI_ASSISTANT.md).
+
 ## 기획·티켓 (Notion)
 
 코드 작업 전에 버전 범위를 Notion에서 맞춘다. 로컬에 같은 뼈대가 [ROADMAP.md](ROADMAP.md)에 있다.
