@@ -386,21 +386,18 @@ function updateWeatherDisplay(weather) {
     // 이름
     weatherName.textContent = weather.description || '흐림';
     
-    // 평균 기온
-    if (weather.temp !== null && weather.temp !== undefined) {
-        weatherTemp.textContent = `평균 ${Math.round(weather.temp)}°C`;
-    } else {
-        weatherTemp.textContent = '—';
+    if (weatherTemp) {
+        weatherTemp.textContent =
+            weather.temp != null && weather.temp !== undefined ? `평균 ${Math.round(weather.temp)}°` : '';
     }
-    
-    // 최고/최저 기온
-    if (weather.tempMax !== null && weather.tempMin !== null) {
+
+    if (weather.tempMax !== null && weather.tempMin !== null && tempRange) {
         tempRange.style.display = 'flex';
         tempRange.innerHTML = `
-            <span class="temp-high">최고 ${Math.round(weather.tempMax)}°</span>
-            <span class="temp-low">최저 ${Math.round(weather.tempMin)}°</span>
+            <span class="temp-max">최고 ${Math.round(weather.tempMax)}°</span>
+            <span class="temp-min">최저 ${Math.round(weather.tempMin)}°</span>
         `;
-    } else {
+    } else if (tempRange) {
         tempRange.style.display = 'none';
     }
 

@@ -127,21 +127,16 @@ StyleLog_1.1V/
 
 ## 4. 하단 네비게이션 (Bottom Nav)
 
-모든 메인 페이지에서 동일한 구조를 사용합니다.
-
-- **클래스**: `body.has-bottom-nav`, `nav.bottom-nav`
-- **아이템**: 홈 | 작성 | 마이
-- **현재 페이지**에 `.active` 부여
+- **마크업 단일 소스**: `scripts/bottom-nav.js` (`bottom-nav.css`와 쌍)
+- **페이지**: `body.has-bottom-nav` + **컨테이너 바깥** 마운트  
+  `<div data-stylelog-bottom-nav data-active="home|write|mypage"></div>`
+- **폭**: `max-width: var(--container-max-width)` + `margin: 0 auto` (모바일 428px 컬럼과 좌우 정렬)
+- **앱 셸 배경**: 바깥 `body` → `--color-bg-secondary`, 컬럼·헤더 → `--color-bg-primary` (작성·옷장·조합·홈 일별)
 
 ```html
-<nav class="bottom-nav">
-    <a href="home.html" class="bottom-nav-item [active]">
-        <div class="bottom-nav-icon">...</div>
-        <span class="bottom-nav-label">홈</span>
-    </a>
-    <a href="write.html" class="bottom-nav-item write-btn [active]">...</a>
-    <a href="mypage.html" class="bottom-nav-item [active]">...</a>
-</nav>
+</main>
+<div data-stylelog-bottom-nav data-active="mypage"></div>
+<script src="scripts/bottom-nav.js?v=1" defer></script>
 ```
 
 | 페이지 | active 적용 |

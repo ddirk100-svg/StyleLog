@@ -1,55 +1,29 @@
 @import url('variables.css');
 
+/* 셸·헤더·body 배경: write.css 와 동일(흰 컬럼 + 회색 레터박스) */
 #combinationsView.container {
-  max-width: var(--container-max-width);
-  min-height: calc(100vh - var(--bottom-nav-height));
-  margin: 0 auto;
-  padding: 0 var(--page-inset-x) var(--page-padding-bottom-nav);
-  background: var(--color-bg-page);
-}
-
-.combinations-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-xl) 0 var(--spacing-md);
-  gap: var(--spacing-md);
-}
-
-.combinations-header .header-title {
-  flex: 1;
-  text-align: center;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  margin: 0;
-  letter-spacing: -0.03em;
-}
-
-.combinations-hint {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin: 0 0 var(--spacing-md);
-  padding: 0 2px;
+  padding-bottom: var(--page-padding-bottom-nav);
 }
 
 .combinations-list {
+  margin-top: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  padding-left: var(--page-inset-x);
+  padding-right: var(--page-inset-x);
+  box-sizing: border-box;
 }
 
 .combo-card {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  grid-template-rows: auto;
-  gap: 10px 12px;
+  display: flex;
   align-items: center;
+  gap: 10px;
   width: 100%;
   padding: var(--spacing-md) var(--spacing-lg);
-  border: 1px solid var(--color-border-light);
+  border: 1px solid var(--color-border-lighter);
   border-radius: var(--radius-xl);
-  background: var(--color-bg-elevated);
+  background: var(--color-bg-muted);
   text-align: left;
   cursor: pointer;
   font: inherit;
@@ -78,66 +52,45 @@
   flex-shrink: 0;
 }
 
-.combo-card-count {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 52px;
-  padding: 6px 8px;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-bg-muted));
-  flex-shrink: 0;
-}
-
-.combo-card-count-num {
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--color-primary);
-  line-height: 1.1;
-}
-
-.combo-card-count-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-
 .combo-card-pieces {
-  grid-column: 3;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  min-width: 0;
 }
 
 .combo-piece {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--color-bg-muted);
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--color-bg-primary);
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
+  max-width: 100%;
 }
 
 .combo-piece em {
   font-style: normal;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--color-text-tertiary);
+  flex-shrink: 0;
 }
 
-.combo-card-plus {
+.combo-card-count {
+  flex-shrink: 0;
+  margin-left: 8px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-text-tertiary);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  white-space: nowrap;
 }
 
 .combo-empty {

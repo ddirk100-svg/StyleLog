@@ -1971,10 +1971,33 @@ input.form-input[readonly] {
     line-height: 1.25;
 }
 
-.write-when-weather-temp {
+.write-when-weather .write-when-temp-range.temp-range {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin: 2px 0 0;
+    padding: 0;
+    border-top: none;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--color-text-secondary);
+}
+
+.write-when-temp-range .temp-max,
+.write-when-temp-range .temp-min {
+    white-space: nowrap;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .form-textarea--compact {

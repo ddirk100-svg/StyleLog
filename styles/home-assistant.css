@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-bottom: var(--spacing-md);
   padding: 10px 0 12px;
   border-bottom: 1px solid var(--color-border-lighter);
@@ -34,28 +34,15 @@
   height: 24px;
 }
 
-.home-day-banner-weather {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-}
-
-.home-day-banner-temp {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--color-text-primary);
-}
-
 .home-day-banner-status {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .home-day-banner-range {
@@ -64,6 +51,8 @@
   font-weight: 600;
   color: var(--color-text-tertiary);
   white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .home-day-banner.weather-sunny,
@@ -387,10 +376,16 @@ body.home-ai-panel-open {
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 360px) {
+  .home-day-banner {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
   .home-day-banner-range {
-    width: 100%;
     margin-left: 0;
-    padding-left: 2px;
+    width: 100%;
+    padding-left: 0;
+    text-align: left;
   }
 }

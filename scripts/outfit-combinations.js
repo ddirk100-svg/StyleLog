@@ -71,29 +71,67 @@
     return norm !== 'reference';
   }
 
+  function sortKeysByCategory(keys) {
+    const rank =
+      typeof global.outfitCategorySortRank === 'function'
+        ? global.outfitCategorySortRank
+        : () => 0;
+    return [...(keys || [])].sort((ka, kb) => {
+      try {
+        const a = JSON.parse(ka);
+        const b = JSON.parse(kb);
+        const d = rank(a[0]) - rank(b[0]);
+        return d !== 0 ? d : String(a[0]).localeCompare(String(b[0]), 'ko');
+      } catch (_) {
+        return String(ka).localeCompare(String(kb), 'ko');
+      }
+    });
+  }
+
+  function labelForKeys(sortedKeys) {
+    const text = sortedKeys
+      .map((k) => {
+        try {
+          const a = JSON.parse(k);
+          if (Array.isArray(a) && a.length >= 2) return `${a[0]} · ${a[1]}`;
+        } catch (_) {
+          /* ignore */
+        }
+        return '품목';
+      })
+      .join('  ');
+    return { text, keys: sortedKeys };
+  }
+
+  /** 코디 1건당 서로 다른 구분의 착장 전체를 하나의 조합으로 집계 (2품목 이상) */
   function aggregateOutfitCombinations(logs) {
     const map = new Map();
     (logs || []).forEach((log) => {
       if (!isMyOutfitLog(log)) return;
       const pairs = parseLogItemsPairs(log?.items);
       if (pairs.length < 2) return;
-      for (let i = 0; i < pairs.length; i++) {
-        for (let j = i + 1; j < pairs.length; j++) {
-          const catA = pairs[i][0];
-          const catB = pairs[j][0];
-          if (catA === catB) continue;
-          const kA = outfitFilterPairKey(catA, pairs[i][1]);
-          const kB = outfitFilterPairKey(catB, pairs[j][1]);
-          if (!kA || !kB) continue;
-          const id = comboCanonicalId(kA, kB);
-          const prev = map.get(id);
-          if (prev) {
-            prev.count += 1;
-          } else {
-            const { text, keys } = labelForPair(kA, kB);
-            map.set(id, { id, count: 1, label: text, keys });
-          }
-        }
+
+      const byCategory = new Map();
+      pairs.forEach(([cat, val]) => {
+        if (!byCategory.has(cat)) byCategory.set(cat, val);
+      });
+      if (byCategory.size < 2) return;
+
+      const rawKeys = [];
+      byCategory.forEach((val, cat) => {
+        const k = outfitFilterPairKey(cat, val);
+        if (k) rawKeys.push(k);
+      });
+      if (rawKeys.length < 2) return;
+
+      const keys = sortKeysByCategory(rawKeys);
+      const id = keys.join('::');
+      const prev = map.get(id);
+      if (prev) {
+        prev.count += 1;
+      } else {
+        const { text, keys: sorted } = labelForKeys(keys);
+        map.set(id, { id, count: 1, label: text, keys: sorted });
       }
     });
     return [...map.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'ko'));

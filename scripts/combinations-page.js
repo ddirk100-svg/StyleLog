@@ -1,5 +1,7 @@
 function comboDisplayParts(keys) {
-  return (keys || [])
+  const rank =
+    typeof outfitCategorySortRank === 'function' ? outfitCategorySortRank : () => 0;
+  const parts = (keys || [])
     .map((key) => {
       try {
         const arr = JSON.parse(key);
@@ -12,6 +14,12 @@ function comboDisplayParts(keys) {
       return null;
     })
     .filter(Boolean);
+
+  parts.sort((a, b) => {
+    const d = rank(a.category) - rank(b.category);
+    return d !== 0 ? d : a.category.localeCompare(b.category, 'ko');
+  });
+  return parts;
 }
 
 async function initCombinationsPage() {
@@ -53,28 +61,22 @@ async function initCombinationsPage() {
       rank.className = 'combo-card-rank';
       rank.textContent = String(index + 1);
 
-      const count = document.createElement('div');
-      count.className = 'combo-card-count';
-      count.innerHTML = `<span class="combo-card-count-num">${row.count}</span><span class="combo-card-count-label">코디</span>`;
-
       const pieces = document.createElement('div');
       pieces.className = 'combo-card-pieces';
-      parts.forEach((part, i) => {
-        if (i > 0) {
-          const plus = document.createElement('span');
-          plus.className = 'combo-card-plus';
-          plus.textContent = '+';
-          pieces.appendChild(plus);
-        }
+      parts.forEach((part) => {
         const chip = document.createElement('span');
         chip.className = 'combo-piece';
         chip.innerHTML = `<em>${escapeHtml(part.category)}</em>${escapeHtml(part.value)}`;
         pieces.appendChild(chip);
       });
 
+      const count = document.createElement('span');
+      count.className = 'combo-card-count';
+      count.textContent = `${row.count}회`;
+
       btn.appendChild(rank);
-      btn.appendChild(count);
       btn.appendChild(pieces);
+      btn.appendChild(count);
 
       btn.addEventListener('click', () => {
         window.location.href = api.homeUrlForCombination(row.keys);

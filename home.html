@@ -18,9 +18,9 @@
     <link rel="stylesheet" href="styles/variables.css?v=11">
     <link rel="stylesheet" href="styles/utils.css?v=10">
     <link rel="stylesheet" href="styles/dialog.css">
-    <link rel="stylesheet" href="styles/home.css?v=19">
-    <link rel="stylesheet" href="styles/home-assistant.css?v=4">
-    <link rel="stylesheet" href="styles/bottom-nav.css?v=2">
+    <link rel="stylesheet" href="styles/home.css?v=20">
+    <link rel="stylesheet" href="styles/home-assistant.css?v=5">
+    <link rel="stylesheet" href="styles/bottom-nav.css?v=4">
     <link rel="stylesheet" href="styles/day-list.css">
     <link rel="stylesheet" href="styles/menu-popup.css">
     <link rel="stylesheet" href="styles/weather-compact.css?v=3">
@@ -118,11 +118,8 @@
                 <span class="home-day-banner-icon" id="weatherIconWrap" aria-hidden="true">
                     <svg class="weather-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
                 </span>
-                <div class="home-day-banner-weather">
-                    <span class="home-day-banner-temp" id="weatherCurrentTemp">--</span>
-                    <span class="home-day-banner-status" id="weatherStatus">--</span>
-                </div>
-                <span class="home-day-banner-range" id="weatherTempRange">-- / --</span>
+                <span class="home-day-banner-status" id="weatherStatus">--</span>
+                <span class="home-day-banner-range" id="weatherTempRange">--</span>
                 <span id="weatherTodayDate" hidden></span>
             </div>
             <div class="home-ai" id="homeAiRoot">
@@ -286,38 +283,8 @@
                 </div>
             </div>
         </div>
-
-        <!-- 하단 네비게이션 바 -->
-        <nav class="bottom-nav">
-        <a href="home.html" class="bottom-nav-item active">
-            <div class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-            </div>
-            <span class="bottom-nav-label">홈</span>
-        </a>
-        <a href="write.html" class="bottom-nav-item write-btn">
-            <div class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-            </div>
-            <span class="bottom-nav-label">코디 추가</span>
-        </a>
-        <a href="mypage.html" class="bottom-nav-item">
-            <div class="bottom-nav-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-            </div>
-            <span class="bottom-nav-label">마이</span>
-        </a>
-        </nav>
     </div>
+    <div data-stylelog-bottom-nav data-active="home"></div>
     <div class="home-ai-backdrop" id="homeAiBackdrop" hidden aria-hidden="true"></div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
@@ -330,7 +297,8 @@
     <script src="scripts/outfit-combinations.js?v=2" defer></script>
     <script src="scripts/recommendation.js?v=1" defer></script>
     <script src="scripts/feedback.js" defer></script>
-    <script src="scripts/home.js?v=52" defer></script>
+    <script src="scripts/bottom-nav.js?v=1" defer></script>
+    <script src="scripts/home.js?v=53" defer></script>
     <script src="scripts/style-assistant-client.js?v=3" defer></script>
     <script src="scripts/home-assistant-inline.js?v=4" defer></script>
     <script>

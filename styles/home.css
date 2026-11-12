@@ -63,14 +63,14 @@ body:has(.container.day-view-active) {
     height: auto;
     position: relative;
     min-height: calc(100vh + 1px);
-    background: var(--color-bg-canvas);
+    background: var(--color-bg-secondary);
 }
 
 .container {
     max-width: var(--container-max-width);
     min-height: 100vh;
     margin: 0 auto;
-    background-color: var(--color-bg-canvas);
+    background-color: var(--color-bg-primary);
     overflow-x: hidden;
     overflow-y: auto;
     display: flex;
@@ -80,11 +80,11 @@ body:has(.container.day-view-active) {
 
 .container.day-view-active,
 .home-shell.day-view-active {
-    background: var(--color-bg-canvas);
+    background: var(--color-bg-primary);
 }
 
 .home-shell {
-    background: var(--color-bg-page);
+    background: var(--color-bg-primary);
 }
 
 .home-main {
@@ -135,7 +135,7 @@ body:has(.container.day-view-active) {
     padding: var(--spacing-md) var(--home-inset-x);
     position: sticky;
     top: 0;
-    background-color: rgba(250, 250, 250, 0.82);
+    background-color: rgba(255, 255, 255, 0.88);
     backdrop-filter: saturate(180%) blur(16px);
     -webkit-backdrop-filter: saturate(180%) blur(16px);
     z-index: var(--z-index-sticky);

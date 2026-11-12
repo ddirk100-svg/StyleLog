@@ -1,5 +1,10 @@
 .assistant-page {
-  background: var(--color-bg-page);
+  background: var(--color-bg-secondary);
+}
+
+.assistant-page #assistantView.container {
+  background: var(--color-bg-primary);
+  min-height: 100vh;
 }
 
 .assistant-page .assistant-lede {

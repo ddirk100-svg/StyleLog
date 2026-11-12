@@ -2744,27 +2744,18 @@ async function updateTodayInfo() {
         const weather = await getCurrentWeather();
         debugLog('🌤️ 날씨 데이터:', weather);
         
-        const currentTempEl = document.getElementById('weatherCurrentTemp');
         const tempRangeEl = document.getElementById('weatherTempRange');
         const iconWrapEl = document.getElementById('weatherIconWrap');
         const statusEl = document.getElementById('weatherStatus');
         const weatherChip = document.getElementById('homeWeatherChip') || document.getElementById('weatherBottomSection');
         
-        if (weather && currentTempEl && weatherChip) {
-            // 평균 기온: (최고 + 최저) / 2
-            let displayTemp = null;
+        if (weather && tempRangeEl && weatherChip) {
             if (weather.tempMin != null && weather.tempMax != null) {
-                displayTemp = Math.round((weather.tempMax + weather.tempMin) / 2);
-            }
-            currentTempEl.textContent = displayTemp != null ? `${displayTemp}°` : '--';
-
-            // 최고 · 최저
-            if (tempRangeEl) {
-                if (weather.tempMin != null && weather.tempMax != null) {
-                    tempRangeEl.textContent = `${Math.round(weather.tempMax)}° / ${Math.round(weather.tempMin)}°`;
-                } else {
-                    tempRangeEl.textContent = '-- / --';
-                }
+                tempRangeEl.textContent = `최고 ${Math.round(weather.tempMax)}° · 최저 ${Math.round(weather.tempMin)}°`;
+            } else if (weather.temp != null) {
+                tempRangeEl.textContent = `평균 ${Math.round(weather.temp)}°`;
+            } else {
+                tempRangeEl.textContent = '—';
             }
             
             // 날씨 아이콘 (80px, 모바일 64px)
