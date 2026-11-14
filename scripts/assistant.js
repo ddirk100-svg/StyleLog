@@ -9,7 +9,11 @@
     const div = document.createElement('div');
     div.className =
       role === 'user' ? 'assistant-bubble assistant-bubble--user' : 'assistant-bubble assistant-bubble--bot';
-    div.textContent = text;
+    if (role === 'bot' && window.StyleLogAssistantFormat?.renderBotMessage) {
+      div.innerHTML = window.StyleLogAssistantFormat.renderBotMessage(text);
+    } else {
+      div.textContent = text;
+    }
     threadEl.appendChild(div);
     threadEl.scrollTop = threadEl.scrollHeight;
   }
@@ -44,7 +48,7 @@
     if (typeof requireAuth === 'function' && !(await requireAuth())) return;
     appendBubble(
       'bot',
-      '안녕하세요. 저장해 둔 내 코디만 보고 추천해요. 오늘 상황이나 날씨를 말해 보세요.'
+      '안녕하세요. 저장해 둔 내 코디를 **먼저** 참고하고, 필요하면 일반적인 스타일 조언도 드려요.\n오늘 상황이나 날씨를 말해 보세요.'
     );
   });
 })();

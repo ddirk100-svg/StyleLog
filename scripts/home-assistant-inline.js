@@ -167,7 +167,11 @@
     row.className = role === 'user' ? 'home-ai-msg home-ai-msg--user' : 'home-ai-msg home-ai-msg--bot';
     const bubble = document.createElement('div');
     bubble.className = 'home-ai-msg-bubble';
-    bubble.textContent = text;
+    if (role === 'bot' && window.StyleLogAssistantFormat?.renderBotMessage) {
+      bubble.innerHTML = window.StyleLogAssistantFormat.renderBotMessage(text);
+    } else {
+      bubble.textContent = text;
+    }
     row.appendChild(bubble);
     messagesEl.appendChild(row);
     flushMessagesUi();
