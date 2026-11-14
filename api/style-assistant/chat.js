@@ -90,8 +90,19 @@ module.exports = async function handler(req, res) {
       sendJson(res, 503, { ok: false, error: 'openai_not_configured' });
       return;
     }
-    if (e && e.code === 'openai_error') {
-      sendJson(res, 502, { ok: false, error: 'openai_error' });
+    if (
+      e &&
+      (e.code === 'openai_error' ||
+        e.code === 'openai_invalid_key' ||
+        e.code === 'openai_quota' ||
+        e.code === 'openai_rate_limit' ||
+        e.code === 'openai_model')
+    ) {
+      sendJson(res, 502, { ok: false, error: e.code || 'openai_error' });
+      return;
+    }
+    if (e && e.code === 'openai_empty') {
+      sendJson(res, 502, { ok: false, error: 'openai_empty' });
       return;
     }
     console.error('style-assistant/chat', e);

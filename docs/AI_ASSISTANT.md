@@ -14,13 +14,21 @@ OPENAI_API_KEY=sk-...
 
 ## Vercel (Alpha · 리얼)
 
-각 프로젝트 → **Settings → Environment Variables**
+[vercel.com](https://vercel.com) → **StyleLog** (GitHub 연동 프로젝트) → **Settings** → **Environment Variables**
 
-| 이름 | 값 | 환경 |
-|------|-----|------|
-| `OPENAI_API_KEY` | 본인 ChatGPT API 키 | Production, Preview(Alpha) |
+| 이름 | 값 | 반드시 켤 환경 |
+|------|-----|----------------|
+| `OPENAI_API_KEY` | OpenAI 대시보드에서 발급한 `sk-…` 키 | **Production** (`www.stylelog.co.kr`) |
+| 동일 | 동일 | **Preview** (`alpha.stylelog.co.kr`, PR 미리보기) |
 
-저장 후 **Redeploy** 한 번.
+- **Production만** 넣으면 리얼은 되고 alpha는 `openai_not_configured` (503).
+- **Preview만** 넣으면 alpha만 되고 **www는 안 됨** (지금 보이는 메시지).
+- 변수 추가·수정 후 **Deployments → 최신 배포 ⋮ → Redeploy** (환경 변수만 바꿔도 재배포 필요).
+
+확인: 브라우저 개발자도구 → Network → `POST /api/style-assistant/chat`  
+- `401` = 로그인  
+- `503` + `openai_not_configured` = 키 없음  
+- `200` = 정상
 
 ## 모델 (권장 초기값)
 

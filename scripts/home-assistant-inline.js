@@ -1,11 +1,11 @@
 /**
- * 홈 인라인 AI — 바텀시트 채팅 (assistant.html 이동 없음)
+ * 홈 인라인 AI — 바텀시트 채팅 (패널은 body 직계, overflow 클립 방지)
  */
 (function () {
   const root = document.getElementById('homeAiRoot');
-  if (!root) return;
-
   const panel = document.getElementById('homeAiPanel');
+  if (!root || !panel) return;
+
   const messagesEl = document.getElementById('homeAiMessages');
   const formCollapsed = document.getElementById('homeAiForm');
   const inputCollapsed = document.getElementById('homeAiInput');
@@ -19,6 +19,15 @@
   let inFlight = false;
   let thinkingRow = null;
 
+  function flushMessagesUi() {
+    if (!messagesEl) return;
+    void messagesEl.offsetHeight;
+    requestAnimationFrame(() => {
+      scrollMessagesToEnd();
+      requestAnimationFrame(scrollMessagesToEnd);
+    });
+  }
+
   function scrollMessagesToEnd() {
     if (!messagesEl) return;
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -27,6 +36,7 @@
   function removeThinking() {
     if (thinkingRow?.parentNode) thinkingRow.parentNode.removeChild(thinkingRow);
     thinkingRow = null;
+    flushMessagesUi();
   }
 
   function showThinking(label) {
@@ -43,7 +53,7 @@
     row.appendChild(bubble);
     messagesEl.appendChild(row);
     thinkingRow = row;
-    scrollMessagesToEnd();
+    flushMessagesUi();
   }
 
   function ensureWelcome() {
@@ -55,28 +65,35 @@
     );
   }
 
+  function focusPanelInput() {
+    window.setTimeout(() => {
+      inputPanel?.focus({ preventScroll: true });
+    }, 320);
+  }
+
   function expand() {
     root.classList.add('is-expanded');
-    if (panel) panel.setAttribute('aria-hidden', 'false');
+    panel.classList.add('is-open');
+    panel.setAttribute('aria-hidden', 'false');
     if (backdrop) {
       backdrop.hidden = false;
       backdrop.classList.add('is-visible');
       backdrop.setAttribute('aria-hidden', 'false');
     }
     document.body.classList.add('home-ai-panel-open');
-    ensureWelcome();
     if (inputPanel && inputCollapsed) inputPanel.value = inputCollapsed.value;
-    inputPanel?.focus();
+    ensureWelcome();
+    flushMessagesUi();
+    focusPanelInput();
   }
 
   function collapse() {
     root.classList.remove('is-expanded');
-    if (panel) {
-      panel.classList.remove('is-dragging');
-      panel.style.transition = '';
-      panel.style.transform = '';
-      panel.setAttribute('aria-hidden', 'true');
-    }
+    panel.classList.remove('is-open');
+    panel.classList.remove('is-dragging');
+    panel.style.transition = '';
+    panel.style.transform = '';
+    panel.setAttribute('aria-hidden', 'true');
     if (backdrop) {
       backdrop.classList.remove('is-visible');
       backdrop.setAttribute('aria-hidden', 'true');
@@ -95,7 +112,7 @@
     bubble.textContent = text;
     row.appendChild(bubble);
     messagesEl.appendChild(row);
-    scrollMessagesToEnd();
+    flushMessagesUi();
   }
 
   async function ask(message) {
@@ -131,12 +148,12 @@
     } finally {
       inFlight = false;
       if (sendPanelBtn) sendPanelBtn.disabled = false;
-      inputPanel?.focus();
+      focusPanelInput();
     }
   }
 
   function bindSheetSwipeDismiss() {
-    if (!panel || !handle || panel.dataset.swipeBound === '1') return;
+    if (!handle || panel.dataset.swipeBound === '1') return;
     panel.dataset.swipeBound = '1';
     const DISMISS_PX = 88;
     let startY = 0;
@@ -145,7 +162,7 @@
     let pointerId = null;
 
     handle.addEventListener('pointerdown', (e) => {
-      if (!root.classList.contains('is-expanded')) return;
+      if (!panel.classList.contains('is-open')) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       dragging = true;
       pointerId = e.pointerId;
@@ -189,7 +206,13 @@
     handle.addEventListener('pointercancel', endDrag);
   }
 
-  inputCollapsed?.addEventListener('focus', expand);
+  inputCollapsed?.addEventListener('focus', () => {
+    expand();
+  });
+
+  inputCollapsed?.addEventListener('click', () => {
+    if (!panel.classList.contains('is-open')) expand();
+  });
 
   formCollapsed?.addEventListener('submit', (e) => {
     e.preventDefault();

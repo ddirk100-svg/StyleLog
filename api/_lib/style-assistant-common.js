@@ -150,8 +150,21 @@ async function callOpenAIChat(messages) {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(body?.error?.message || 'openai_error');
-    err.code = 'openai_error';
+    const oa = body?.error || {};
+    const msg = String(oa.message || '').toLowerCase();
+    const oaCode = String(oa.code || oa.type || '').toLowerCase();
+    let code = 'openai_error';
+    if (res.status === 401 || oaCode === 'invalid_api_key' || msg.includes('incorrect api key')) {
+      code = 'openai_invalid_key';
+    } else if (oaCode === 'insufficient_quota' || msg.includes('quota') || msg.includes('billing')) {
+      code = 'openai_quota';
+    } else if (res.status === 429 || oaCode === 'rate_limit_exceeded') {
+      code = 'openai_rate_limit';
+    } else if (msg.includes('does not exist') || oaCode === 'model_not_found') {
+      code = 'openai_model';
+    }
+    const err = new Error(oa.message || 'openai_error');
+    err.code = code;
     err.status = res.status;
     throw err;
   }

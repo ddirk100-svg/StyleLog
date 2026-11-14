@@ -6,8 +6,17 @@
     auth_required: '다시 로그인해 주세요.',
     invalid_session: '로그인이 만료됐어요. 다시 로그인해 주세요.',
     openai_not_configured:
-      'AI 키가 서버에 설정되지 않았어요. Vercel Production·Preview에 OPENAI_API_KEY가 있는지 확인해 주세요.',
+      'AI 키가 이 서버에 없어요. Vercel → StyleLog 프로젝트 → Settings → Environment Variables에서 OPENAI_API_KEY를 Production(www)·Preview(alpha)에 넣고 Redeploy 해 주세요.',
     openai_error: 'AI 서비스에 일시적 문제가 있어요. 잠시 후 다시 시도해 주세요.',
+    openai_invalid_key:
+      'OpenAI API 키가 잘못됐거나 만료됐어요. Vercel의 OPENAI_API_KEY를 새로 발급한 sk- 키로 바꾸고 Redeploy 해 주세요.',
+    openai_quota:
+      'OpenAI 사용 한도나 결제가 필요해요. platform.openai.com → Billing에서 잔액·결제 수단을 확인해 주세요.',
+    openai_rate_limit:
+      '요청이 너무 많아요. 잠시 후 다시 시도해 주세요.',
+    openai_model:
+      'AI 모델 설정을 확인해 주세요. Vercel에 OPENAI_MODEL=gpt-4o-mini 를 넣거나 변수를 비워 두세요.',
+    openai_empty: 'AI가 빈 답을 반환했어요. 다시 시도해 주세요.',
     assistant_failed: 'AI 응답을 만들지 못했어요. 잠시 후 다시 시도해 주세요.',
     supabase_not_configured: '서버 설정을 확인 중이에요.',
     message_required: '메시지를 입력해 주세요.',
