@@ -4,19 +4,16 @@
     <script>if(window.location.hostname.includes('alpha')){document.write('<meta name="robots" content="noindex,nofollow">');}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="StyleLog - 나만의 패션 일기. 오늘 날씨에 딱 맞는 과거의 내 착장을 찾아보고, 기분 좋게 하루를 시작해보세요. 무료로 시작하기.">
+    <meta name="description" content="StyleLog — 거울샷 한 장이 내 코디가 됩니다. 날씨·상황으로 다시 찾고, 오늘 입을 조합과 AI 코디 상담까지. 무료로 시작하세요.">
     <link rel="canonical" href="https://www.stylelog.co.kr/">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="StyleLog - 오늘 뭐 입지? 기록이 답해줄 거예요">
-    <meta property="og:description" content="나만의 패션 일기. 오늘 날씨에 딱 맞는 과거의 내 착장을 찾아보고, 기분 좋게 하루를 시작해보세요.">
+    <meta property="og:title" content="StyleLog — 입었던 나에게 물어보세요">
+    <meta property="og:description" content="내가 실제로 입었던 코디만 쌓입니다. 비슷한 날씨에는 예전 기록부터, 말로도 물어볼 수 있어요.">
     <meta property="og:url" content="https://www.stylelog.co.kr/">
     <meta property="og:image" content="https://www.stylelog.co.kr/img/StyleLog_logo(Eng).png">
     <meta property="og:locale" content="ko_KR">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="StyleLog - 오늘 뭐 입지? 기록이 답해줄 거예요">
-    <link rel="preconnect" href="https://cdn.tailwindcss.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+    <meta name="twitter:title" content="StyleLog — 입었던 나에게 물어보세요">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4JCJ9BQ674"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -26,92 +23,79 @@
     </script>
     <link rel="icon" href="/img/StyleLog_logo(favicon).png" type="image/png" sizes="48x48">
     <link rel="apple-touch-icon" href="/img/StyleLog_logo(favicon).png">
-    <title>StyleLog - 오늘 뭐 입지? 기록이 답해줄 거예요</title>
+    <title>StyleLog — 입었던 나에게 물어보세요</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              deep: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' }
-            },
-            fontFamily: { sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Malgun Gothic', 'sans-serif'] },
-            animation: { 'flow': 'flow 3s ease-in-out infinite', 'pulse-soft': 'pulse-soft 2s ease-in-out infinite' }
-          }
-        }
-      }
-    </script>
-    <link rel="stylesheet" href="styles/landing.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/landing.css?v=2">
 </head>
-<body class="bg-white text-gray-900 antialiased">
-    <div class="min-h-screen">
-        <!-- Header -->
-        <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center h-16">
-                <a href="landing.html" class="flex items-center">
-                    <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-10 w-auto" width="120" height="40" loading="eager" decoding="async">
-                </a>
-                <div class="flex gap-3">
-                    <a href="login.html" class="px-4 py-2 text-sm font-semibold text-deep-600 border-2 border-deep-600 rounded-lg hover:bg-deep-50 transition-colors">로그인</a>
-                    <a href="signup.html" class="px-4 py-2 text-sm font-semibold bg-deep-600 text-white rounded-lg hover:bg-deep-700 transition-colors shadow-sm">무료로 시작</a>
-                </div>
-            </div>
-        </header>
+<body class="landing">
+    <a class="ld-skip" href="#main">본문으로 건너뛰기</a>
 
+    <header class="ld-header">
+        <div class="ld-header__inner">
+            <a href="landing.html" class="ld-logo" aria-label="StyleLog 홈">
+                <img src="img/StyleLog_logo(Eng).png" alt="" width="112" height="32" decoding="async">
+            </a>
+            <nav class="ld-header__nav" aria-label="계정">
+                <a href="login.html" class="ld-btn ld-btn--ghost">로그인</a>
+                <a href="signup.html" class="ld-btn ld-btn--primary">무료로 시작</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
         <!-- Hero -->
-        <section class="pt-24 pb-20 sm:pt-32 sm:pb-28 px-4 sm:px-6 bg-gradient-to-b from-white via-deep-50/30 to-white">
-            <div class="max-w-6xl mx-auto">
-                <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                    <div class="hero-text">
-                        <p class="hero-label">나만의 패션 일기</p>
-                        <h1 class="hero-headline">
-                            오늘 뭐 입지?<br />
-                            매일 아침 반복되는 고민,<br />
-                            <span class="text-deep-600">스타일로그로 해결!</span>
-                        </h1>
-                        <p class="hero-sub">
-                            오늘 날씨에 딱 맞는 과거의 내 착장을 찾아보고,<br />
-                            기분 좋게 하루를 시작해보세요.
-                        </p>
-                        <div class="flex flex-wrap gap-3">
-                            <a href="signup.html" class="inline-flex items-center px-6 py-3.5 bg-deep-600 text-white font-semibold rounded-lg hover:bg-deep-700 transition-all hover:shadow-lg hover:-translate-y-0.5">
-                                무료로 시작하기
-                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                            </a>
-                            <a href="login.html" class="inline-flex items-center px-6 py-3.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-deep-400 hover:text-deep-600 transition-colors">로그인</a>
-                        </div>
+        <section class="ld-hero" aria-labelledby="hero-title">
+            <div class="ld-wrap ld-hero__grid">
+                <div class="ld-hero__copy">
+                    <p class="ld-eyebrow">내 코디가 쌓이는 패션 기록</p>
+                    <h1 id="hero-title" class="ld-title ld-title--hero">
+                        오늘 뭐 입지?<br>
+                        <span class="ld-title__accent">입었던 나에게</span> 물어보세요.
+                    </h1>
+                    <p class="ld-lead">
+                        거울샷 한 장이면 그날 날씨와 착장이 남아요.
+                        비슷한 날에는 <strong>내가 실제로 입었던 조합</strong>부터 보여 주고,
+                        더 궁금하면 홈에서 바로 코디에게 물어볼 수 있어요.
+                    </p>
+                    <div class="ld-hero__actions">
+                        <a href="signup.html" class="ld-btn ld-btn--primary ld-btn--lg">무료로 시작하기</a>
+                        <a href="login.html" class="ld-btn ld-btn--outline ld-btn--lg">로그인</a>
                     </div>
-                    <!-- Hero Visual: 오늘 기온 → 착장 카드 스택 -->
-                    <div class="relative lg:pl-16">
-                        <div class="phone-mockup hero-fade-in">
-                            <div class="phone-screen">
-                                <div class="weather-widget">
-                                    <p class="weather-widget-q">오늘 날씨는?</p>
-                                    <p class="weather-widget-date">02.17 화</p>
-                                    <div class="weather-widget-badge">
-                                        <span class="weather-icon">☀️</span>
-                                        <span class="weather-temp">-6° / 4°</span>
+                    <p class="ld-trust">카드 없음 · 사진만으로 첫 기록 가능</p>
+                </div>
+
+                <div class="ld-device" aria-hidden="true">
+                    <div class="ld-device__frame">
+                        <div class="ld-device__screen">
+                            <div class="ld-mock-banner">
+                                <time class="ld-mock-date">3월 9일 토</time>
+                                <span class="ld-mock-weather">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                                    맑음
+                                </span>
+                                <span class="ld-mock-temp">4° ~ 14°</span>
+                            </div>
+                            <form class="ld-mock-ai" action="#" onsubmit="return false">
+                                <span class="ld-mock-ai__ph">오늘 회사인데 좀 추워, 뭐 입을까?</span>
+                                <span class="ld-mock-ai__send" aria-hidden="true"></span>
+                            </form>
+                            <p class="ld-mock-section">오늘 입을 만한 조합</p>
+                            <div class="ld-mock-combos">
+                                <article class="ld-mock-combo">
+                                    <div class="ld-mock-thumb ld-mock-thumb--a"></div>
+                                    <div class="ld-mock-combo__meta">
+                                        <p class="ld-mock-combo__title">니트 + 와이드 팬츠</p>
+                                        <p class="ld-mock-combo__sub">2월 21일 · 5~11°</p>
                                     </div>
-                                </div>
-                                <div class="hero-stack-wrap">
-                                    <div class="weather-connect-line"></div>
-                                    <div class="outfit-card outfit-card-top">
-                                        <img src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&q=85" alt="그린 자켓 룩" width="400" height="140" fetchpriority="high" decoding="async">
-                                        <div class="outfit-card-overlay">
-                                            <span class="outfit-temp">9°~15°</span>
-                                            <span class="outfit-match">이 날씨엔 이거!</span>
-                                        </div>
+                                </article>
+                                <article class="ld-mock-combo">
+                                    <div class="ld-mock-thumb ld-mock-thumb--b"></div>
+                                    <div class="ld-mock-combo__meta">
+                                        <p class="ld-mock-combo__title">셔츠 레이어드</p>
+                                        <p class="ld-mock-combo__sub">1월 8일 · 즐겨찾기</p>
                                     </div>
-                                    <div class="outfit-card outfit-card-2">
-                                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=85" alt="베이지 셔츠 룩" width="400" height="140" loading="lazy" decoding="async">
-                                        <div class="outfit-card-overlay"><span>12°~18°</span></div>
-                                    </div>
-                                    <div class="outfit-card outfit-card-3">
-                                        <img src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=85" alt="크림 니트 룩" width="400" height="140" loading="lazy" decoding="async">
-                                        <div class="outfit-card-overlay"><span>5°~10°</span></div>
-                                    </div>
-                                </div>
+                                </article>
                             </div>
                         </div>
                     </div>
@@ -119,171 +103,195 @@
             </div>
         </section>
 
-        <!-- Features: Bento Grid -->
-        <section class="py-28 sm:py-36 px-4 sm:px-6 bg-white">
-            <div class="max-w-6xl mx-auto">
-                <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-4">이렇게 도와줄게요</h2>
-                <p class="text-gray-600 text-center max-w-xl mx-auto mb-20">평소처럼 사진만 찍으세요.<br>나머지는 StyleLog가 알아서 할게요.</p>
+        <!-- Pain -->
+        <section class="ld-section ld-section--muted" aria-labelledby="pain-title">
+            <div class="ld-wrap">
+                <div class="ld-section-head">
+                    <h2 id="pain-title" class="ld-title ld-title--section">아침마다 겪는 일, 맞죠?</h2>
+                    <p class="ld-section-desc">문제는 옷이 없어서가 아니라, <strong>내 코디가 흩어져 있어서</strong>예요.</p>
+                </div>
+                <ul class="ld-pain">
+                    <li class="ld-pain__item">
+                        <p class="ld-pain__quote">“입을 게 없다”고 하는데, 어제 뭘 입었는지도 잘 모르겠다.</p>
+                    </li>
+                    <li class="ld-pain__item">
+                        <p class="ld-pain__quote">눈대중으로 입었다가 추워지거나 더워져서 하루 종일 신경 쓰인다.</p>
+                    </li>
+                    <li class="ld-pain__item">
+                        <p class="ld-pain__quote">갤러리엔 거울샷이 있는데, 그날 착장을 다시 찾기 어렵다.</p>
+                    </li>
+                    <li class="ld-pain__item">
+                        <p class="ld-pain__quote">예쁜 코디는 많은데, 다 남의 옷장 기준이라 내 옷과는 안 맞는다.</p>
+                    </li>
+                </ul>
+            </div>
+        </section>
 
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Feature 1: 날씨는 제가 적어둘게요 -->
-                    <article class="bento-card group">
-                        <div class="bento-inner">
-                            <div class="flex items-center gap-3 mb-5">
-                                <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 group-hover:bg-amber-100 transition-colors">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75Zm0 8.25a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"/></svg>
-                                </div>
-                                <h3 class="font-bold text-lg text-gray-900">날씨는 제가 적어둘게요</h3>
-                            </div>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-6">날짜만 고르면 그날의 최저·최고 기온이 따라와요.</p>
-                            <div class="bento-mock fe-mock-1 rounded-2xl overflow-hidden bg-white border border-gray-200">
-                                <div class="p-2.5 border-b border-gray-100">
-                                    <p class="text-xs text-gray-500">2026.02.13 금</p>
-                                </div>
-                                <div class="aspect-[4/3] overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=500&q=85" alt="트렌치코트" class="w-full h-full object-cover" width="500" height="375" loading="lazy" decoding="async">
-                                </div>
-                                <div class="p-3 flex items-center gap-2 bg-white border-t border-gray-100">
-                                    <span class="text-base">☁️</span>
-                                    <span class="font-semibold text-rose-500">9°C</span>
-                                    <span class="text-gray-300">/</span>
-                                    <span class="font-semibold text-gray-500">-2°C</span>
-                                    <span class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">good</span>
-                                </div>
+        <!-- How -->
+        <section class="ld-section" aria-labelledby="how-title">
+            <div class="ld-wrap">
+                <div class="ld-section-head ld-section-head--left">
+                    <h2 id="how-title" class="ld-title ld-title--section">기록 → 다시 찾기 → 오늘 고르기</h2>
+                    <p class="ld-section-desc">쌓인 데이터가 많을수록 아침이 가벼워져요.</p>
+                </div>
+                <ol class="ld-steps">
+                    <li class="ld-step">
+                        <span class="ld-step__num">1</span>
+                        <h3 class="ld-step__title">기록</h3>
+                        <p class="ld-step__text">사진과 날씨·상황·품목을 가볍게 남겨요.</p>
+                    </li>
+                    <li class="ld-step">
+                        <span class="ld-step__num">2</span>
+                        <h3 class="ld-step__title">회고</h3>
+                        <p class="ld-step__text">기온·체감·즐겨찾기로 예전 코디를 꺼내요.</p>
+                    </li>
+                    <li class="ld-step">
+                        <span class="ld-step__num">3</span>
+                        <h3 class="ld-step__title">추천</h3>
+                        <p class="ld-step__text">오늘 날씨에 맞는 <strong>내 조합</strong>을 먼저 보여줘요.</p>
+                    </li>
+                    <li class="ld-step">
+                        <span class="ld-step__num">4</span>
+                        <h3 class="ld-step__title">물어보기</h3>
+                        <p class="ld-step__text">내 기록을 우선해 답하고, 필요하면 스타일 조언도 해요.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="ld-section ld-section--muted" aria-labelledby="feat-title">
+            <div class="ld-wrap">
+                <div class="ld-section-head">
+                    <h2 id="feat-title" class="ld-title ld-title--section">이렇게 도와줄게요</h2>
+                    <p class="ld-section-desc">남의 룩북이 아니라, <strong>내 착장 기록</strong>만 씁니다.</p>
+                </div>
+
+                <div class="ld-features">
+                    <article class="ld-feat">
+                        <header class="ld-feat__head">
+                            <span class="ld-feat__index">01</span>
+                            <h3 class="ld-feat__title">날씨는 자동으로 따라와요</h3>
+                        </header>
+                        <p class="ld-feat__desc">날짜만 고르면 그날 최저·최고 기온과 날씨가 붙어요. 나중에 “그때 몇 도였지?” 찾지 않아도 됩니다.</p>
+                        <div class="ld-feat__mock ld-mock-log" aria-hidden="true">
+                            <div class="ld-mock-log__date">2026.03.09 토</div>
+                            <div class="ld-mock-log__photo"></div>
+                            <div class="ld-mock-log__row">
+                                <span>☀ 맑음</span>
+                                <span class="ld-mock-log__temp"><em>4°</em> / <em>14°</em></span>
                             </div>
                         </div>
                     </article>
 
-                    <!-- Feature 2: 지금 기온에 딱인 옷만 쏙쏙 -->
-                    <article class="bento-card group">
-                        <div class="bento-inner">
-                            <div class="flex items-center gap-3 mb-5">
-                                <div class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600 group-hover:bg-sky-100 transition-colors">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-                                </div>
-                                <h3 class="font-bold text-lg text-gray-900">지금 기온에 딱인 옷만 쏙쏙</h3>
+                    <article class="ld-feat">
+                        <header class="ld-feat__head">
+                            <span class="ld-feat__index">02</span>
+                            <h3 class="ld-feat__title">지금 기온에 맞춰 보기</h3>
+                        </header>
+                        <p class="ld-feat__desc">오늘과 비슷한 날씨에 입었던 코디만 걸러요. 체감·품목 필터로 더 좁힐 수 있어요.</p>
+                        <div class="ld-feat__mock ld-mock-filter" aria-hidden="true">
+                            <p class="ld-mock-filter__label">기온</p>
+                            <div class="ld-mock-range">
+                                <span>최저 3° 이상</span>
+                                <p class="ld-mock-range__bar"><i style="width:38%"></i></p>
                             </div>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-6">구간만 잡으면, 그날씨에 입었던 옷만 딱 나타나요.</p>
-                            <div class="bento-mock fe-mock-2 rounded-2xl overflow-hidden bg-white border border-gray-200">
-                                <div class="p-4 border-b border-gray-100 bg-gray-50 relative">
-                                    <p class="text-xs font-semibold text-gray-700 mb-3">필터 · 기온</p>
-                                    <div class="space-y-3">
-                                        <div>
-                                            <div class="flex items-center justify-between text-xs mb-1">
-                                                <span class="text-sky-600 font-medium">최저</span>
-                                                <span class="font-bold text-sky-600">5° 이상</span>
-                                            </div>
-                                            <div class="h-2 rounded-full bg-gray-200 overflow-hidden relative">
-                                                <div class="h-full w-1/4 rounded-full bg-sky-500"></div>
-                                                <div class="slider-thumb slider-thumb-min"></div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="flex items-center justify-between text-xs mb-1">
-                                                <span class="text-rose-500 font-medium">최고</span>
-                                                <span class="font-bold text-rose-600">12° 이하</span>
-                                            </div>
-                                            <div class="h-2 rounded-full bg-gray-200 overflow-hidden relative">
-                                                <div class="h-full w-2/3 rounded-full bg-rose-400"></div>
-                                                <div class="slider-thumb slider-thumb-max"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button class="mt-4 w-full py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold">3개 확인하기</button>
-                                </div>
-                                <div class="p-2 grid grid-cols-2 gap-1.5 bg-gray-50">
-                                    <div class="aspect-square rounded-lg bg-deep-100/60"></div>
-                                    <div class="aspect-square rounded-lg bg-deep-100/60"></div>
-                                </div>
+                            <div class="ld-mock-range">
+                                <span>최고 15° 이하</span>
+                                <p class="ld-mock-range__bar ld-mock-range__bar--high"><i style="width:62%"></i></p>
+                            </div>
+                            <p class="ld-mock-filter__result">맞는 기록 <strong>6개</strong></p>
+                        </div>
+                    </article>
+
+                    <article class="ld-feat">
+                        <header class="ld-feat__head">
+                            <span class="ld-feat__index">03</span>
+                            <h3 class="ld-feat__title">오늘 입을 만한 조합</h3>
+                        </header>
+                        <p class="ld-feat__desc">홈에서 자주 입었던 조합과 즐겨찾기 코디를 오늘 날씨와 맞춰 제안해요.</p>
+                        <div class="ld-feat__mock ld-mock-picks" aria-hidden="true">
+                            <div class="ld-mock-pick">#1 니트 · 치노</div>
+                            <div class="ld-mock-pick">#2 코트 · 데님</div>
+                        </div>
+                    </article>
+
+                    <article class="ld-feat ld-feat--wide">
+                        <header class="ld-feat__head">
+                            <span class="ld-feat__index">04</span>
+                            <h3 class="ld-feat__title">코디에게 물어보기</h3>
+                        </header>
+                        <p class="ld-feat__desc">“회사인데 좀 추워”처럼 말로 물으면 저장해 둔 내 기록을 먼저 보고, 부족할 때는 친근하게 스타일 조언을 이어가요.</p>
+                        <div class="ld-feat__mock ld-mock-chat" aria-hidden="true">
+                            <div class="ld-mock-chat__user">예전에 비슷하게 입었던 거 있어?</div>
+                            <div class="ld-mock-chat__bot">
+                                <p><strong>2월 21일</strong>에 니트+팬츠 조합이 있어요. 오늘도 비슷하게 가면 편할 거예요.</p>
+                                <ul>
+                                    <li><strong>상의</strong>: 라이트 그레이 니트</li>
+                                    <li><strong>하의</strong>: 와이드 베이지 팬츠</li>
+                                </ul>
                             </div>
                         </div>
                     </article>
 
-                    <!-- Feature 3: 사진 한 장이면 끝! -->
-                    <article class="bento-card group">
-                        <div class="bento-inner">
-                            <div class="flex items-center gap-3 mb-5">
-                                <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-100 transition-colors">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
-                                </div>
-                                <h3 class="font-bold text-lg text-gray-900">사진 한 장이면 끝!</h3>
-                            </div>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-6">복잡한 상세 정보 입력은 그만! 사진 한 장이면 충분해요.</p>
-                            <div class="bento-mock fe-mock-3 rounded-2xl overflow-hidden bg-white border border-gray-200">
-                                <div class="p-5 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-emerald-50/30 to-white">
-                                    <div class="flex items-center gap-2 text-emerald-600">
-                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-                                        <span class="text-lg font-bold">기록 완료!</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 w-full max-w-[220px] p-2.5 bg-white rounded-xl border border-gray-200 shadow-sm">
-                                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=120&q=80" alt="오늘 착장" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" width="48" height="48" loading="lazy" decoding="async">
-                                        <div class="text-left flex-1 min-w-0">
-                                            <p class="text-sm font-semibold text-gray-800 truncate">오늘 딱 좋았음!</p>
-                                            <p class="text-xs text-gray-500">사진 한 장이면 끝</p>
-                                        </div>
-                                        <span class="text-emerald-500 flex-shrink-0">✓</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <article class="ld-feat ld-feat--compact">
+                        <header class="ld-feat__head">
+                            <span class="ld-feat__index">05</span>
+                            <h3 class="ld-feat__title">즐겨찾기·옷장</h3>
+                        </header>
+                        <p class="ld-feat__desc">잘 맞았던 날은 별표로 모아 두고, 품목별로 다시 연결해요.</p>
                     </article>
                 </div>
             </div>
         </section>
 
-        <!-- Comparison: 과거의 나 vs StyleLog를 쓰는 나 -->
-        <section class="py-28 sm:py-36 px-4 sm:px-6 bg-gray-50">
-            <div class="max-w-4xl mx-auto">
-                <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-4">Before/After</h2>
-                <p class="text-gray-600 text-center mb-20">과거의 나와, StyleLog를 쓰는 나.</p>
-
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="compare-card compare-before">
-                        <div class="compare-character">
-                            <div class="character-icon character-worry">😰</div>
-                            <h3 class="text-xl font-bold text-gray-700 mt-3">고민하는 아침</h3>
-                            <p class="text-sm text-gray-500 mt-1">어제의 나</p>
-                        </div>
-                        <div class="compare-desc">
-                            <p class="text-gray-600 text-sm leading-relaxed">"입을 옷이 없네..." <br>눈대중으로 챙겨 입었다가, 땀 뻘뻘 흘리거나 덜덜 떨며 후회하던 나.</p>
-                        </div>
-                    </div>
-                    <div class="compare-card compare-after">
-                        <div class="compare-character">
-                            <div class="character-icon character-relax">😊</div>
-                            <h3 class="text-xl font-bold text-deep-700 mt-3">여유로운 아침</h3>
-                            <p class="text-sm text-deep-600 mt-1">오늘의 나</p>
-                        </div>
-                        <div class="compare-desc">
-                            <p class="text-gray-600 text-sm leading-relaxed">"이렇게 입으면 되겠네!" <br>한번 훑고 10초 만에 코디 끝. 가벼운 발걸음으로 현관문을 나서는 나.</p>
-                        </div>
-                    </div>
+        <!-- Shift -->
+        <section class="ld-section" aria-labelledby="shift-title">
+            <div class="ld-wrap">
+                <h2 id="shift-title" class="ld-visually-hidden">전과 후</h2>
+                <div class="ld-shift">
+                    <article class="ld-shift__col ld-shift__col--before">
+                        <p class="ld-shift__label">예전 아침</p>
+                        <h3 class="ld-shift__heading">갤러리를 뒤지고, 날씨는 감으로.</h3>
+                        <ul class="ld-shift__list">
+                            <li>옷장만 열었다 닫았다 반복</li>
+                            <li>입고 나와서야 “아, 얇게 입었네”</li>
+                            <li>출근 시간만 줄어드는 스트레스</li>
+                        </ul>
+                    </article>
+                    <article class="ld-shift__col ld-shift__col--after">
+                        <p class="ld-shift__label">StyleLog 쓰는 아침</p>
+                        <h3 class="ld-shift__heading">홈 한 번, 말 한 줄이면 결정.</h3>
+                        <ul class="ld-shift__list">
+                            <li>오늘 기온에 맞는 내 조합부터 확인</li>
+                            <li>애매하면 코디에게 바로 질문</li>
+                            <li>다음에 비슷한 날씨가 와도 준비됨</li>
+                        </ul>
+                    </article>
                 </div>
             </div>
         </section>
 
         <!-- CTA -->
-        <section class="py-28 sm:py-36 px-4 sm:px-6 bg-gradient-to-br from-deep-600 to-deep-800 text-white">
-            <div class="max-w-2xl mx-auto text-center">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4">기억 대신 기록.<br />감 대신 데이터.</h2>
-                <p class="text-deep-100 text-lg mb-4">옷장은 꽉 찼는데 입을 게 없는 당신을 위해 만들었어요.</p>
-                <p class="text-deep-200 text-base mb-10">지금 바로 첫 로그를 남겨보세요.</p>
-                <a href="signup.html" class="inline-flex items-center px-8 py-4 bg-white text-deep-600 font-bold rounded-2xl hover:bg-deep-50 transition-all hover:shadow-xl hover:-translate-y-0.5">
-                    지금 바로 무료로 시작하기
-                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                </a>
+        <section class="ld-cta" aria-labelledby="cta-title">
+            <div class="ld-wrap ld-cta__inner">
+                <h2 id="cta-title" class="ld-title ld-title--cta">기억 대신 기록.<br>감 대신 내 데이터.</h2>
+                <p class="ld-cta__lead">코디만 세 번 남겨도, 다음 비슷한 날엔 훨씬 빨리 고를 수 있어요.</p>
+                <a href="signup.html" class="ld-btn ld-btn--inverse ld-btn--lg">첫 코디 기록하기</a>
             </div>
         </section>
+    </main>
 
-        <footer class="py-12 px-4 bg-gray-900 text-gray-400 text-center">
-            <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="h-8 w-auto mx-auto mb-4 opacity-80 invert" width="96" height="32" loading="lazy" decoding="async">
-            <nav class="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 text-sm mb-6" aria-label="법적 고지">
-                <a href="terms.html" class="text-gray-300 hover:text-white transition-colors">이용약관</a>
-                <span class="text-gray-600 hidden sm:inline" aria-hidden="true">|</span>
-                <a href="privacy.html" class="text-gray-300 hover:text-white transition-colors">개인정보처리방침</a>
+    <footer class="ld-footer">
+        <div class="ld-wrap ld-footer__inner">
+            <img src="img/StyleLog_logo(Eng).png" alt="StyleLog" class="ld-footer__logo" width="96" height="28" loading="lazy" decoding="async">
+            <nav class="ld-footer__nav" aria-label="법적 고지">
+                <a href="terms.html">이용약관</a>
+                <span aria-hidden="true">·</span>
+                <a href="privacy.html">개인정보처리방침</a>
             </nav>
-            <p class="text-sm">© 2026 StyleLog</p>
-        </footer>
-    </div>
+            <p class="ld-footer__copy">© 2026 StyleLog</p>
+        </div>
+    </footer>
 </body>
 </html>
