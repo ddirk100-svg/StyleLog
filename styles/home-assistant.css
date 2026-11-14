@@ -162,6 +162,16 @@
   transform: translate(-50%, 0);
 }
 
+/* 키보드 열림 — JS가 visualViewport에 맞춤 */
+.home-ai-panel.is-viewport-fit.is-open {
+  transform: translateX(-50%);
+  transition: top 0.12s ease-out, height 0.12s ease-out, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-ai-panel.is-viewport-fit.is-dragging {
+  transition: none;
+}
+
 .home-ai-panel.is-dragging {
   transition: none;
 }
@@ -352,7 +362,12 @@ body.home-ai-panel-open {
   border-radius: 14px;
   padding: 10px 12px;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-primary);
+  background: var(--color-bg-primary);
 }
 
 .home-ai-panel-send {
@@ -435,6 +450,13 @@ body.home-ai-panel-open {
   }
   100% {
     background-position: -100% 0;
+  }
+}
+
+@media (max-width: 428px) {
+  .home-ai-panel:not(.is-viewport-fit) {
+    height: min(88dvh, 720px);
+    max-height: 88dvh;
   }
 }
 

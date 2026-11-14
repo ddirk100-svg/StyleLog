@@ -18,6 +18,62 @@
 
   let inFlight = false;
   let thinkingRow = null;
+  let viewportRaf = 0;
+
+  function clearPanelViewportStyles() {
+    panel.classList.remove('is-viewport-fit');
+    panel.style.removeProperty('height');
+    panel.style.removeProperty('top');
+    panel.style.removeProperty('bottom');
+    panel.style.removeProperty('max-height');
+  }
+
+  function syncPanelToVisualViewport() {
+    const vv = window.visualViewport;
+    if (!panel.classList.contains('is-open')) {
+      clearPanelViewportStyles();
+      return;
+    }
+    if (!vv) return;
+
+    const layoutH = window.innerHeight;
+    const gap = layoutH - vv.height;
+    const keyboardOpen =
+      document.activeElement === inputPanel || gap > 72 || vv.offsetTop > 8;
+
+    if (keyboardOpen) {
+      panel.classList.add('is-viewport-fit');
+      const h = Math.max(220, Math.round(vv.height));
+      panel.style.height = `${h}px`;
+      panel.style.top = `${Math.round(vv.offsetTop)}px`;
+      panel.style.bottom = 'auto';
+      panel.style.maxHeight = 'none';
+      if (!panel.classList.contains('is-dragging')) {
+        panel.style.transform = 'translateX(-50%)';
+      }
+    } else {
+      clearPanelViewportStyles();
+      if (!panel.classList.contains('is-dragging')) {
+        panel.style.transform = '';
+      }
+    }
+    flushMessagesUi();
+  }
+
+  function scheduleViewportSync() {
+    cancelAnimationFrame(viewportRaf);
+    viewportRaf = requestAnimationFrame(syncPanelToVisualViewport);
+  }
+
+  function bindVisualViewport() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    vv.addEventListener('resize', scheduleViewportSync);
+    vv.addEventListener('scroll', scheduleViewportSync);
+    window.addEventListener('orientationchange', () => {
+      window.setTimeout(scheduleViewportSync, 120);
+    });
+  }
 
   function flushMessagesUi() {
     if (!messagesEl) return;
@@ -84,6 +140,7 @@
     if (inputPanel && inputCollapsed) inputPanel.value = inputCollapsed.value;
     ensureWelcome();
     flushMessagesUi();
+    scheduleViewportSync();
     focusPanelInput();
   }
 
@@ -91,6 +148,7 @@
     root.classList.remove('is-expanded');
     panel.classList.remove('is-open');
     panel.classList.remove('is-dragging');
+    clearPanelViewportStyles();
     panel.style.transition = '';
     panel.style.transform = '';
     panel.setAttribute('aria-hidden', 'true');
@@ -180,7 +238,9 @@
     handle.addEventListener('pointermove', (e) => {
       if (!dragging || e.pointerId !== pointerId) return;
       dragY = Math.max(0, e.clientY - startY);
-      panel.style.transform = `translate(-50%, ${dragY}px)`;
+      panel.style.transform = panel.classList.contains('is-viewport-fit')
+        ? `translateX(-50%) translateY(${dragY}px)`
+        : `translate(-50%, ${dragY}px)`;
     });
 
     const endDrag = (e) => {
@@ -195,10 +255,14 @@
         window.setTimeout(collapse, 280);
         return;
       }
-      panel.style.transform = 'translate(-50%, 0)';
+      scheduleViewportSync();
       window.setTimeout(() => {
         panel.style.transition = '';
-        panel.style.transform = '';
+        if (!panel.classList.contains('is-viewport-fit')) {
+          panel.style.transform = '';
+        } else {
+          panel.style.transform = 'translateX(-50%)';
+        }
       }, 300);
     };
 
@@ -234,5 +298,20 @@
     }
   });
 
+  inputPanel?.addEventListener('focus', () => {
+    scheduleViewportSync();
+    window.setTimeout(scheduleViewportSync, 80);
+    window.setTimeout(scheduleViewportSync, 350);
+  });
+
+  inputPanel?.addEventListener('blur', () => {
+    window.setTimeout(scheduleViewportSync, 80);
+  });
+
+  inputPanel?.addEventListener('input', () => {
+    scheduleViewportSync();
+  });
+
   bindSheetSwipeDismiss();
+  bindVisualViewport();
 })();
