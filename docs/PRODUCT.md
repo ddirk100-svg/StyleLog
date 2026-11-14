@@ -19,7 +19,7 @@
 ## 5.0V — 코디에게 물어보기
 
 - 마이 → **코디에게 물어보기** (`assistant.html`)
-- **내 착장 기록만** RAG로 넣어 ChatGPT가 답함 (`POST /api/style-assistant/chat`)
+- **내 착장**을 RAG로 우선 참고하고, 부족하면 일반 스타일 조언 (`POST /api/style-assistant/chat`, `SYSTEM_PROMPT`)
 - 키·배포: [AI_ASSISTANT.md](AI_ASSISTANT.md)
 
 ## 같이 보는 문서

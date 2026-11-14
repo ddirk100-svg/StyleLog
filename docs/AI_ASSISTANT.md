@@ -44,7 +44,8 @@ OPENAI_MODEL=gpt-4o-mini
 
 - **컨텍스트:** 로그인 사용자의 `style_logs`(내 착장) + 옷장 요약. `log_kind=reference`는 앱에서 제외(4.1V).
 - **흐름:** 클라이언트 → `POST /api/style-assistant/chat` (세션 쿠키/ Bearer) → Supabase에서 기록 조회 → OpenAI에 system+context+user 메시지.
-- **폴백:** 기록이 없으면 규칙 기반 안내 + 홈 링크 (Notion 티켓과 동일).
+- **시스템 지침:** `api/style-assistant/chat.js`의 `SYSTEM_PROMPT`. 1순위는 RAG에 넣은 내 코디 기반 답변, 기록이 없거나 질문에 맞는 로그가 없으면 과거 코디를 지어내지 않고 친근한 일반 스타일리스트 톤으로 보완.
+- **폴백(UI):** API 오류·미설정 등 클라이언트 메시지는 `style-assistant-client.js` 등에서 처리.
 
 ## 개인정보
 
