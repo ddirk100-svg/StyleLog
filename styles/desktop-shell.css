@@ -15,11 +15,40 @@
     right: 0;
   }
 
+  /* 메뉴: 오버레이는 전체 화면, 패널만 앱 폭으로 중앙 정렬 */
   .menu-popup {
-    left: 50%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  .menu-popup .menu-content {
+    position: relative;
+    top: auto;
     right: auto;
-    width: var(--container-max-width);
-    margin-left: calc(var(--container-max-width) / -2);
+    width: min(100%, var(--container-max-width));
+    max-width: var(--container-max-width);
+    height: auto;
+    max-height: min(85vh, 520px);
+    border-radius: var(--modal-border-radius, 20px);
+    transform: none;
+    box-shadow: 0 16px 48px var(--color-shadow-lg);
+    overflow: hidden;
+  }
+
+  .menu-popup.active .menu-content {
+    transform: none;
+  }
+
+  .menu-popup .menu-items {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .outfit-category-sheet {

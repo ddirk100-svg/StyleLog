@@ -243,23 +243,26 @@ body.header-scrolled-hidden.year-label-reached-top .container .month-label-day-v
     background: var(--color-overlay);
 }
 
-.menu-content {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 80%;
-    max-width: 300px;
-    height: 100%;
-    background: var(--color-bg-primary);
-    box-shadow: -4px 0 24px var(--color-shadow-md);
-    transform: translateX(100%);
-    transition: transform 0.3s;
-    display: flex;
-    flex-direction: column;
-}
+/* 모바일: 우측 드로어 */
+@media (max-width: 428px) {
+    .menu-content {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 80%;
+        max-width: 300px;
+        height: 100%;
+        background: var(--color-bg-primary);
+        box-shadow: -4px 0 24px var(--color-shadow-md);
+        transform: translateX(100%);
+        transition: transform 0.3s;
+        display: flex;
+        flex-direction: column;
+    }
 
-.menu-popup.active .menu-content {
-    transform: translateX(0);
+    .menu-popup.active .menu-content {
+        transform: translateX(0);
+    }
 }
 
 .menu-header {

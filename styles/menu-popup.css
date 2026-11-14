@@ -10,8 +10,13 @@
     bottom: 0;
     z-index: var(--z-index-popup);
     display: none;
-    align-items: flex-end;
     justify-content: center;
+}
+
+@media (max-width: 428px) {
+    .menu-popup {
+        align-items: flex-end;
+    }
 }
 
 .menu-popup.active {
